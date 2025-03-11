@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { X, Maximize2, Minimize2, MoreHorizontal } from 'lucide-react';
+import { X, Maximize2, Minimize2, MoreHorizontal, Settings } from 'lucide-react';
 import { useWidgetDrag } from '@/hooks/useWidgetDrag';
 import { useWidget } from '@/context/WidgetContext';
 import { cn } from '@/lib/utils';
@@ -35,7 +35,7 @@ const Widget: React.FC<WidgetProps> = ({
   // Get viewport bounds
   const bounds = {
     left: 0,
-    top: 60, // Leave space for header
+    top: 100, // Leave space for header and tabs
     right: window.innerWidth,
     bottom: window.innerHeight
   };
@@ -98,8 +98,8 @@ const Widget: React.FC<WidgetProps> = ({
     <div
       ref={widgetRef}
       className={cn(
-        "widget-container animate-fade-in",
-        isActive && "ring-1 ring-terminal-accent"
+        "widget-container animate-fade-in border border-terminal-border",
+        isActive && "ring-1 ring-blue-500"
       )}
       style={{
         left: `${currentPosition.x}px`,
@@ -111,27 +111,36 @@ const Widget: React.FC<WidgetProps> = ({
       onClick={handleWidgetClick}
     >
       <div 
-        className="widget-header px-4 py-3 bg-terminal-accent flex items-center justify-between"
+        className="widget-header h-10 px-3 py-2 bg-terminal-accent/60 flex items-center justify-between cursor-move"
         onMouseDown={handleDragStart}
       >
-        <h3 className="text-sm font-medium truncate">{title}</h3>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-yellow-500 mr-1.5"></div>
+          <h3 className="text-xs font-medium truncate">{title}</h3>
+        </div>
+        <div className="flex items-center space-x-1">
           <button 
-            className="p-1 rounded-md hover:bg-terminal-widget transition-colors"
-            onClick={toggleMaximize}
+            className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
+            onClick={() => {}}
           >
-            {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            <Settings size={14} className="text-terminal-muted" />
           </button>
           <button 
-            className="p-1 rounded-md hover:bg-terminal-widget text-terminal-text transition-colors hover:text-terminal-negative"
+            className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
+            onClick={toggleMaximize}
+          >
+            {isMaximized ? <Minimize2 size={14} className="text-terminal-muted" /> : <Maximize2 size={14} className="text-terminal-muted" />}
+          </button>
+          <button 
+            className="p-1 rounded-sm hover:bg-terminal-widget/50 text-terminal-text transition-colors hover:text-terminal-negative"
             onClick={onRemove}
           >
-            <X size={16} />
+            <X size={14} />
           </button>
         </div>
       </div>
       
-      <div className="p-3 h-[calc(100%-48px)] overflow-auto">
+      <div className="p-3 h-[calc(100%-40px)] overflow-auto bg-terminal-bg">
         {children}
       </div>
       

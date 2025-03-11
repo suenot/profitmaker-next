@@ -3,6 +3,7 @@ import React, { useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import Widget from '@/components/Widget';
 import WidgetMenu from '@/components/WidgetMenu';
+import TabNavigation from '@/components/TabNavigation';
 import { WidgetProvider, useWidget } from '@/context/WidgetContext';
 import ChartWidget from '@/components/widgets/Chart';
 import PortfolioWidget from '@/components/widgets/Portfolio';
@@ -33,13 +34,14 @@ const TradingTerminal: React.FC = () => {
   
   return (
     <div 
-      className="min-h-screen bg-terminal-bg text-terminal-text"
+      className="min-h-screen bg-terminal-bg text-terminal-text flex flex-col"
       onContextMenu={handleContextMenu}
       onClick={() => contextMenuPosition && setContextMenuPosition(null)}
     >
       <Header />
+      <TabNavigation />
       
-      <main className="pt-4 px-4 h-[calc(100vh-56px)]">
+      <main className="flex-1 pt-2 px-2 h-[calc(100vh-104px)]">
         {widgets.map((widget) => {
           const WidgetComponent = widgetComponents[widget.type];
           
@@ -67,8 +69,12 @@ const TradingTerminal: React.FC = () => {
         />
       )}
       
-      <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 text-terminal-muted text-xs">
-        <span>Right-click anywhere to add widgets</span>
+      <div className="fixed bottom-2 right-2 flex items-center text-terminal-muted text-xs bg-terminal-accent/30 px-3 py-1 rounded-md">
+        <span className="mr-2">22:54:42</span>
+        <div className="flex items-center">
+          <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+          <span>Онлайн</span>
+        </div>
       </div>
     </div>
   );

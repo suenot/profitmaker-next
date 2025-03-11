@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 
@@ -26,10 +25,10 @@ interface WidgetContextType {
 const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
 
 const defaultWidgetSizes: Record<WidgetType, { width: number; height: number }> = {
-  chart: { width: 700, height: 400 },
-  portfolio: { width: 400, height: 300 },
-  orderForm: { width: 350, height: 400 },
-  transactions: { width: 400, height: 300 },
+  chart: { width: 650, height: 330 },
+  portfolio: { width: 800, height: 350 },
+  orderForm: { width: 350, height: 550 },
+  transactions: { width: 400, height: 350 },
   watchlist: { width: 350, height: 400 },
   news: { width: 400, height: 500 },
   calendar: { width: 400, height: 350 },
@@ -37,14 +36,14 @@ const defaultWidgetSizes: Record<WidgetType, { width: number; height: number }> 
 };
 
 const widgetTitles: Record<WidgetType, string> = {
-  chart: 'Price Chart',
-  portfolio: 'Portfolio',
-  orderForm: 'Order Form',
-  transactions: 'Transactions',
-  watchlist: 'Watchlist',
-  news: 'Market News',
-  calendar: 'Economic Calendar',
-  positions: 'Open Positions'
+  chart: 'Деньги не спят: график',
+  portfolio: 'Инвестиционный счёт',
+  orderForm: 'Заявка',
+  transactions: 'Деньги не спят: История операций',
+  watchlist: 'Список наблюдения',
+  news: 'Новости рынка',
+  calendar: 'Экономический календарь',
+  positions: 'Открытые позиции'
 };
 
 export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -56,34 +55,43 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const initialWidgets: Widget[] = [
       {
         id: '1',
-        type: 'chart',
-        title: 'Price Chart',
+        type: 'portfolio',
+        title: 'Инвестиционный счёт',
         position: { x: 20, y: 80 },
-        size: { width: 700, height: 400 },
+        size: { width: 800, height: 350 },
         zIndex: 1,
         isActive: false
       },
       {
         id: '2',
-        type: 'portfolio',
-        title: 'Portfolio',
-        position: { x: 740, y: 80 },
-        size: { width: 400, height: 300 },
+        type: 'orderForm',
+        title: 'Заявка',
+        position: { x: 830, y: 80 },
+        size: { width: 350, height: 550 },
         zIndex: 2,
         isActive: false
       },
       {
         id: '3',
-        type: 'orderForm',
-        title: 'Order Form',
-        position: { x: 740, y: 400 },
-        size: { width: 400, height: 400 },
+        type: 'chart',
+        title: 'Деньги не спят: график',
+        position: { x: 20, y: 440 },
+        size: { width: 650, height: 330 },
         zIndex: 3,
+        isActive: false
+      },
+      {
+        id: '4',
+        type: 'transactions',
+        title: 'Деньги не спят: История операций',
+        position: { x: 680, y: 440 },
+        size: { width: 400, height: 330 },
+        zIndex: 4,
         isActive: false
       },
     ];
     setWidgets(initialWidgets);
-    setNextZIndex(4);
+    setNextZIndex(5);
   }, []);
 
   const addWidget = (type: WidgetType) => {
@@ -118,7 +126,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setWidgets(prev => [...prev, newWidget]);
     setNextZIndex(prev => prev + 1);
     
-    toast(`${widgetTitles[type]} widget added`, {
+    toast(`Виджет "${widgetTitles[type]}" добавлен`, {
       duration: 2000,
     });
   };
@@ -129,7 +137,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setWidgets(prev => prev.filter(widget => widget.id !== id));
     
     if (widgetToRemove) {
-      toast(`${widgetToRemove.title} widget removed`, {
+      toast(`Виджет "${widgetToRemove.title}" удален`, {
         duration: 2000,
       });
     }

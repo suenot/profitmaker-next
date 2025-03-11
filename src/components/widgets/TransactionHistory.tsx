@@ -1,132 +1,133 @@
 
 import React, { useState } from 'react';
-import { Calendar, Clock, ChevronDown, Filter } from 'lucide-react';
+import { Calendar, Clock, ChevronDown, Filter, Search, Settings, CreditCard, Banknote, Wallet } from 'lucide-react';
 
 // Sample transaction data
 const transactionData = [
   { 
-    id: 'ord-123456', 
-    type: 'buy', 
-    symbol: 'AAPL', 
-    quantity: 10, 
-    price: 182.67, 
-    date: '2023-05-15', 
-    time: '14:32:45', 
-    status: 'completed' 
+    id: 'transfer-1', 
+    type: 'transfer', 
+    description: 'Перевод денег между счетами', 
+    amount: '-500 000 ₽', 
+    isNegative: true,
+    date: 'Сегодня', 
+    time: '16:23', 
+    account: 'Спекулятивный счёт'
   },
   { 
-    id: 'ord-123457', 
-    type: 'sell', 
-    symbol: 'MSFT', 
-    quantity: 5, 
-    price: 315.75, 
-    date: '2023-05-14', 
-    time: '10:15:22', 
-    status: 'completed' 
+    id: 'deposit-1', 
+    type: 'deposit', 
+    description: 'Пополнение счета', 
+    amount: '500 000 ₽', 
+    isNegative: false,
+    date: 'Сегодня', 
+    time: '16:23', 
+    account: 'Спекулятивный счёт'
   },
   { 
-    id: 'ord-123458', 
-    type: 'buy', 
-    symbol: 'TSLA', 
-    quantity: 3, 
-    price: 237.49, 
-    date: '2023-05-12', 
-    time: '09:45:11', 
-    status: 'completed' 
+    id: 'tax-1', 
+    type: 'tax', 
+    description: 'Корректировка налога', 
+    amount: '1 026 ₽', 
+    isNegative: false,
+    date: '20 января 2025', 
+    time: '23:35', 
+    account: 'Спекулятивный счёт'
   },
   { 
-    id: 'ord-123459', 
-    type: 'sell', 
-    symbol: 'AMZN', 
-    quantity: 2, 
-    price: 139.85, 
-    date: '2023-05-10', 
-    time: '11:22:33', 
-    status: 'completed' 
+    id: 'tax-2', 
+    type: 'tax', 
+    description: 'Удержание налога', 
+    amount: '-25 873 ₽', 
+    isNegative: true,
+    date: '01 января 2025', 
+    time: '01:57', 
+    account: 'Спекулятивный счёт'
   },
   { 
-    id: 'ord-123460', 
-    type: 'buy', 
-    symbol: 'GOOGL', 
-    quantity: 4, 
-    price: 127.56, 
-    date: '2023-05-08', 
-    time: '15:48:19', 
-    status: 'completed' 
+    id: 'fee-1', 
+    type: 'fee', 
+    description: 'Списание вариационной маржи', 
+    amount: '-5,47 ₽', 
+    isNegative: true,
+    date: '13 сентября 2024', 
+    time: '19:03', 
+    account: 'Спекулятивный счёт'
   },
 ];
 
 const TransactionHistoryWidget: React.FC = () => {
   const [filter, setFilter] = useState('all');
   
-  const filteredTransactions = filter === 'all' 
-    ? transactionData 
-    : transactionData.filter(t => t.type === filter);
+  const getIconForTransactionType = (type: string) => {
+    switch (type) {
+      case 'transfer': return <Wallet size={20} className="text-blue-400" />;
+      case 'deposit': return <Banknote size={20} className="text-green-400" />;
+      case 'tax': return <Wallet size={20} className="text-gray-400" />;
+      case 'fee': return <Wallet size={20} className="text-red-400" />;
+      default: return <Wallet size={20} className="text-terminal-muted" />;
+    }
+  };
+  
+  // Group transactions by date
+  const groupedTransactions: Record<string, typeof transactionData> = {};
+  transactionData.forEach(transaction => {
+    if (!groupedTransactions[transaction.date]) {
+      groupedTransactions[transaction.date] = [];
+    }
+    groupedTransactions[transaction.date].push(transaction);
+  });
   
   return (
     <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-medium">Recent Transactions</h3>
-        
-        <div className="flex space-x-2">
-          <div className="relative">
-            <select 
-              className="bg-terminal-accent border border-terminal-border rounded-md text-xs py-1 pl-2 pr-8 appearance-none"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="buy">Buy</option>
-              <option value="sell">Sell</option>
-            </select>
-            <ChevronDown size={12} className="absolute right-2 top-1.5 text-terminal-muted pointer-events-none" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search size={16} className="text-terminal-muted" />
           </div>
-          
-          <button className="p-1 rounded-md bg-terminal-accent border border-terminal-border">
-            <Filter size={14} className="text-terminal-muted" />
+          <input
+            type="text"
+            className="bg-terminal-accent/30 border border-terminal-border rounded-md py-2 pl-10 pr-3 text-sm w-64"
+            placeholder="Деньги не спят: История операций"
+            readOnly
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <button className="p-1 rounded hover:bg-terminal-accent/50">
+            <Settings size={16} className="text-terminal-muted" />
           </button>
         </div>
       </div>
       
-      <div className="overflow-auto flex-grow">
-        <table className="w-full text-sm">
-          <thead className="bg-terminal-accent/30 sticky top-0">
-            <tr className="text-terminal-muted text-xs">
-              <th className="text-left py-2 px-3 font-normal">Order</th>
-              <th className="text-left py-2 px-3 font-normal">Symbol</th>
-              <th className="text-right py-2 px-3 font-normal">Quantity</th>
-              <th className="text-right py-2 px-3 font-normal">Price</th>
-              <th className="text-right py-2 px-3 font-normal">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTransactions.map((transaction, index) => (
-              <tr key={index} className="border-b border-terminal-border/20 hover:bg-terminal-accent/10">
-                <td className="py-3 px-3">
-                  <div className="flex items-center">
-                    <span className={`w-2 h-2 rounded-full mr-2 ${transaction.type === 'buy' ? 'bg-terminal-positive' : 'bg-terminal-negative'}`}></span>
-                    <span className="capitalize">{transaction.type}</span>
+      <div className="flex-grow overflow-auto">
+        {Object.entries(groupedTransactions).map(([date, transactions]) => (
+          <div key={date} className="mb-4">
+            <div className="text-sm font-medium mb-2">{date}</div>
+            
+            {transactions.map((transaction) => (
+              <div 
+                key={transaction.id}
+                className="flex items-center py-3 border-b border-terminal-border/20 hover:bg-terminal-accent/10"
+              >
+                <div className="mr-3 p-1 rounded-full bg-terminal-accent/30">
+                  {getIconForTransactionType(transaction.type)}
+                </div>
+                
+                <div className="flex-grow">
+                  <div className="text-sm">{transaction.description}</div>
+                  <div className="text-xs text-terminal-muted">{transaction.account}</div>
+                </div>
+                
+                <div className="text-right">
+                  <div className={`text-sm ${transaction.isNegative ? 'text-terminal-negative' : 'text-terminal-positive'}`}>
+                    {transaction.amount}
                   </div>
-                </td>
-                <td className="py-3 px-3 font-medium">{transaction.symbol}</td>
-                <td className="py-3 px-3 text-right">{transaction.quantity}</td>
-                <td className="py-3 px-3 text-right">${transaction.price.toFixed(2)}</td>
-                <td className="py-3 px-3 text-right text-terminal-muted">
-                  <div className="flex flex-col items-end text-xs">
-                    <div className="flex items-center">
-                      <Calendar size={10} className="mr-1" />
-                      {transaction.date}
-                    </div>
-                    <div className="flex items-center mt-0.5">
-                      <Clock size={10} className="mr-1" />
-                      {transaction.time}
-                    </div>
-                  </div>
-                </td>
-              </tr>
+                  <div className="text-xs text-terminal-muted">{transaction.time}</div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        ))}
       </div>
     </div>
   );

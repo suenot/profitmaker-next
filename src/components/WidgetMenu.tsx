@@ -38,36 +38,39 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
   };
 
   const widgetOptions = [
-    { type: 'chart' as WidgetType, label: 'Price Chart', icon: <LineChart size={18} /> },
-    { type: 'portfolio' as WidgetType, label: 'Portfolio', icon: <PieChart size={18} /> },
-    { type: 'orderForm' as WidgetType, label: 'Order Form', icon: <FileText size={18} /> },
-    { type: 'transactions' as WidgetType, label: 'Transactions', icon: <ListOrdered size={18} /> },
-    { type: 'watchlist' as WidgetType, label: 'Watchlist', icon: <BarChart3 size={18} /> },
-    { type: 'news' as WidgetType, label: 'Market News', icon: <Newspaper size={18} /> },
-    { type: 'calendar' as WidgetType, label: 'Economic Calendar', icon: <Calendar size={18} /> },
-    { type: 'positions' as WidgetType, label: 'Open Positions', icon: <Clock size={18} /> },
+    { type: 'chart' as WidgetType, label: 'График цены', icon: <LineChart size={16} /> },
+    { type: 'portfolio' as WidgetType, label: 'Портфель', icon: <PieChart size={16} /> },
+    { type: 'orderForm' as WidgetType, label: 'Форма заявки', icon: <FileText size={16} /> },
+    { type: 'transactions' as WidgetType, label: 'История операций', icon: <ListOrdered size={16} /> },
+    { type: 'watchlist' as WidgetType, label: 'Список наблюдения', icon: <BarChart3 size={16} /> },
+    { type: 'news' as WidgetType, label: 'Новости рынка', icon: <Newspaper size={16} /> },
+    { type: 'calendar' as WidgetType, label: 'Экономический календарь', icon: <Calendar size={16} /> },
+    { type: 'positions' as WidgetType, label: 'Открытые позиции', icon: <Clock size={16} /> },
   ];
 
   return (
     <div
       ref={menuRef}
-      className="widget-menu absolute glass-effect rounded-lg shadow-lg py-2 overflow-hidden w-60 z-50"
-      style={{ left: adjustedPosition.x, top: adjustedPosition.y }}
+      className="widget-menu absolute glass-effect rounded-lg shadow-lg py-2 overflow-hidden z-50 border border-terminal-border bg-terminal-widget"
+      style={{ left: adjustedPosition.x, top: adjustedPosition.y, width: '220px' }}
     >
-      <div className="px-4 py-2 bg-terminal-accent/30 backdrop-blur-md">
-        <h3 className="text-sm font-medium">Add Widget</h3>
+      <div className="px-3 py-2 border-b border-terminal-border/50">
+        <h3 className="text-sm font-medium">Добавить виджет</h3>
       </div>
-      <div className="p-2 grid grid-cols-2 gap-2">
+      <div className="p-2">
         {widgetOptions.map((option) => (
           <button
             key={option.type}
-            className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-terminal-accent transition-colors text-left"
+            className="flex items-center w-full space-x-3 px-3 py-2 rounded-md hover:bg-terminal-accent/50 transition-colors text-left text-sm"
             onClick={() => handleAddWidget(option.type)}
           >
             <span className="text-terminal-muted">{option.icon}</span>
-            <span className="text-sm">{option.label}</span>
+            <span>{option.label}</span>
           </button>
         ))}
+      </div>
+      <div className="p-2 border-t border-terminal-border/50 text-xs text-terminal-muted px-3">
+        Выберите виджет для добавления на рабочую область
       </div>
     </div>
   );

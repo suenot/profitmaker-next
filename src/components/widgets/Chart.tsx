@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { BarChart2, Maximize, Menu, ChevronsUpDown, RefreshCw } from 'lucide-react';
+import { BarChart2, Maximize, Menu, ChevronsUpDown, RefreshCw, Clock } from 'lucide-react';
 
 // Generate some realistic stock data
 const generateChartData = () => {
@@ -29,71 +29,67 @@ interface ChartWidgetProps {
   symbol?: string;
 }
 
-const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'AAPL' }) => {
+const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
   const [timeframe, setTimeframe] = useState('1D');
-  const [currentPrice, setCurrentPrice] = useState(chartData[chartData.length - 1].price.toFixed(2));
-  const [priceChange, setPriceChange] = useState({
-    value: '+1.24',
-    percentage: '+1.25%',
-    isPositive: true
-  });
+  const [currentPrice, setCurrentPrice] = useState(86.56);
+  
+  const timeframes = [
+    { id: '1M', label: '1М' },
+    { id: '5M', label: '5М' },
+    { id: '10M', label: '10М' },
+    { id: '1H', label: '1Ч' },
+    { id: '4H', label: '4Ч' },
+    { id: 'D', label: 'Д' },
+    { id: 'W', label: 'Н' },
+    { id: 'M', label: 'Мес' },
+  ];
   
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          <span className="font-medium mr-1">{symbol}</span>
-          <span className="text-xs px-2 py-0.5 rounded bg-terminal-accent/30 text-terminal-muted">NASDAQ</span>
-        </div>
-        
+      <div className="flex items-center space-x-2 mb-2">
+        <span className="text-sm flex items-center text-terminal-muted">
+          <Clock size={14} className="mr-1" />
+          Деньги не спят: график {symbol}
+        </span>
+      </div>
+      
+      <div className="flex items-center justify-between mb-2">
         <div className="flex space-x-1 items-center">
-          {['1H', '1D', '1W', '1M', '1Y'].map(tf => (
+          {timeframes.map(tf => (
             <button 
-              key={tf}
-              className={`text-xs px-2 py-1 rounded ${timeframe === tf ? 'bg-terminal-accent text-white' : 'text-terminal-muted hover:bg-terminal-accent/30'}`}
-              onClick={() => setTimeframe(tf)}
+              key={tf.id}
+              className={`text-xs px-2 py-1 rounded ${timeframe === tf.id ? 'bg-terminal-accent text-white' : 'text-terminal-muted hover:bg-terminal-accent/30'}`}
+              onClick={() => setTimeframe(tf.id)}
             >
-              {tf}
+              {tf.label}
             </button>
           ))}
         </div>
         
         <div className="flex items-center space-x-2">
-          <button className="p-1 rounded hover:bg-terminal-accent/30">
-            <RefreshCw size={14} className="text-terminal-muted" />
+          <button className="px-3 py-1 text-xs rounded bg-terminal-accent/30 text-terminal-muted hover:bg-terminal-accent/50">
+            Индикаторы
           </button>
           <button className="p-1 rounded hover:bg-terminal-accent/30">
-            <ChevronsUpDown size={14} className="text-terminal-muted" />
-          </button>
-          <button className="p-1 rounded hover:bg-terminal-accent/30">
-            <Menu size={14} className="text-terminal-muted" />
+            <Maximize size={14} className="text-terminal-muted" />
           </button>
         </div>
       </div>
       
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-baseline">
-          <span className="text-2xl font-medium mr-2">${currentPrice}</span>
-          <span className={`text-sm ${priceChange.isPositive ? 'text-terminal-positive' : 'text-terminal-negative'}`}>
-            {priceChange.value} ({priceChange.percentage})
-          </span>
-        </div>
-      </div>
-      
-      <div className="flex-grow">
+      <div className="flex-grow relative">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.4}/>
+                <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.1}/>
                 <stop offset="95%" stopColor="#4CAF50" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis 
               dataKey="time" 
               tick={{ fill: '#9DA3B4', fontSize: 10 }} 
-              axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} 
+              axisLine={{ stroke: 'rgba(255,255,255,0.05)' }} 
               tickLine={false}
             />
             <YAxis 
@@ -111,19 +107,41 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'AAPL' }) => {
                 fontSize: '12px'
               }} 
               labelStyle={{ color: '#E6E8EC' }}
-              formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
+              formatter={(value: number) => [`${value.toFixed(4)}`, 'Цена']}
             />
             <Area 
               type="monotone" 
               dataKey="price" 
-              stroke="#4CAF50" 
+              stroke="#4878ff" 
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#priceGradient)" 
               animationDuration={300}
+              dot={false}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="price" 
+              stroke="#4878ff" 
+              strokeWidth={1.5}
+              dot={false}
+              activeDot={{ r: 4, fill: '#4878ff', stroke: '#fff' }}
             />
           </AreaChart>
         </ResponsiveContainer>
+        
+        <div className="absolute bottom-4 left-4 text-xs text-terminal-muted flex space-x-8">
+          <span>сент.</span>
+          <span>окт.</span>
+          <span>нояб.</span>
+          <span>дек.</span>
+          <span>2025</span>
+          <span>февр.</span>
+        </div>
+        
+        <div className="absolute bottom-4 right-4 text-xs text-terminal-muted">
+          57162
+        </div>
       </div>
     </div>
   );
