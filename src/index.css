@@ -136,6 +136,41 @@
   opacity: 0.5;
 }
 
+/* Alignment guide styles */
+.alignment-guide {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9999;
+  background-color: #2D9CDB;
+  box-shadow: 0 0 0 1px rgba(45, 156, 219, 0.5);
+  transition: opacity 0.2s ease;
+  opacity: 0.8;
+}
+
+.alignment-guide.horizontal {
+  height: 1px;
+  left: 0;
+  right: 0;
+}
+
+.alignment-guide.vertical {
+  width: 1px;
+  top: 0;
+  bottom: 0;
+}
+
+.alignment-guide-distance {
+  position: absolute;
+  background-color: rgba(45, 156, 219, 0.8);
+  color: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* Continue with existing styles */
 .slide-up-enter {
   opacity: 0;
   transform: translateY(20px);

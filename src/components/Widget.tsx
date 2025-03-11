@@ -28,7 +28,13 @@ const Widget: React.FC<WidgetProps> = ({
   isActive,
   onRemove
 }) => {
-  const { updateWidgetPosition, updateWidgetSize, activateWidget, getGroupColor, widgetGroups, widgets } = useWidget();
+  const { 
+    updateWidgetPosition, 
+    updateWidgetSize, 
+    activateWidget, 
+    getGroupColor, 
+    widgets
+  } = useWidget();
   const widgetRef = useRef<HTMLDivElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [showGroupMenu, setShowGroupMenu] = useState(false);
@@ -47,6 +53,117 @@ const Widget: React.FC<WidgetProps> = ({
     bottom: window.innerHeight
   };
 
+  // Function to handle widget snapping during movement
+  const handleWidgetSnap = (widgetId: string, rect: DOMRect) => {
+    const result = { x: null as number | null, y: null as number | null };
+    const snapThreshold = 14;
+
+    // Get coordinates of the current widget being moved
+    const widgetLeft = rect.left;
+    const widgetRight = rect.left + rect.width;
+    const widgetTop = rect.top;
+    const widgetBottom = rect.top + rect.height;
+    const widgetCenterX = widgetLeft + rect.width / 2;
+    const widgetCenterY = widgetTop + rect.height / 2;
+
+    // Check if close to container boundaries
+    if (Math.abs(rect.left) <= snapThreshold) {
+      result.x = 0; // Snap to left edge of container
+    } else if (Math.abs(bounds.right - widgetRight) <= snapThreshold) {
+      result.x = bounds.right - rect.width; // Snap to right edge
+    }
+
+    if (Math.abs(rect.top - bounds.top) <= snapThreshold) {
+      result.y = bounds.top; // Snap to top edge
+    } else if (Math.abs(bounds.bottom - widgetBottom) <= snapThreshold) {
+      result.y = bounds.bottom - rect.height; // Snap to bottom edge
+    }
+
+    // Check alignment with other widgets
+    widgets.forEach(otherWidget => {
+      if (otherWidget.id === widgetId) return; // Skip the current widget
+
+      const otherLeft = otherWidget.position.x;
+      const otherRight = otherWidget.position.x + otherWidget.size.width;
+      const otherTop = otherWidget.position.y;
+      const otherBottom = otherWidget.position.y + otherWidget.size.height;
+      const otherCenterX = otherLeft + otherWidget.size.width / 2;
+      const otherCenterY = otherTop + otherWidget.size.height / 2;
+
+      // Horizontal alignment checks
+      if (Math.abs(widgetLeft - otherLeft) <= snapThreshold) {
+        result.x = otherLeft; // Align left edges
+      } else if (Math.abs(widgetRight - otherRight) <= snapThreshold) {
+        result.x = otherRight - rect.width; // Align right edges
+      } else if (Math.abs(widgetLeft - otherRight) <= snapThreshold) {
+        result.x = otherRight; // Snap right-to-left
+      } else if (Math.abs(widgetRight - otherLeft) <= snapThreshold) {
+        result.x = otherLeft - rect.width; // Snap left-to-right
+      } else if (Math.abs(widgetCenterX - otherCenterX) <= snapThreshold) {
+        result.x = otherCenterX - rect.width / 2; // Align centers horizontally
+      }
+
+      // Vertical alignment checks
+      if (Math.abs(widgetTop - otherTop) <= snapThreshold) {
+        result.y = otherTop; // Align top edges
+      } else if (Math.abs(widgetBottom - otherBottom) <= snapThreshold) {
+        result.y = otherBottom - rect.height; // Align bottom edges
+      } else if (Math.abs(widgetTop - otherBottom) <= snapThreshold) {
+        result.y = otherBottom; // Snap bottom-to-top
+      } else if (Math.abs(widgetBottom - otherTop) <= snapThreshold) {
+        result.y = otherTop - rect.height; // Snap top-to-bottom
+      } else if (Math.abs(widgetCenterY - otherCenterY) <= snapThreshold) {
+        result.y = otherCenterY - rect.height / 2; // Align centers vertically
+      }
+    });
+
+    return result;
+  };
+
+  // Similar function for resize snapping
+  const handleWidgetResizeSnap = (widgetId: string, rect: DOMRect) => {
+    const result = { x: null as number | null, y: null as number | null };
+    const snapThreshold = 14;
+
+    const widgetRight = rect.left + rect.width;
+    const widgetBottom = rect.top + rect.height;
+
+    // Check if close to container boundaries
+    if (Math.abs(bounds.right - widgetRight) <= snapThreshold) {
+      result.x = bounds.right; // Snap right edge to container
+    }
+
+    if (Math.abs(bounds.bottom - widgetBottom) <= snapThreshold) {
+      result.y = bounds.bottom; // Snap bottom edge to container
+    }
+
+    // Check alignment with other widgets
+    widgets.forEach(otherWidget => {
+      if (otherWidget.id === widgetId) return; // Skip the current widget
+
+      const otherLeft = otherWidget.position.x;
+      const otherRight = otherWidget.position.x + otherWidget.size.width;
+      const otherTop = otherWidget.position.y;
+      const otherBottom = otherWidget.position.y + otherWidget.size.height;
+
+      // Right edge alignment
+      if (Math.abs(widgetRight - otherLeft) <= snapThreshold) {
+        result.x = otherLeft; // Snap to left edge of other widget
+      } else if (Math.abs(widgetRight - otherRight) <= snapThreshold) {
+        result.x = otherRight; // Align with right edge of other widget
+      }
+
+      // Bottom edge alignment
+      if (Math.abs(widgetBottom - otherTop) <= snapThreshold) {
+        result.y = otherTop; // Snap to top edge of other widget
+      } else if (Math.abs(widgetBottom - otherBottom) <= snapThreshold) {
+        result.y = otherBottom; // Align with bottom edge of other widget
+      }
+    });
+
+    return result;
+  };
+
   const {
     position: currentPosition,
     size: currentSize,
@@ -61,6 +178,9 @@ const Widget: React.FC<WidgetProps> = ({
     onSizeChange: (newSize) => {
       updateWidgetSize(id, newSize);
     },
+    onWidgetMove: handleWidgetSnap,
+    onWidgetResize: handleWidgetResizeSnap,
+    widgetId: id,
     minWidth: 250,
     minHeight: 150,
     bounds,
@@ -114,6 +234,7 @@ const Widget: React.FC<WidgetProps> = ({
 
   return (
     <div
+      id={`widget-${id}`}
       ref={widgetRef}
       className={cn(
         "widget-container animate-fade-in border border-terminal-border",
