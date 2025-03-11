@@ -4,11 +4,14 @@ import Header from '@/components/Header';
 import Widget from '@/components/Widget';
 import WidgetMenu from '@/components/WidgetMenu';
 import TabNavigation from '@/components/TabNavigation';
+import GroupManagerDialog from '@/components/GroupManagerDialog';
 import { WidgetProvider, useWidget } from '@/context/WidgetContext';
 import ChartWidget from '@/components/widgets/Chart';
 import PortfolioWidget from '@/components/widgets/Portfolio';
 import OrderFormWidget from '@/components/widgets/OrderForm';
 import TransactionHistoryWidget from '@/components/widgets/TransactionHistory';
+import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
 
 // Widget content mapping
 const widgetComponents: Record<string, React.FC<any>> = {
@@ -24,7 +27,8 @@ const widgetComponents: Record<string, React.FC<any>> = {
 
 const TradingTerminal: React.FC = () => {
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
-  const { widgets, removeWidget } = useWidget();
+  const [showGroupManager, setShowGroupManager] = useState(false);
+  const { widgets, removeWidget, widgetGroups } = useWidget();
   
   // Handle right-click to open widget menu
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -41,7 +45,19 @@ const TradingTerminal: React.FC = () => {
       <Header />
       <TabNavigation />
       
-      <main className="flex-1 pt-2 px-2 h-[calc(100vh-104px)]">
+      <div className="flex items-center justify-end px-3 py-1 bg-terminal-accent/5 border-b border-terminal-border">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-xs text-terminal-muted hover:text-terminal-text"
+          onClick={() => setShowGroupManager(true)}
+        >
+          <Settings size={14} className="mr-1" />
+          Управление группами виджетов
+        </Button>
+      </div>
+      
+      <main className="flex-1 pt-2 px-2 h-[calc(100vh-140px)]">
         {widgets.map((widget) => {
           const WidgetComponent = widgetComponents[widget.type];
           
@@ -68,6 +84,11 @@ const TradingTerminal: React.FC = () => {
           onClose={() => setContextMenuPosition(null)} 
         />
       )}
+      
+      <GroupManagerDialog 
+        open={showGroupManager} 
+        onOpenChange={setShowGroupManager} 
+      />
       
       <div className="fixed bottom-2 right-2 flex items-center text-terminal-muted text-xs bg-terminal-accent/30 px-3 py-1 rounded-md">
         <span className="mr-2">22:54:42</span>

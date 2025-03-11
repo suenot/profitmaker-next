@@ -1,7 +1,16 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 
 export type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactions' | 'watchlist' | 'news' | 'calendar' | 'positions';
+
+export interface WidgetGroup {
+  id: string;
+  name: string;
+  color: string;
+  symbol: string;
+  isActive: boolean;
+}
 
 export interface Widget {
   id: string;
@@ -11,15 +20,25 @@ export interface Widget {
   size: { width: number; height: number };
   zIndex: number;
   isActive: boolean;
+  groupId: string | null;
 }
 
 interface WidgetContextType {
   widgets: Widget[];
-  addWidget: (type: WidgetType) => void;
+  widgetGroups: WidgetGroup[];
+  activeGroupId: string | null;
+  addWidget: (type: WidgetType, groupId?: string | null) => void;
   removeWidget: (id: string) => void;
   updateWidgetPosition: (id: string, position: { x: number; y: number }) => void;
   updateWidgetSize: (id: string, size: { width: number; height: number }) => void;
   activateWidget: (id: string) => void;
+  createGroup: (name: string, symbol: string, color: string) => string;
+  updateGroup: (id: string, data: Partial<Omit<WidgetGroup, 'id'>>) => void;
+  deleteGroup: (id: string) => void;
+  addWidgetToGroup: (widgetId: string, groupId: string) => void;
+  removeWidgetFromGroup: (widgetId: string) => void;
+  activateGroup: (groupId: string) => void;
+  getGroupColor: (groupId: string | null) => string;
 }
 
 const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
@@ -46,9 +65,25 @@ const widgetTitles: Record<WidgetType, string> = {
   positions: 'Открытые позиции'
 };
 
+// Group color palette
+const groupColors = [
+  '#8B5CF6', // Vivid Purple
+  '#D946EF', // Magenta Pink 
+  '#F97316', // Bright Orange
+  '#0EA5E9', // Ocean Blue
+  '#10B981', // Emerald Green
+  '#FBBF24', // Amber Yellow
+  '#EC4899', // Pink
+  '#6366F1', // Indigo
+  '#F43F5E', // Rose
+  '#84CC16'  // Lime
+];
+
 export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [widgets, setWidgets] = useState<Widget[]>([]);
+  const [widgetGroups, setWidgetGroups] = useState<WidgetGroup[]>([]);
   const [nextZIndex, setNextZIndex] = useState(1);
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
 
   // Initialize with some default widgets
   useEffect(() => {
@@ -60,7 +95,8 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         position: { x: 20, y: 80 },
         size: { width: 800, height: 350 },
         zIndex: 1,
-        isActive: false
+        isActive: false,
+        groupId: null
       },
       {
         id: '2',
@@ -69,7 +105,8 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         position: { x: 830, y: 80 },
         size: { width: 350, height: 550 },
         zIndex: 2,
-        isActive: false
+        isActive: false,
+        groupId: null
       },
       {
         id: '3',
@@ -78,7 +115,8 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         position: { x: 20, y: 440 },
         size: { width: 650, height: 330 },
         zIndex: 3,
-        isActive: false
+        isActive: false,
+        groupId: null
       },
       {
         id: '4',
@@ -87,14 +125,27 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         position: { x: 680, y: 440 },
         size: { width: 400, height: 330 },
         zIndex: 4,
-        isActive: false
+        isActive: false,
+        groupId: null
       },
     ];
+    
+    // Create a default group for USDRUB
+    const defaultGroup: WidgetGroup = {
+      id: 'group-default',
+      name: 'USDRUB',
+      color: groupColors[0],
+      symbol: 'USDRUB',
+      isActive: true
+    };
+    
     setWidgets(initialWidgets);
+    setWidgetGroups([defaultGroup]);
     setNextZIndex(5);
+    setActiveGroupId(defaultGroup.id);
   }, []);
 
-  const addWidget = (type: WidgetType) => {
+  const addWidget = (type: WidgetType, groupId: string | null = null) => {
     const id = `widget-${Date.now()}`;
     
     // Calculate position - try to place it in a visible area
@@ -120,7 +171,8 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       position: { x, y },
       size: defaultWidgetSizes[type],
       zIndex: nextZIndex,
-      isActive: true
+      isActive: true,
+      groupId
     };
     
     setWidgets(prev => [...prev, newWidget]);
@@ -129,6 +181,8 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     toast(`Виджет "${widgetTitles[type]}" добавлен`, {
       duration: 2000,
     });
+    
+    return id;
   };
 
   const removeWidget = (id: string) => {
@@ -169,16 +223,146 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     setNextZIndex(prev => prev + 1);
   };
+  
+  // Group management functions
+  const createGroup = (name: string, symbol: string, color: string) => {
+    const id = `group-${Date.now()}`;
+    const newGroup: WidgetGroup = {
+      id,
+      name,
+      color,
+      symbol,
+      isActive: false
+    };
+    
+    setWidgetGroups(prev => [...prev, newGroup]);
+    
+    toast(`Группа "${name}" создана`, {
+      duration: 2000,
+    });
+    
+    return id;
+  };
+  
+  const updateGroup = (id: string, data: Partial<Omit<WidgetGroup, 'id'>>) => {
+    setWidgetGroups(prev => 
+      prev.map(group => 
+        group.id === id ? { ...group, ...data } : group
+      )
+    );
+    
+    // If the group being updated is also the active group, we need to update it
+    if (id === activeGroupId && data.symbol) {
+      // Update all widgets in this group to use the new symbol
+      const updatedGroup = widgetGroups.find(g => g.id === id);
+      if (updatedGroup) {
+        const newName = data.name || updatedGroup.name;
+        toast(`Группа "${newName}" обновлена`, {
+          duration: 2000,
+        });
+      }
+    }
+  };
+  
+  const deleteGroup = (id: string) => {
+    const groupToDelete = widgetGroups.find(g => g.id === id);
+    
+    // Remove this group from all widgets
+    setWidgets(prev => 
+      prev.map(widget => 
+        widget.groupId === id ? { ...widget, groupId: null } : widget
+      )
+    );
+    
+    setWidgetGroups(prev => prev.filter(group => group.id !== id));
+    
+    // If this was the active group, clear the active group
+    if (activeGroupId === id) {
+      setActiveGroupId(null);
+    }
+    
+    if (groupToDelete) {
+      toast(`Группа "${groupToDelete.name}" удалена`, {
+        duration: 2000,
+      });
+    }
+  };
+  
+  const addWidgetToGroup = (widgetId: string, groupId: string) => {
+    setWidgets(prev => 
+      prev.map(widget => 
+        widget.id === widgetId ? { ...widget, groupId } : widget
+      )
+    );
+    
+    const widget = widgets.find(w => w.id === widgetId);
+    const group = widgetGroups.find(g => g.id === groupId);
+    
+    if (widget && group) {
+      toast(`Виджет "${widget.title}" добавлен в группу "${group.name}"`, {
+        duration: 2000,
+      });
+    }
+  };
+  
+  const removeWidgetFromGroup = (widgetId: string) => {
+    const widget = widgets.find(w => w.id === widgetId);
+    const group = widget?.groupId ? widgetGroups.find(g => g.id === widget.groupId) : null;
+    
+    setWidgets(prev => 
+      prev.map(widget => 
+        widget.id === widgetId ? { ...widget, groupId: null } : widget
+      )
+    );
+    
+    if (widget && group) {
+      toast(`Виджет "${widget.title}" удален из группы "${group.name}"`, {
+        duration: 2000,
+      });
+    }
+  };
+  
+  const activateGroup = (groupId: string) => {
+    setActiveGroupId(groupId);
+    
+    setWidgetGroups(prev => 
+      prev.map(group => 
+        group.id === groupId ? { ...group, isActive: true } : { ...group, isActive: false }
+      )
+    );
+    
+    const group = widgetGroups.find(g => g.id === groupId);
+    if (group) {
+      toast(`Группа "${group.name}" активирована`, {
+        duration: 2000,
+      });
+    }
+  };
+  
+  const getGroupColor = (groupId: string | null) => {
+    if (!groupId) return '';
+    const group = widgetGroups.find(g => g.id === groupId);
+    return group ? group.color : '';
+  };
 
   return (
     <WidgetContext.Provider 
       value={{ 
         widgets, 
+        widgetGroups,
+        activeGroupId,
         addWidget, 
         removeWidget, 
         updateWidgetPosition, 
         updateWidgetSize, 
-        activateWidget 
+        activateWidget,
+        createGroup,
+        updateGroup,
+        deleteGroup,
+        addWidgetToGroup,
+        removeWidgetFromGroup,
+        activateGroup,
+        getGroupColor
       }}
     >
       {children}

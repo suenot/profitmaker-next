@@ -1,9 +1,11 @@
 
-import React, { useRef, useEffect } from 'react';
-import { X, Maximize2, Minimize2, MoreHorizontal, Settings } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, Maximize2, Minimize2, Settings, Plus, Circle } from 'lucide-react';
 import { useWidgetDrag } from '@/hooks/useWidgetDrag';
 import { useWidget } from '@/context/WidgetContext';
 import { cn } from '@/lib/utils';
+import GroupMenu from './GroupMenu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface WidgetProps {
   id: string;
@@ -26,11 +28,16 @@ const Widget: React.FC<WidgetProps> = ({
   isActive,
   onRemove
 }) => {
-  const { updateWidgetPosition, updateWidgetSize, activateWidget } = useWidget();
+  const { updateWidgetPosition, updateWidgetSize, activateWidget, getGroupColor, widgetGroups, widgets } = useWidget();
   const widgetRef = useRef<HTMLDivElement>(null);
-  const [isMaximized, setIsMaximized] = React.useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [showGroupMenu, setShowGroupMenu] = useState(false);
   const previousSizeRef = useRef(size);
   const previousPositionRef = useRef(position);
+  
+  const widget = widgets.find(w => w.id === id);
+  const groupId = widget?.groupId;
+  const groupColor = getGroupColor(groupId);
 
   // Get viewport bounds
   const bounds = {
@@ -93,6 +100,17 @@ const Widget: React.FC<WidgetProps> = ({
       activateWidget(id);
     }
   };
+  
+  // Toggle group menu
+  const handleGroupIndicatorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowGroupMenu(!showGroupMenu);
+  };
+  
+  // Close group menu when clicking outside
+  const handleCloseGroupMenu = () => {
+    setShowGroupMenu(false);
+  };
 
   return (
     <div
@@ -115,7 +133,31 @@ const Widget: React.FC<WidgetProps> = ({
         onMouseDown={handleDragStart}
       >
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-yellow-500 mr-1.5"></div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={handleGroupIndicatorClick}
+                  className="mr-2 p-0.5 rounded-full hover:bg-terminal-accent/50 transition-colors"
+                >
+                  {groupId ? (
+                    <Circle size={16} fill={groupColor} color={groupColor} />
+                  ) : (
+                    <div className="flex items-center justify-center w-4 h-4 rounded-full border border-terminal-muted text-terminal-muted">
+                      <Plus size={12} />
+                    </div>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {groupId 
+                  ? 'Просмотреть настройки группы' 
+                  : 'Добавить виджет в группу'
+                }
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           <h3 className="text-xs font-medium truncate">{title}</h3>
         </div>
         <div className="flex items-center space-x-1">
@@ -149,6 +191,15 @@ const Widget: React.FC<WidgetProps> = ({
         className="widget-resize-handle"
         onMouseDown={handleResizeStart}
       />
+      
+      {/* Group menu */}
+      {showGroupMenu && (
+        <GroupMenu
+          widgetId={id}
+          position={{ x: 0, y: 40 }}
+          onClose={handleCloseGroupMenu}
+        />
+      )}
     </div>
   );
 };
