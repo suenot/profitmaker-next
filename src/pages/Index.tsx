@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import Header from '@/components/Header';
 import Widget from '@/components/Widget';
@@ -13,9 +12,9 @@ import TransactionHistoryWidget from '@/components/widgets/TransactionHistory';
 import AlignmentGuides from '@/components/AlignmentGuides';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
-import { useAlignmentGuides, GuideLineType } from '@/hooks/useAlignmentGuides';
+import { useAlignmentGuides } from '@/hooks/useAlignmentGuides';
+import { GuideLineType } from '@/types/alignmentGuides';
 
-// Widget content mapping
 const widgetComponents: Record<string, React.FC<any>> = {
   chart: ChartWidget,
   portfolio: PortfolioWidget,
@@ -35,33 +34,28 @@ const TradingTerminal: React.FC = () => {
   const [activeWidgetId, setActiveWidgetId] = useState<string | null>(null);
   const [guideLines, setGuideLines] = useState<GuideLineType[]>([]);
   
-  // Initialize alignment guides
   const { calculateGuides, clearGuides } = useAlignmentGuides(widgets, mainContainerRef);
   
-  // Handle widget snap calculations
   const handleWidgetMove = useCallback((widgetId: string, rect: DOMRect) => {
     setActiveWidgetId(widgetId);
     const guides = calculateGuides(widgetId, rect);
     setGuideLines(guides);
-    return { x: null, y: null }; // Let the widget component handle the snapping
+    return { x: null, y: null };
   }, [calculateGuides]);
   
-  // Handle widget resize snap calculations
   const handleWidgetResize = useCallback((widgetId: string, rect: DOMRect) => {
     setActiveWidgetId(widgetId);
     const guides = calculateGuides(widgetId, rect, true);
     setGuideLines(guides);
-    return { x: null, y: null }; // Let the widget component handle the snapping
+    return { x: null, y: null };
   }, [calculateGuides]);
   
-  // Clear guides when no longer dragging/resizing
   const handleWidgetDragEnd = useCallback(() => {
     setActiveWidgetId(null);
     clearGuides();
     setGuideLines([]);
   }, [clearGuides]);
   
-  // Handle right-click to open widget menu
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
@@ -92,7 +86,6 @@ const TradingTerminal: React.FC = () => {
         ref={mainContainerRef}
         className="flex-1 pt-2 px-2 h-[calc(100vh-140px)] relative"
       >
-        {/* Show alignment guides when dragging/resizing */}
         <AlignmentGuides guideLines={guideLines} />
         
         {widgets.map((widget) => {

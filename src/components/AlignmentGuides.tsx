@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { GuideLineType } from '@/hooks/useAlignmentGuides';
+import { GuideLineType } from '@/types/alignmentGuides';
 
 interface AlignmentGuidesProps {
   guideLines: GuideLineType[];
