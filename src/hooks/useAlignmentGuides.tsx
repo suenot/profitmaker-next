@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { Widget } from '@/context/WidgetContext';
 
-interface GuideLineType {
+export interface GuideLineType {
   position: number;
   orientation: 'horizontal' | 'vertical';
   length: number;
@@ -247,9 +247,4 @@ export const useAlignmentGuides = (
   };
 };
 
-export type GuideLineType = {
-  position: number;
-  orientation: 'horizontal' | 'vertical';
-  length: number;
-  start: number;
-};
+// The GuideLineType is now exported at the top of the file, so we don't need this duplicate export
