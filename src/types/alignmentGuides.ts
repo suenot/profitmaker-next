@@ -16,3 +16,29 @@ export interface CalculateGuidesOptions {
   currentWidgetId: string;
   currentRect: DOMRect;
 }
+
+export interface EdgePositions {
+  currentLeft: number;
+  currentRight: number;
+  currentCenterX: number;
+  currentTop: number;
+  currentBottom: number;
+  widgetLeft: number;
+  widgetRight: number;
+  widgetCenterX: number;
+  widgetTop: number;
+  widgetBottom: number;
+}
+
+export interface HorizontalPositions {
+  currentTop: number;
+  currentBottom: number;
+  currentCenterY: number;
+  currentLeft: number;
+  currentRight: number;
+  widgetTop: number;
+  widgetBottom: number;
+  widgetCenterY: number;
+  widgetLeft: number;
+  widgetRight: number;
+}

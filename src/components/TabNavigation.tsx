@@ -1,12 +1,9 @@
 
 import React from 'react';
-import { Plus, LayoutGrid, X, User, CircleDot } from 'lucide-react';
-import { useWidget } from '@/context/WidgetContext';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, LayoutGrid, X, User } from 'lucide-react';
 
 const TabNavigation: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState(0);
-  const { widgetGroups, activateGroup, activeGroupId } = useWidget();
   
   const tabs = [
     { id: 'tab-1', icon: <User size={14} />, label: 'Васи (И)', closable: true },
@@ -18,10 +15,6 @@ const TabNavigation: React.FC = () => {
     { id: 'tab-7', label: 'Подбор акций', closable: false },
     { id: 'tab-8', label: 'Вкладка', closable: false },
   ];
-  
-  const handleGroupClick = (groupId: string) => {
-    activateGroup(groupId);
-  };
   
   return (
     <div className="flex flex-col h-auto bg-terminal-bg border-b border-terminal-border">
@@ -58,36 +51,6 @@ const TabNavigation: React.FC = () => {
           </button>
         </div>
       </div>
-      
-      {/* Group tabs */}
-      {widgetGroups.length > 0 && (
-        <div className="flex items-center h-8 px-2 overflow-x-auto hide-scrollbar bg-terminal-accent/10">
-          <div className="text-xs text-terminal-muted px-2">Группы:</div>
-          
-          {widgetGroups.map((group) => (
-            <TooltipProvider key={group.id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className={`flex items-center px-3 h-6 mx-0.5 rounded-sm cursor-pointer ${
-                      activeGroupId === group.id 
-                        ? 'bg-terminal-accent/40 text-terminal-text' 
-                        : 'text-terminal-muted hover:bg-terminal-accent/20'
-                    }`}
-                    onClick={() => handleGroupClick(group.id)}
-                  >
-                    <CircleDot size={12} className="mr-1" fill={group.color} color={group.color} />
-                    <span className="text-xs">{group.name}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Инструмент: {group.symbol}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
