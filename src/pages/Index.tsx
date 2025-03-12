@@ -70,6 +70,7 @@ const TradingTerminal: React.FC = () => {
       <main 
         ref={mainContainerRef}
         className="flex-1 p-0 h-[calc(100vh-86px)] relative"
+        style={{ marginTop: 0 }}
       >
         <AlignmentGuides guideLines={guideLines} />
         

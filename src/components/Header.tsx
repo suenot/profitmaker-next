@@ -12,7 +12,7 @@ const Header: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(true);
   
   return (
-    <header className="h-14 bg-terminal-widget border-b border-terminal-border flex items-center justify-between px-4 sticky top-0 z-40 backdrop-blur-lg bg-opacity-80">
+    <header className="h-14 bg-terminal-widget border-b border-terminal-border flex items-center justify-between px-4 sticky top-0 z-40 backdrop-blur-lg bg-opacity-80 mb-0">
       <div className="flex items-center">
         <button className="flex items-center p-2 rounded-md hover:bg-terminal-accent mr-2 transition-colors">
           <span className="font-medium text-sm mr-2">Брокерский счёт</span>
