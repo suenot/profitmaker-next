@@ -1,5 +1,5 @@
 
-import { GuideLineType, CalculateGuidesOptions } from '@/types/alignmentGuides';
+import { GuideLineType, CalculateGuidesOptions, EdgePositions, HorizontalPositions } from '@/types/alignmentGuides';
 
 // Calculate container boundary guides
 export const calculateContainerGuides = (
@@ -97,38 +97,66 @@ export const calculateWidgetAlignmentGuides = (
     // Vertical alignments
     addVerticalGuides(
       guides, 
-      { currentLeft, currentRight, currentCenterX, currentTop, currentBottom },
-      { widgetLeft, widgetRight, widgetCenterX, widgetTop, widgetBottom },
+      { 
+        currentLeft, 
+        currentRight, 
+        currentCenterX, 
+        currentTop, 
+        currentBottom,
+        widgetLeft,
+        widgetRight,
+        widgetCenterX,
+        widgetTop,
+        widgetBottom
+      },
+      { 
+        widgetLeft, 
+        widgetRight, 
+        widgetCenterX, 
+        widgetTop, 
+        widgetBottom,
+        currentLeft,
+        currentRight,
+        currentCenterX,
+        currentTop,
+        currentBottom
+      },
       snapThreshold
     );
     
     // Horizontal alignments
     addHorizontalGuides(
       guides,
-      { currentTop, currentBottom, currentCenterY, currentLeft, currentRight },
-      { widgetTop, widgetBottom, widgetCenterY, widgetLeft, widgetRight },
+      { 
+        currentTop, 
+        currentBottom, 
+        currentCenterY, 
+        currentLeft, 
+        currentRight,
+        widgetTop,
+        widgetBottom,
+        widgetCenterY,
+        widgetLeft,
+        widgetRight
+      },
+      { 
+        widgetTop, 
+        widgetBottom, 
+        widgetCenterY, 
+        widgetLeft, 
+        widgetRight,
+        currentTop,
+        currentBottom,
+        currentCenterY,
+        currentLeft,
+        currentRight
+      },
       snapThreshold
     );
   });
   
   return guides;
 };
-
-interface EdgePositions {
-  currentLeft: number;
-  currentRight: number;
-  currentCenterX: number;
-  currentTop: number;
-  currentBottom: number;
-}
-
-interface HorizontalPositions {
-  currentTop: number;
-  currentBottom: number;
-  currentCenterY: number;
-  currentLeft: number;
-  currentRight: number;
-}
 
 // Helper function to add vertical alignment guides
 const addVerticalGuides = (
