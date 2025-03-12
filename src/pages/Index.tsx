@@ -69,7 +69,7 @@ const TradingTerminal: React.FC = () => {
       
       <main 
         ref={mainContainerRef}
-        className="flex-1 p-0 h-[calc(100vh-52px)] relative"
+        className="flex-1 p-0 h-[calc(100vh-86px)] relative"
       >
         <AlignmentGuides guideLines={guideLines} />
         

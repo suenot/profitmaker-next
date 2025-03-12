@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 
@@ -67,16 +66,13 @@ const widgetTitles: Record<WidgetType, string> = {
 
 // Group color palette
 const groupColors = [
-  '#8B5CF6', // Vivid Purple
-  '#D946EF', // Magenta Pink 
-  '#F97316', // Bright Orange
-  '#0EA5E9', // Ocean Blue
-  '#10B981', // Emerald Green
-  '#FBBF24', // Amber Yellow
-  '#EC4899', // Pink
-  '#6366F1', // Indigo
-  '#F43F5E', // Rose
-  '#84CC16'  // Lime
+  '#FFD700', // Gold/Yellow (USDRUB)
+  '#F87171', // Red (Group 2)
+  '#A78BFA', // Purple (Group 3)
+  '#60A5FA', // Blue (Group 4)
+  '#BEF264', // Light Green (Group 5)
+  '#6EE7B7', // Teal (Group 6)
+  '#FCD34D'  // Amber/Orange (Group 7)
 ];
 
 export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -130,19 +126,63 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       },
     ];
     
-    // Create a default group for USDRUB
-    const defaultGroup: WidgetGroup = {
-      id: 'group-default',
-      name: 'USDRUB',
-      color: groupColors[0],
-      symbol: 'USDRUB',
-      isActive: true
-    };
+    // Create default groups
+    const defaultGroups: WidgetGroup[] = [
+      {
+        id: 'group-1',
+        name: 'USDRUB',
+        color: groupColors[0],
+        symbol: 'USDRUB',
+        isActive: true
+      },
+      {
+        id: 'group-2',
+        name: 'Группа 2',
+        color: groupColors[1],
+        symbol: 'ГРУППА 2',
+        isActive: false
+      },
+      {
+        id: 'group-3',
+        name: 'Группа 3',
+        color: groupColors[2],
+        symbol: 'ГРУППА 3',
+        isActive: false
+      },
+      {
+        id: 'group-4',
+        name: 'Группа 4',
+        color: groupColors[3],
+        symbol: 'ГРУППА 4',
+        isActive: false
+      },
+      {
+        id: 'group-5',
+        name: 'Группа 5',
+        color: groupColors[4],
+        symbol: 'ГРУППА 5',
+        isActive: false
+      },
+      {
+        id: 'group-6',
+        name: 'Группа 6',
+        color: groupColors[5],
+        symbol: 'ГРУППА 6',
+        isActive: false
+      },
+      {
+        id: 'group-7',
+        name: 'Группа 7',
+        color: groupColors[6],
+        symbol: 'ГРУППА 7',
+        isActive: false
+      }
+    ];
     
     setWidgets(initialWidgets);
-    setWidgetGroups([defaultGroup]);
+    setWidgetGroups(defaultGroups);
     setNextZIndex(5);
-    setActiveGroupId(defaultGroup.id);
+    setActiveGroupId(defaultGroups[0].id);
   }, []);
 
   const addWidget = (type: WidgetType, groupId: string | null = null) => {
@@ -377,3 +417,4 @@ export const useWidget = () => {
   }
   return context;
 };
+

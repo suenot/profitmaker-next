@@ -18,8 +18,7 @@ const TabNavigation: React.FC = () => {
   
   return (
     <div className="flex flex-col h-auto bg-terminal-bg border-b border-terminal-border">
-      {/* Main tabs */}
-      <div className="flex items-center justify-between h-12 px-2 border-b border-terminal-border">
+      <div className="flex items-center justify-between h-12 px-2">
         <div className="flex overflow-x-auto hide-scrollbar">
           {tabs.map((tab, index) => (
             <div
