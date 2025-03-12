@@ -48,7 +48,7 @@ const Widget: React.FC<WidgetProps> = ({
   // Get viewport bounds
   const bounds = {
     left: 0,
-    top: 100, // Leave space for header and tabs
+    top: 0, // Leave space for header and tabs
     right: window.innerWidth,
     bottom: window.innerHeight
   };
