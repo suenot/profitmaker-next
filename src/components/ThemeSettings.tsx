@@ -25,14 +25,14 @@ const availableThemes: ThemeVariant[] = [
     name: 'Темная тема',
     type: 'dark',
     colors: {
-      bg: '17 24 39',
-      widget: '31 41 55',
-      accent: '55 65 81',
-      text: '243 244 246',
-      muted: '156 163 175',
-      positive: '34 197 94',
-      negative: '239 68 68',
-      border: '75 85 99'
+      bg: '15 15 15',           // Чистый темно-серый
+      widget: '25 25 25',       // Темно-серый для виджетов
+      accent: '40 40 40',       // Серый для акцентов
+      text: '255 255 255',      // Белый текст
+      muted: '160 160 160',     // Серый для второстепенного текста
+      positive: '34 197 94',    // Зеленый
+      negative: '239 68 68',    // Красный
+      border: '60 60 60'        // Серый для границ
     }
   },
   {
@@ -40,14 +40,14 @@ const availableThemes: ThemeVariant[] = [
     name: 'Светлая тема',
     type: 'light',
     colors: {
-      bg: '255 255 255',
-      widget: '249 250 251',
-      accent: '243 244 246',
-      text: '17 24 39',
-      muted: '107 114 128',
-      positive: '34 197 94',
-      negative: '239 68 68',
-      border: '209 213 219'
+      bg: '255 255 255',        // Чистый белый
+      widget: '250 250 250',    // Очень светло-серый для виджетов
+      accent: '240 240 240',    // Светло-серый для акцентов
+      text: '0 0 0',            // Черный текст
+      muted: '100 100 100',     // Темно-серый для второстепенного текста
+      positive: '34 197 94',    // Зеленый
+      negative: '239 68 68',    // Красный
+      border: '220 220 220'     // Светло-серый для границ
     }
   }
 ];
@@ -116,7 +116,7 @@ const ThemeSettings: React.FC = () => {
                 <div
                   key={key}
                   className="w-6 h-6 rounded border border-terminal-border"
-                  style={{ backgroundColor: `hsl(${value})` }}
+                  style={{ backgroundColor: `rgb(${value})` }}
                   title={key}
                 />
               ))}
