@@ -64,14 +64,14 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				terminal: {
-					bg: '#171A23',
-					widget: '#1E2230',
-					accent: '#2A3042',
-					text: '#E6E8EC',
-					muted: '#9DA3B4',
-					positive: '#4CAF50',
-					negative: '#F44336',
-					border: '#2E3446'
+					bg: 'hsl(var(--terminal-bg))',
+					widget: 'hsl(var(--terminal-widget))',
+					accent: 'hsl(var(--terminal-accent))',
+					text: 'hsl(var(--terminal-text))',
+					muted: 'hsl(var(--terminal-muted))',
+					positive: 'hsl(var(--terminal-positive))',
+					negative: 'hsl(var(--terminal-negative))',
+					border: 'hsl(var(--terminal-border))'
 				}
 			},
 			borderRadius: {
