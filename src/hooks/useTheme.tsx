@@ -68,6 +68,18 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     root.style.setProperty('--terminal-border', colors.border);
   };
 
+  const loadSavedThemeColors = (variant: string) => {
+    const saved = localStorage.getItem(`themeColors_${variant}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved) as ThemeColors;
+      } catch (e) {
+        console.error('Failed to parse saved theme colors:', e);
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
     // Apply theme class
     if (theme === 'dark') {
@@ -76,18 +88,41 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       document.documentElement.classList.remove('dark');
     }
     
-    // Apply default colors for the theme
-    const defaultColors = theme === 'dark' ? defaultDarkColors : defaultLightColors;
-    applyThemeColors(defaultColors);
-    
     // Save to localStorage
     localStorage.setItem('theme', theme);
     
-    // Reset variant to default when theme changes
-    const newVariant = theme === 'dark' ? 'default-dark' : 'default-light';
-    setThemeVariantState(newVariant);
-    localStorage.setItem('themeVariant', newVariant);
+    // Reset variant to default when theme changes, but only if current variant doesn't match theme
+    const isCurrentVariantCompatible = 
+      (theme === 'dark' && themeVariant.includes('dark')) ||
+      (theme === 'light' && themeVariant.includes('light'));
+    
+    if (!isCurrentVariantCompatible) {
+      const newVariant = theme === 'dark' ? 'default-dark' : 'default-light';
+      setThemeVariantState(newVariant);
+      localStorage.setItem('themeVariant', newVariant);
+      
+      // Apply default colors
+      const defaultColors = theme === 'dark' ? defaultDarkColors : defaultLightColors;
+      applyThemeColors(defaultColors);
+    } else {
+      // Load saved colors for current variant or apply defaults
+      const savedColors = loadSavedThemeColors(themeVariant);
+      const defaultColors = theme === 'dark' ? defaultDarkColors : defaultLightColors;
+      applyThemeColors(savedColors || defaultColors);
+    }
   }, [theme]);
+
+  useEffect(() => {
+    // Apply colors when variant changes
+    const savedColors = loadSavedThemeColors(themeVariant);
+    if (savedColors) {
+      applyThemeColors(savedColors);
+    } else {
+      // Apply default colors if no saved colors found
+      const defaultColors = theme === 'dark' ? defaultDarkColors : defaultLightColors;
+      applyThemeColors(defaultColors);
+    }
+  }, [themeVariant]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
