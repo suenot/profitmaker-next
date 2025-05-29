@@ -55,14 +55,14 @@ const availableThemes: ThemeVariant[] = [
     name: 'Стандартная светлая',
     type: 'light',
     colors: {
-      bg: '248 250 252',
-      widget: '241 245 249',
-      accent: '226 232 240',
-      text: '15 23 42',
+      bg: '255 255 255',
+      widget: '248 250 252',
+      accent: '241 245 249',
+      text: '30 41 59',
       muted: '100 116 139',
       positive: '34 197 94',
       negative: '239 68 68',
-      border: '203 213 225'
+      border: '226 232 240'
     }
   },
   {
@@ -70,14 +70,14 @@ const availableThemes: ThemeVariant[] = [
     name: 'Бумажная',
     type: 'light',
     colors: {
-      bg: '255 255 255',
-      widget: '250 250 250',
-      accent: '240 240 240',
-      text: '20 20 20',
-      muted: '120 120 120',
+      bg: '250 250 250',
+      widget: '255 255 255',
+      accent: '245 245 245',
+      text: '51 65 85',
+      muted: '71 85 105',
       positive: '34 197 94',
       negative: '239 68 68',
-      border: '220 220 220'
+      border: '203 213 225'
     }
   }
 ];
