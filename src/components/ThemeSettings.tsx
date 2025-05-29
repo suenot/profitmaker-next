@@ -61,6 +61,22 @@ const ThemeSettings: React.FC = () => {
     if (selectedTheme) {
       console.log('🎨 ThemeSettings: Found theme:', selectedTheme);
       setThemeVariant(selectedTheme.id, selectedTheme.colors);
+      
+      // Принудительно применяем цвета к документу
+      const root = document.documentElement;
+      Object.entries(selectedTheme.colors).forEach(([key, value]) => {
+        root.style.setProperty(`--terminal-${key}`, value);
+      });
+      
+      // Применяем класс темы
+      if (selectedTheme.type === 'dark') {
+        root.classList.add('dark');
+        root.classList.remove('light');
+      } else {
+        root.classList.remove('dark');
+        root.classList.add('light');
+      }
+      
     } else {
       console.error('🎨 ThemeSettings: Theme not found for ID:', variantId);
     }
