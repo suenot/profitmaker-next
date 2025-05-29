@@ -96,8 +96,9 @@ const ThemeSettings: React.FC = () => {
     }
   };
 
+  const darkThemes = availableThemes.filter(t => t.type === 'dark');
+  const lightThemes = availableThemes.filter(t => t.type === 'light');
   const currentTheme = availableThemes.find(t => t.id === themeVariant) || availableThemes[0];
-  console.log('🎨 ThemeSettings: Current theme:', currentTheme);
 
   return (
     <div className="p-6 space-y-6">
@@ -109,20 +110,48 @@ const ThemeSettings: React.FC = () => {
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-terminal-text mb-2">
-              Выберите тему:
+              Темные темы:
             </label>
             <Select 
-              value={themeVariant} 
+              value={theme === 'dark' ? themeVariant : ''} 
               onValueChange={(value) => {
-                console.log('🎨 ThemeSettings: Theme select changed to:', value);
+                console.log('🎨 ThemeSettings: Dark theme select changed to:', value);
                 handleThemeSelect(value);
               }}
             >
               <SelectTrigger className="w-full bg-terminal-widget border-terminal-border text-terminal-text">
-                <SelectValue placeholder="Выберите тему" />
+                <SelectValue placeholder="Выберите темную тему" />
               </SelectTrigger>
               <SelectContent className="bg-terminal-widget border-terminal-border">
-                {availableThemes.map((variant) => (
+                {darkThemes.map((variant) => (
+                  <SelectItem 
+                    key={variant.id} 
+                    value={variant.id}
+                    className="text-terminal-text hover:bg-terminal-accent focus:bg-terminal-accent"
+                  >
+                    {variant.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-terminal-text mb-2">
+              Светлые темы:
+            </label>
+            <Select 
+              value={theme === 'light' ? themeVariant : ''} 
+              onValueChange={(value) => {
+                console.log('🎨 ThemeSettings: Light theme select changed to:', value);
+                handleThemeSelect(value);
+              }}
+            >
+              <SelectTrigger className="w-full bg-terminal-widget border-terminal-border text-terminal-text">
+                <SelectValue placeholder="Выберите светлую тему" />
+              </SelectTrigger>
+              <SelectContent className="bg-terminal-widget border-terminal-border">
+                {lightThemes.map((variant) => (
                   <SelectItem 
                     key={variant.id} 
                     value={variant.id}
@@ -153,22 +182,11 @@ const ThemeSettings: React.FC = () => {
                   className="w-6 h-6 rounded border border-terminal-border"
                   style={{ backgroundColor: `hsl(${value})` }}
                   title={key}
-                  onClick={() => console.log('🎨 Color clicked:', key, value)}
                 />
               ))}
             </div>
-            
-            <div className="mt-2 text-xs text-terminal-muted">
-              Клик по цвету для отладки в консоли
-            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="pt-4 border-t border-terminal-border">
-        <p className="text-sm text-terminal-muted">
-          Настройки автоматически сохраняются в браузере
-        </p>
       </div>
     </div>
   );
