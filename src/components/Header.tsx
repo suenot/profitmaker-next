@@ -2,14 +2,15 @@
 import React from 'react';
 import { ChevronDown, Wallet, Bell, User, Sun, Moon, Menu, Plus, LayoutGrid } from 'lucide-react';
 import { useWidget } from '@/context/WidgetContext';
+import { useTheme } from '@/hooks/useTheme';
 import { WidgetType } from '@/context/WidgetContext';
 
 const Header: React.FC = () => {
   const { addWidget } = useWidget();
+  const { theme, toggleTheme } = useTheme();
   
   const [accountBalance, setAccountBalance] = React.useState('2 059,62 ₽');
   const [accountDelta, setAccountDelta] = React.useState({ value: '-1,24 ₽', percentage: '(0,06%)', isNegative: true });
-  const [isDarkMode, setIsDarkMode] = React.useState(true);
   
   return (
     <header className="h-14 bg-terminal-widget border-b border-terminal-border flex items-center justify-between px-4 sticky top-0 z-40 backdrop-blur-lg bg-opacity-80 mb-0">
@@ -47,9 +48,9 @@ const Header: React.FC = () => {
         
         <button 
           className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors"
-          onClick={() => setIsDarkMode(!isDarkMode)}
+          onClick={toggleTheme}
         >
-          {isDarkMode ? (
+          {theme === 'dark' ? (
             <Sun size={18} className="text-terminal-muted" />
           ) : (
             <Moon size={18} className="text-terminal-muted" />

@@ -43,6 +43,16 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Light theme terminal colors */
+    --terminal-bg: 248 250 252;
+    --terminal-widget: 241 245 249;
+    --terminal-accent: 226 232 240;
+    --terminal-text: 15 23 42;
+    --terminal-muted: 100 116 139;
+    --terminal-positive: 34 197 94;
+    --terminal-negative: 239 68 68;
+    --terminal-border: 203 213 225;
   }
 
   .dark {
@@ -81,6 +91,16 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Dark theme terminal colors */
+    --terminal-bg: 23 26 35;
+    --terminal-widget: 30 34 48;
+    --terminal-accent: 42 48 66;
+    --terminal-text: 230 232 236;
+    --terminal-muted: 157 163 180;
+    --terminal-positive: 76 175 80;
+    --terminal-negative: 244 67 54;
+    --terminal-border: 46 52 70;
   }
 }
 
