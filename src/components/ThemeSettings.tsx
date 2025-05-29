@@ -2,6 +2,7 @@
 import React from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
 interface ThemeVariant {
   id: string;
@@ -585,36 +586,77 @@ const lightThemes: ThemeVariant[] = [
 ];
 
 const ThemeSettings: React.FC = () => {
-  const { theme, themeVariant, setThemeVariant } = useTheme();
-  const themes = theme === 'dark' ? darkThemes : lightThemes;
+  const { theme, themeVariant, setThemeVariant, toggleTheme } = useTheme();
+  
+  const currentThemes = theme === 'dark' ? darkThemes : lightThemes;
+  const otherThemes = theme === 'dark' ? lightThemes : darkThemes;
 
   const handleThemeSelect = (variantId: string) => {
-    const selectedTheme = themes.find(t => t.id === variantId);
+    const selectedTheme = [...currentThemes, ...otherThemes].find(t => t.id === variantId);
     if (selectedTheme) {
       setThemeVariant(selectedTheme.id, selectedTheme.colors);
     }
   };
 
-  const currentTheme = themes.find(t => t.id === themeVariant) || themes[0];
+  const currentTheme = currentThemes.find(t => t.id === themeVariant) || currentThemes[0];
 
   return (
     <div className="p-6 space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4 text-terminal-text">
-          Настройки {theme === 'dark' ? 'темной' : 'светлой'} темы
+          Настройки темы
         </h2>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-terminal-border bg-terminal-accent/20">
+            <div>
+              <span className="font-medium text-terminal-text">Режим темы</span>
+              <p className="text-sm text-terminal-muted">
+                {theme === 'dark' ? 'Темная тема' : 'Светлая тема'}
+              </p>
+            </div>
+            <Button
+              onClick={toggleTheme}
+              variant="outline"
+              size="sm"
+              className="bg-terminal-widget border-terminal-border text-terminal-text hover:bg-terminal-accent"
+            >
+              Переключить на {theme === 'dark' ? 'светлую' : 'темную'}
+            </Button>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-terminal-text mb-2">
-              Выберите вариант темы:
+              Текущая тема ({theme === 'dark' ? 'темная' : 'светлая'}):
             </label>
             <Select value={themeVariant} onValueChange={handleThemeSelect}>
               <SelectTrigger className="w-full bg-terminal-widget border-terminal-border text-terminal-text">
                 <SelectValue placeholder="Выберите тему" />
               </SelectTrigger>
               <SelectContent className="bg-terminal-widget border-terminal-border">
-                {themes.map((variant) => (
+                {currentThemes.map((variant) => (
+                  <SelectItem 
+                    key={variant.id} 
+                    value={variant.id}
+                    className="text-terminal-text hover:bg-terminal-accent focus:bg-terminal-accent"
+                  >
+                    {variant.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-terminal-text mb-2">
+              Альтернативные темы ({theme === 'dark' ? 'светлые' : 'темные'}):
+            </label>
+            <Select onValueChange={handleThemeSelect}>
+              <SelectTrigger className="w-full bg-terminal-widget border-terminal-border text-terminal-text">
+                <SelectValue placeholder={`Выберите ${theme === 'dark' ? 'светлую' : 'темную'} тему`} />
+              </SelectTrigger>
+              <SelectContent className="bg-terminal-widget border-terminal-border">
+                {otherThemes.map((variant) => (
                   <SelectItem 
                     key={variant.id} 
                     value={variant.id}

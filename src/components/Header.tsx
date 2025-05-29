@@ -4,13 +4,13 @@ import { ChevronDown, Wallet, Bell, User, Sun, Moon, Menu, Plus, LayoutGrid } fr
 import { useWidget } from '@/context/WidgetContext';
 import { useTheme } from '@/hooks/useTheme';
 import { WidgetType } from '@/context/WidgetContext';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import ThemeSettings from '@/components/ThemeSettings';
 
 const Header: React.FC = () => {
   const { addWidget } = useWidget();
   const { theme, toggleTheme } = useTheme();
-  const [isThemeDrawerOpen, setIsThemeDrawerOpen] = useState(false);
+  const [isThemeSheetOpen, setIsThemeSheetOpen] = useState(false);
   
   const [accountBalance, setAccountBalance] = React.useState('2 059,62 ₽');
   const [accountDelta, setAccountDelta] = React.useState({ value: '-1,24 ₽', percentage: '(0,06%)', isNegative: true });
@@ -18,7 +18,7 @@ const Header: React.FC = () => {
   const handleThemeClick = (e: React.MouseEvent) => {
     if (e.altKey) {
       // Option+Click opens theme settings
-      setIsThemeDrawerOpen(true);
+      setIsThemeSheetOpen(true);
     } else {
       // Regular click toggles theme
       toggleTheme();
@@ -78,14 +78,14 @@ const Header: React.FC = () => {
         </div>
       </header>
 
-      <Drawer open={isThemeDrawerOpen} onOpenChange={setIsThemeDrawerOpen}>
-        <DrawerContent className="h-[600px] bg-terminal-widget border-terminal-border">
-          <DrawerHeader>
-            <DrawerTitle className="text-terminal-text">Настройки темы</DrawerTitle>
-          </DrawerHeader>
+      <Sheet open={isThemeSheetOpen} onOpenChange={setIsThemeSheetOpen}>
+        <SheetContent side="right" className="w-[400px] bg-terminal-widget border-terminal-border">
+          <SheetHeader>
+            <SheetTitle className="text-terminal-text">Настройки темы</SheetTitle>
+          </SheetHeader>
           <ThemeSettings />
-        </DrawerContent>
-      </Drawer>
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
