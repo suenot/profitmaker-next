@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -592,13 +591,18 @@ const ThemeSettings: React.FC = () => {
   const otherThemes = theme === 'dark' ? lightThemes : darkThemes;
 
   const handleThemeSelect = (variantId: string) => {
+    console.log('🎨 ThemeSettings: Selected variant:', variantId);
     const selectedTheme = [...currentThemes, ...otherThemes].find(t => t.id === variantId);
     if (selectedTheme) {
+      console.log('🎨 ThemeSettings: Found theme:', selectedTheme);
       setThemeVariant(selectedTheme.id, selectedTheme.colors);
+    } else {
+      console.error('🎨 ThemeSettings: Theme not found for ID:', variantId);
     }
   };
 
   const currentTheme = currentThemes.find(t => t.id === themeVariant) || currentThemes[0];
+  console.log('🎨 ThemeSettings: Current theme:', currentTheme);
 
   return (
     <div className="p-6 space-y-6">
@@ -616,7 +620,10 @@ const ThemeSettings: React.FC = () => {
               </p>
             </div>
             <Button
-              onClick={toggleTheme}
+              onClick={() => {
+                console.log('🎨 ThemeSettings: Toggle button clicked');
+                toggleTheme();
+              }}
               variant="outline"
               size="sm"
               className="bg-terminal-widget border-terminal-border text-terminal-text hover:bg-terminal-accent"
@@ -629,7 +636,13 @@ const ThemeSettings: React.FC = () => {
             <label className="block text-sm font-medium text-terminal-text mb-2">
               Текущая тема ({theme === 'dark' ? 'темная' : 'светлая'}):
             </label>
-            <Select value={themeVariant} onValueChange={handleThemeSelect}>
+            <Select 
+              value={themeVariant} 
+              onValueChange={(value) => {
+                console.log('🎨 ThemeSettings: Current theme select changed to:', value);
+                handleThemeSelect(value);
+              }}
+            >
               <SelectTrigger className="w-full bg-terminal-widget border-terminal-border text-terminal-text">
                 <SelectValue placeholder="Выберите тему" />
               </SelectTrigger>
@@ -651,7 +664,10 @@ const ThemeSettings: React.FC = () => {
             <label className="block text-sm font-medium text-terminal-text mb-2">
               Альтернативные темы ({theme === 'dark' ? 'светлые' : 'темные'}):
             </label>
-            <Select onValueChange={handleThemeSelect}>
+            <Select onValueChange={(value) => {
+              console.log('🎨 ThemeSettings: Alternative theme select changed to:', value);
+              handleThemeSelect(value);
+            }}>
               <SelectTrigger className="w-full bg-terminal-widget border-terminal-border text-terminal-text">
                 <SelectValue placeholder={`Выберите ${theme === 'dark' ? 'светлую' : 'темную'} тему`} />
               </SelectTrigger>
@@ -682,8 +698,13 @@ const ThemeSettings: React.FC = () => {
                   className="w-6 h-6 rounded border border-terminal-border"
                   style={{ backgroundColor: `hsl(${value})` }}
                   title={key}
+                  onClick={() => console.log('🎨 Color clicked:', key, value)}
                 />
               ))}
+            </div>
+            
+            <div className="mt-2 text-xs text-terminal-muted">
+              Клик по цвету для отладки в консоли
             </div>
           </div>
         </div>
