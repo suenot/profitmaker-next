@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { useWidget, WidgetType } from '@/context/WidgetContext';
 import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar } from 'lucide-react';
@@ -51,7 +50,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
   return (
     <div
       ref={menuRef}
-      className="widget-menu absolute glass-effect rounded-lg shadow-lg overflow-hidden z-50 border border-terminal-border bg-terminal-widget"
+      className="widget-menu absolute rounded-lg shadow-lg overflow-hidden z-50 border border-terminal-border bg-terminal-widget/95 backdrop-blur-md text-terminal-text"
       style={{ left: adjustedPosition.x, top: adjustedPosition.y, width: '300px' }}
     >
       <div className="px-3 py-2 border-b border-terminal-border/50">
@@ -62,7 +61,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
         {widgetOptions.map((option) => (
           <button
             key={option.type}
-            className="flex items-center w-full space-x-3 px-3 py-2 rounded-md hover:bg-terminal-accent/50 transition-colors text-left text-sm"
+            className="flex items-center w-full space-x-3 px-3 py-2 rounded-md hover:bg-terminal-accent/50 hover:text-terminal-text transition-colors text-left text-sm"
             onClick={() => handleAddWidget(option.type)}
           >
             <span className="text-terminal-muted">{option.icon}</span>
