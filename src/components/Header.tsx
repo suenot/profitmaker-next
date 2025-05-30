@@ -5,11 +5,13 @@ import { useTheme } from '@/hooks/useTheme';
 import { WidgetType } from '@/context/WidgetContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import ThemeSettings from '@/components/ThemeSettings';
+import UserDrawer from './UserDrawer';
 
 const Header: React.FC = () => {
   const { addWidget } = useWidget();
   const { theme, toggleTheme } = useTheme();
   const [isThemeSheetOpen, setIsThemeSheetOpen] = useState(false);
+  const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   
   const [accountBalance, setAccountBalance] = React.useState('2 059,62 ₽');
   const [accountDelta, setAccountDelta] = React.useState({ value: '-1,24 ₽', percentage: '(0,06%)', isNegative: true });
@@ -59,7 +61,7 @@ const Header: React.FC = () => {
             )}
           </button>
           
-          <button className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors">
+          <button className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors" onClick={() => setIsUserDrawerOpen(true)}>
             <User size={18} className="text-terminal-muted" />
           </button>
         </div>
@@ -73,6 +75,8 @@ const Header: React.FC = () => {
           <ThemeSettings />
         </SheetContent>
       </Sheet>
+
+      <UserDrawer open={isUserDrawerOpen} onOpenChange={setIsUserDrawerOpen} />
     </>
   );
 };

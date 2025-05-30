@@ -16,7 +16,6 @@
 + lucide-react @Lucide 
 + date-fns @Date-fns 
 + react-resizable-panels @React resizable panels 
-+ https://github.com/emilkowalski/vaul @Vaul 
 + zustand @Zustand 
 + immer @Immer 
 + https://github.com/vercel/swr @swr 
