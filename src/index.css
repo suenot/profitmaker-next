@@ -43,15 +43,15 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Modern Light Trading Theme - like TradingView/Binance light */
-    --terminal-bg: 255 255 255;        /* Pure white background */
-    --terminal-widget: 248 250 252;    /* Very light gray widgets */
-    --terminal-accent: 241 245 249;    /* Light gray accents */
-    --terminal-text: 15 23 42;         /* Dark slate text */
-    --terminal-muted: 100 116 139;     /* Medium gray muted */
-    --terminal-positive: 0 200 83;     /* Modern green */
-    --terminal-negative: 255 59 48;    /* Modern red */
-    --terminal-border: 226 232 240;    /* Light border */
+    /* Modern Light Trading Theme - HSL */
+    --terminal-bg: 210 28% 98%;        /* #F7F9FB */
+    --terminal-widget: 0 0% 100%;      /* #FFFFFF */
+    --terminal-accent: 210 28% 96%;    /* #F1F5F9 */
+    --terminal-text: 222 44% 14%;      /* #1A202C */
+    --terminal-muted: 220 15% 35%;     /* #4A5568 */
+    --terminal-positive: 152 77% 43%;  /* #16C784 */
+    --terminal-negative: 356 77% 57%;  /* #EA3943 */
+    --terminal-border: 210 28% 90%;    /* #E2E8F0 */
   }
 
   .dark {
@@ -92,14 +92,14 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Modern Dark Trading Theme - like TradingView/Binance/Bybit dark */
-    --terminal-bg: 13 17 23;           /* Deep dark blue-gray */
-    --terminal-widget: 17 24 32;       /* Slightly lighter widget background */
-    --terminal-accent: 24 33 45;       /* Medium dark for hover states */
-    --terminal-text: 248 250 252;      /* Almost white text */
-    --terminal-muted: 148 163 184;     /* Light gray for secondary text */
-    --terminal-positive: 34 197 94;    /* Bright green for profits */
-    --terminal-negative: 248 113 113;  /* Bright red for losses */
-    --terminal-border: 30 41 59;       /* Dark border */
+    --terminal-bg: 220 13% 11%;           /* #181B20 */
+    --terminal-widget: 222 16% 16%;       /* #23272F */
+    --terminal-accent: 217 29% 16%;       /* #242D39 */
+    --terminal-text: 210 40% 98%;         /* #F7FAFC */
+    --terminal-muted: 210 13% 69%;        /* #A0AEC0 */
+    --terminal-positive: 152 77% 43%;     /* #16C784 */
+    --terminal-negative: 356 77% 57%;     /* #EA3943 */
+    --terminal-border: 220 21% 23%;       /* #2D3748 */
   }
 }
 

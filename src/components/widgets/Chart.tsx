@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { BarChart2, Maximize, Menu, ChevronsUpDown, RefreshCw, Clock } from 'lucide-react';
@@ -81,38 +80,38 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
           <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#4CAF50" stopOpacity={0}/>
+                <stop offset="5%" stopColor="var(--terminal-positive)" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="var(--terminal-positive)" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--terminal-border)" vertical={false} />
             <XAxis 
               dataKey="time" 
-              tick={{ fill: '#9DA3B4', fontSize: 10 }} 
-              axisLine={{ stroke: 'rgba(255,255,255,0.05)' }} 
+              tick={{ fill: 'var(--terminal-muted)', fontSize: 10 }} 
+              axisLine={{ stroke: 'var(--terminal-border)' }} 
               tickLine={false}
             />
             <YAxis 
               domain={['dataMin - 5', 'dataMax + 5']} 
-              tick={{ fill: '#9DA3B4', fontSize: 10 }} 
+              tick={{ fill: 'var(--terminal-muted)', fontSize: 10 }} 
               axisLine={false} 
               tickLine={false}
               orientation="right"
             />
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: '#1E2230', 
-                borderColor: '#2E3446',
+                backgroundColor: 'var(--terminal-widget)', 
+                borderColor: 'var(--terminal-border)',
                 borderRadius: '4px',
                 fontSize: '12px'
               }} 
-              labelStyle={{ color: '#E6E8EC' }}
+              labelStyle={{ color: 'var(--terminal-text)' }}
               formatter={(value: number) => [`${value.toFixed(4)}`, 'Цена']}
             />
             <Area 
               type="monotone" 
               dataKey="price" 
-              stroke="#4878ff" 
+              stroke="var(--terminal-accent)" 
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#priceGradient)" 
@@ -122,10 +121,10 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
             <Line 
               type="monotone" 
               dataKey="price" 
-              stroke="#4878ff" 
+              stroke="var(--terminal-accent)" 
               strokeWidth={1.5}
               dot={false}
-              activeDot={{ r: 4, fill: '#4878ff', stroke: '#fff' }}
+              activeDot={{ r: 4, fill: 'var(--terminal-accent)', stroke: 'var(--terminal-bg)' }}
             />
           </AreaChart>
         </ResponsiveContainer>

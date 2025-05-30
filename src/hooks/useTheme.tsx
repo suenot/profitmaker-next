@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light';
@@ -23,27 +22,27 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Обновленные цвета для современных тем
+// Обновленные цвета для современных тем (HSL для Tailwind)
 const modernDarkColors: ThemeColors = {
-  bg: '15 15 15',
-  widget: '25 25 25',
-  accent: '40 40 40',
-  text: '255 255 255',
-  muted: '160 160 160',
-  positive: '34 197 94',
-  negative: '239 68 68',
-  border: '60 60 60'
+  bg: '220 13% 11%',              // #181B20 глубокий графитовый
+  widget: '222 16% 16%',          // #23272F тёмно-серый для панелей
+  accent: '217 29% 16%',          // #242D39 для hover/выделения
+  text: '210 40% 98%',            // #F7FAFC почти белый текст
+  muted: '210 13% 69%',           // #A0AEC0 светло-серый для второстепенного текста
+  positive: '152 77% 43%',        // #16C784 ярко-зелёный (buy)
+  negative: '356 77% 57%',        // #EA3943 ярко-красный (sell)
+  border: '220 21% 23%'           // #2D3748 тёмно-серый для границ
 };
 
 const modernLightColors: ThemeColors = {
-  bg: '255 255 255',
-  widget: '250 250 250',
-  accent: '240 240 240',
-  text: '0 0 0',
-  muted: '100 100 100',
-  positive: '34 197 94',
-  negative: '239 68 68',
-  border: '220 220 220'
+  bg: '210 28% 98%',              // #F7F9FB светлый фон
+  widget: '0 0% 100%',            // #FFFFFF белый для панелей
+  accent: '210 28% 96%',          // #F1F5F9 светло-серый для выделения
+  text: '222 44% 14%',            // #1A202C тёмно-серый текст
+  muted: '220 15% 35%',           // #4A5568 серый для второстепенного текста
+  positive: '152 77% 43%',        // #16C784 ярко-зелёный (buy)
+  negative: '356 77% 57%',        // #EA3943 ярко-красный (sell)
+  border: '210 28% 90%'           // #E2E8F0 светло-серый для границ
 };
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {

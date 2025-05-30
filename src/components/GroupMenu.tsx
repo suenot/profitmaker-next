@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { useWidget, WidgetGroup } from '@/context/WidgetContext';
 import { X, Search } from 'lucide-react';
@@ -53,7 +52,7 @@ const GroupMenu: React.FC<GroupMenuProps> = ({ widgetId, position, onClose }) =>
   return (
     <div
       ref={menuRef}
-      className="group-menu absolute rounded-lg shadow-lg overflow-hidden z-[1000] border border-terminal-border bg-[#1A202C] text-white"
+      className="group-menu absolute rounded-lg shadow-lg overflow-hidden z-[1000] border border-terminal-border bg-terminal-widget text-terminal-text"
       style={{ 
         left: position.x, 
         top: position.y, 
