@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown, Wallet, Bell, User, Sun, Moon, Menu, Plus, LayoutGrid } from 'lucide-react';
 import { useWidget } from '@/context/WidgetContext';
@@ -39,18 +38,6 @@ const Header: React.FC = () => {
             
             <span className="text-terminal-negative">
               Сегодня {accountDelta.value} {accountDelta.percentage}
-            </span>
-            
-            <span className="text-terminal-muted">
-              Непокрыто 0,00 ₽
-            </span>
-            
-            <button className="px-3 py-1 rounded-md bg-terminal-accent/40 text-terminal-text hover:bg-terminal-accent/60 transition-colors">
-              Пополнить
-            </button>
-            
-            <span className="px-3 py-1 rounded-md bg-blue-600/30 text-blue-400 ml-2">
-              WAVES
             </span>
           </div>
         </div>
