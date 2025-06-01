@@ -6,6 +6,8 @@ import { WidgetType } from '@/context/WidgetContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import ThemeSettings from '@/components/ThemeSettings';
 import UserDrawer from './UserDrawer';
+import { useUserStore } from '@/store/userStore';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 
 const Header: React.FC = () => {
   const { addWidget } = useWidget();
@@ -25,6 +27,11 @@ const Header: React.FC = () => {
       toggleTheme();
     }
   };
+  
+  // Получаем активного пользователя
+  const activeUserId = useUserStore(s => s.activeUserId);
+  const users = useUserStore(s => s.users);
+  const activeUser = users.find(u => u.id === activeUserId);
   
   return (
     <>
@@ -62,7 +69,17 @@ const Header: React.FC = () => {
           </button>
           
           <button className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors" onClick={() => setIsUserDrawerOpen(true)}>
-            <User size={18} className="text-terminal-muted" />
+            {activeUser ? (
+              <Avatar className="w-7 h-7">
+                {activeUser.avatarUrl ? (
+                  <AvatarImage src={activeUser.avatarUrl} alt={activeUser.email} />
+                ) : (
+                  <AvatarFallback>{activeUser.email.slice(0, 2).toUpperCase()}</AvatarFallback>
+                )}
+              </Avatar>
+            ) : (
+              <User size={18} className="text-terminal-muted" />
+            )}
           </button>
         </div>
       </header>
