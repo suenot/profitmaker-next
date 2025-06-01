@@ -6,17 +6,21 @@ import { z } from 'zod';
 // Типы через zod
 export const ExchangeAccountSchema = z.object({
   id: z.string(), // uuid
-  exchange: z.string(), // например, 'binance', 'bybit'
+  exchange: z.string(), // например, 'binance', 'bybit' (обязательное)
   key: z.string(),
   privateKey: z.string(),
+  email: z.string(), // обязательное
   avatarUrl: z.string().url().optional(),
+  notes: z.string().optional(), // опционально
 });
 export type ExchangeAccount = z.infer<typeof ExchangeAccountSchema>;
 
 export const UserSchema = z.object({
   id: z.string(), // uuid
-  name: z.string(),
+  email: z.string(), // обязательное, уникальное
   avatarUrl: z.string().url().optional(),
+  notes: z.string().optional(), // опционально
+  name: z.string().optional(), // опционально
   accounts: z.array(ExchangeAccountSchema),
 });
 export type User = z.infer<typeof UserSchema>;
@@ -36,13 +40,13 @@ function uuidv4() {
 }
 
 interface UserStore extends UserStoreState {
-  addUser: (name: string, avatarUrl?: string) => void;
+  addUser: (data: { email: string; avatarUrl?: string; notes?: string; name?: string }) => void;
   removeUser: (userId: string) => void;
   setActiveUser: (userId: string) => void;
+  updateUser: (userId: string, data: Partial<Omit<User, 'id' | 'accounts'>>) => void;
   addAccount: (userId: string, account: Omit<ExchangeAccount, 'id'>) => void;
   removeAccount: (userId: string, accountId: string) => void;
   updateAccount: (userId: string, account: ExchangeAccount) => void;
-  updateUser: (userId: string, data: Partial<Omit<User, 'id' | 'accounts'>>) => void;
 }
 
 export const useUserStore = create<UserStore>()(
@@ -51,10 +55,12 @@ export const useUserStore = create<UserStore>()(
       users: [],
       activeUserId: undefined,
 
-      addUser: (name, avatarUrl) => {
+      addUser: ({ email, avatarUrl, notes, name }) => {
         set((state) => {
+          // Проверка уникальности email
+          if (state.users.some(u => u.email === email)) return;
           const id = uuidv4();
-          const user: User = { id, name, avatarUrl, accounts: [] };
+          const user: User = { id, email, avatarUrl, notes, name, accounts: [] };
           state.users.push(user);
           state.activeUserId = id;
         });
@@ -73,6 +79,19 @@ export const useUserStore = create<UserStore>()(
         set((state) => {
           if (state.users.some(u => u.id === userId)) {
             state.activeUserId = userId;
+          }
+        });
+      },
+
+      updateUser: (userId, data) => {
+        set((state) => {
+          const user = state.users.find(u => u.id === userId);
+          if (user) {
+            if (data.email && data.email !== user.email && state.users.some(u => u.email === data.email)) return;
+            if (data.email) user.email = data.email;
+            if (data.avatarUrl !== undefined) user.avatarUrl = data.avatarUrl;
+            if (data.notes !== undefined) user.notes = data.notes;
+            if (data.name !== undefined) user.name = data.name;
           }
         });
       },
@@ -101,16 +120,6 @@ export const useUserStore = create<UserStore>()(
           if (user) {
             const idx = user.accounts.findIndex(a => a.id === account.id);
             if (idx !== -1) user.accounts[idx] = account;
-          }
-        });
-      },
-
-      updateUser: (userId, data) => {
-        set((state) => {
-          const user = state.users.find(u => u.id === userId);
-          if (user) {
-            if (data.name) user.name = data.name;
-            if (data.avatarUrl) user.avatarUrl = data.avatarUrl;
           }
         });
       },

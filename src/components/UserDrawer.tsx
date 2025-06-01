@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUserStore, User } from '@/store/userStore';
+import { useUserStore, User, ExchangeAccount } from '@/store/userStore';
 import {
   Sheet,
   SheetContent,
@@ -14,6 +14,16 @@ import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Plus, Trash2, Check } from 'lucide-react';
 
+// Статический список бирж
+const EXCHANGES = [
+  { id: 'binance', name: 'Binance' },
+  { id: 'bybit', name: 'Bybit' },
+  { id: 'okx', name: 'OKX' },
+  { id: 'kucoin', name: 'KuCoin' },
+  { id: 'bitget', name: 'Bitget' },
+  { id: 'mexc', name: 'MEXC' },
+];
+
 interface UserDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,60 +35,61 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
   const addUser = useUserStore((s) => s.addUser);
   const removeUser = useUserStore((s) => s.removeUser);
   const setActiveUser = useUserStore((s) => s.setActiveUser);
-  const updateUser = useUserStore((s) => s.updateUser);
 
-  const [newName, setNewName] = useState('');
-  const [newAvatar, setNewAvatar] = useState('');
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editAvatar, setEditAvatar] = useState('');
+  // Для добавления пользователя
+  const [showAddUser, setShowAddUser] = useState(false);
+  // Для редактирования пользователя
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  // Для редактирования аккаунта
+  const [editAccount, setEditAccount] = useState<{ userId: string; account: ExchangeAccount } | null>(null);
+  // Для добавления аккаунта
+  const [addAccountUserId, setAddAccountUserId] = useState<string | null>(null);
 
-  const handleAdd = () => {
-    if (newName.trim()) {
-      addUser(newName.trim(), newAvatar.trim() || undefined);
-      setNewName('');
-      setNewAvatar('');
-    }
-  };
-
-  const handleEdit = (user: User) => {
-    setEditId(user.id);
-    setEditName(user.name);
-    setEditAvatar(user.avatarUrl || '');
-  };
-
-  const handleEditSave = (userId: string) => {
-    updateUser(userId, { name: editName, avatarUrl: editAvatar });
-    setEditId(null);
-  };
+  // Пустое состояние
+  if (users.length === 0) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="w-[400px] bg-terminal-widget border-l border-terminal-border flex flex-col">
+          <SheetHeader>
+            <SheetTitle>Users</SheetTitle>
+            <SheetDescription>Manage users and accounts</SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div className="rounded-full bg-terminal-accent/40 w-20 h-20 flex items-center justify-center">
+              <svg width="48" height="48" fill="none" stroke="#A0AEC0" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div className="text-lg font-semibold">No users</div>
+            <div className="text-terminal-muted text-center">Start by adding users to manage their exchange accounts</div>
+            <Button onClick={() => setShowAddUser(true)} className="w-full max-w-xs" variant="default">
+              <Plus className="mr-2" size={16} /> Add first user
+            </Button>
+          </div>
+          <SheetFooter>
+            <SheetClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+        {showAddUser && (
+          <EditUserSheet
+            onClose={() => setShowAddUser(false)}
+          />
+        )}
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[400px] bg-terminal-widget border-l border-terminal-border flex flex-col">
         <SheetHeader>
-          <SheetTitle>Пользователи</SheetTitle>
-          <SheetDescription>Управление пользователями и аккаунтами</SheetDescription>
+          <SheetTitle>Users</SheetTitle>
+          <SheetDescription>Manage users and accounts</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-4 py-2 flex-1 overflow-auto">
-          {/* Новый пользователь */}
-          <div className="flex gap-2 items-center mb-2">
-            <Input
-              placeholder="Имя пользователя"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="URL аватарки"
-              value={newAvatar}
-              onChange={e => setNewAvatar(e.target.value)}
-              className="flex-1"
-            />
-            <Button size="icon" variant="outline" onClick={handleAdd} title="Добавить пользователя">
-              <Plus size={18} />
-            </Button>
-          </div>
-          {/* Список пользователей */}
+          <Button onClick={() => setShowAddUser(true)} className="w-full" variant="default">
+            <Plus className="mr-2" size={16} /> Add user
+          </Button>
           <div className="flex flex-col gap-2">
             {users.map(user => (
               <div
@@ -87,58 +98,261 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
               >
                 <Avatar className="w-10 h-10">
                   {user.avatarUrl ? (
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
+                    <AvatarImage src={user.avatarUrl} alt={user.email} />
                   ) : (
-                    <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{user.email.slice(0, 2).toUpperCase()}</AvatarFallback>
                   )}
                 </Avatar>
-                {editId === user.id ? (
-                  <>
-                    <Input
-                      value={editName}
-                      onChange={e => setEditName(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      value={editAvatar}
-                      onChange={e => setEditAvatar(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button size="icon" variant="outline" onClick={() => handleEditSave(user.id)} title="Сохранить">
-                      <Check size={16} />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{user.name}</div>
-                      <div className="text-xs text-terminal-muted truncate">{user.accounts.length} аккаунтов</div>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant={user.id === activeUserId ? 'default' : 'outline'}
-                      onClick={() => setActiveUser(user.id)}
-                      title="Сделать активным"
-                    >
-                      {user.id === activeUserId ? <Check size={16} /> : <span className="w-4 h-4 rounded-full border border-terminal-border" />}
-                    </Button>
-                    <Button size="icon" variant="outline" onClick={() => handleEdit(user)} title="Редактировать">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 0 0 0-1.414l-3.586-3.586a1 1 0 0 0-1.414 0L3 15v6z" /></svg>
-                    </Button>
-                    <Button size="icon" variant="destructive" onClick={() => removeUser(user.id)} title="Удалить">
-                      <Trash2 size={16} />
-                    </Button>
-                  </>
-                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{user.email}</div>
+                  <div className="text-xs text-terminal-muted truncate">{user.accounts.length} account(s)</div>
+                </div>
+                <Button
+                  size="icon"
+                  variant={user.id === activeUserId ? 'default' : 'outline'}
+                  onClick={() => setActiveUser(user.id)}
+                  title="Make active"
+                >
+                  {user.id === activeUserId ? <Check size={16} /> : <span className="w-4 h-4 rounded-full border border-terminal-border" />}
+                </Button>
+                <Button size="icon" variant="outline" onClick={() => setEditUserId(user.id)} title="Edit">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 0 0 0-1.414l-3.586-3.586a1 1 0 0 0-1.414 0L3 15v6z" /></svg>
+                </Button>
               </div>
             ))}
           </div>
+          {/* Аккаунты активного пользователя */}
+          {activeUserId && (
+            <UserAccountsBlock
+              user={users.find(u => u.id === activeUserId)!}
+              onEditAccount={acc => setEditAccount({ userId: activeUserId, account: acc })}
+              onAddAccount={() => setAddAccountUserId(activeUserId)}
+            />
+          )}
         </div>
         <SheetFooter>
           <SheetClose asChild>
-            <Button variant="outline">Закрыть</Button>
+            <Button variant="outline">Cancel</Button>
           </SheetClose>
         </SheetFooter>
+      </SheetContent>
+      {/* Sheet для добавления пользователя */}
+      {showAddUser && (
+        <EditUserSheet
+          onClose={() => setShowAddUser(false)}
+        />
+      )}
+      {/* Sheet для редактирования пользователя */}
+      {editUserId && (
+        <EditUserSheet
+          user={users.find(u => u.id === editUserId)!}
+          onClose={() => setEditUserId(null)}
+        />
+      )}
+      {/* Sheet для редактирования аккаунта */}
+      {editAccount && (
+        <EditAccountSheet
+          userId={editAccount.userId}
+          account={editAccount.account}
+          onClose={() => setEditAccount(null)}
+        />
+      )}
+      {/* Sheet для добавления аккаунта */}
+      {addAccountUserId && (
+        <EditAccountSheet
+          userId={addAccountUserId}
+          onClose={() => setAddAccountUserId(null)}
+        />
+      )}
+    </Sheet>
+  );
+};
+
+// Блок аккаунтов пользователя
+const UserAccountsBlock: React.FC<{
+  user: User;
+  onEditAccount: (acc: ExchangeAccount) => void;
+  onAddAccount: () => void;
+}> = ({ user, onEditAccount, onAddAccount }) => {
+  return (
+    <div className="mt-4">
+      <div className="font-semibold mb-2">Accounts</div>
+      {user.accounts.length === 0 && <div className="text-sm text-terminal-muted mb-2">No accounts</div>}
+      {user.accounts.map(acc => (
+        <div key={acc.id} className="flex items-center gap-2 p-1 rounded border border-terminal-border/30 bg-terminal-accent/10 mb-1">
+          <span className="text-xs font-mono px-1 py-0.5 rounded bg-terminal-widget/80 border border-terminal-border/30">{acc.exchange}</span>
+          <span className="truncate text-xs">{acc.email}</span>
+          <Button size="icon" variant="outline" onClick={() => onEditAccount(acc)} title="Edit account">
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 0 0 0-1.414l-3.586-3.586a1 1 0 0 0-1.414 0L3 15v6z" /></svg>
+          </Button>
+        </div>
+      ))}
+      <Button onClick={onAddAccount} className="w-full mt-2" variant="outline">
+        <Plus className="mr-2" size={16} /> Add account
+      </Button>
+    </div>
+  );
+};
+
+// Sheet для редактирования пользователя
+const EditUserSheet: React.FC<{ user?: User; onClose: () => void; }> = ({ user, onClose }) => {
+  const addUser = useUserStore(s => s.addUser);
+  const updateUser = useUserStore(s => s.updateUser);
+  const removeUser = useUserStore(s => s.removeUser);
+  const users = useUserStore(s => s.users);
+  const [email, setEmail] = useState(user?.email || '');
+  const [name, setName] = useState(user?.name || '');
+  const [avatar, setAvatar] = useState(user?.avatarUrl || '');
+  const [notes, setNotes] = useState(user?.notes || '');
+  const [error, setError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  function validateEmail(email: string) {
+    return /^\S+@\S+\.\S+$/.test(email);
+  }
+
+  const handleSave = () => {
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    if (!validateEmail(email.trim())) {
+      setError('Enter a valid email');
+      return;
+    }
+    if (!user && users.some(u => u.email === email.trim())) {
+      setError('A user with this email already exists');
+      return;
+    }
+    if (user) {
+      updateUser(user.id, { email: email.trim(), name: name.trim(), avatarUrl: avatar.trim() || undefined, notes: notes.trim() });
+    } else {
+      addUser({ email: email.trim(), name: name.trim(), avatarUrl: avatar.trim() || undefined, notes: notes.trim() });
+    }
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    if (user) {
+      removeUser(user.id);
+    }
+    onClose();
+  };
+
+  return (
+    <Sheet open onOpenChange={onClose}>
+      <SheetContent side="right" className="w-[400px] bg-terminal-widget border-l border-terminal-border flex flex-col">
+        <SheetHeader>
+          <SheetTitle>{user ? 'Edit user' : 'Add user'}</SheetTitle>
+        </SheetHeader>
+        <form className="flex flex-col gap-3 mt-3 flex-1" onSubmit={e => { e.preventDefault(); handleSave(); }}>
+          <Input type="email" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} className="w-full" />
+          <Input placeholder="Name (optional)" value={name} onChange={e => setName(e.target.value)} className="w-full" />
+          <Input placeholder="Avatar URL (optional)" value={avatar} onChange={e => setAvatar(e.target.value)} className="w-full" />
+          <textarea placeholder="Notes (optional)" value={notes} onChange={e => setNotes(e.target.value)} className="w-full min-h-[60px] border rounded px-2 py-1" />
+          {error && <div className="text-red-500 text-xs">{error}</div>}
+          <div className="flex gap-2 mt-2">
+            <Button type="submit" className="flex-1">{user ? 'Save' : 'Add'}</Button>
+            <Button type="button" className="flex-1" variant="outline" onClick={onClose}>Cancel</Button>
+          </div>
+          {user && (
+            <div className="mt-8 border-t pt-4">
+              <Button type="button" variant="destructive" className="w-full" onClick={handleDelete}>
+                {confirmDelete ? 'Are you sure you want to delete?' : 'Delete user'}
+              </Button>
+            </div>
+          )}
+        </form>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+// Sheet для редактирования/добавления аккаунта
+const EditAccountSheet: React.FC<{
+  userId: string;
+  account?: ExchangeAccount;
+  onClose: () => void;
+}> = ({ userId, account, onClose }) => {
+  const addAccount = useUserStore(s => s.addAccount);
+  const updateAccount = useUserStore(s => s.updateAccount);
+  const removeAccount = useUserStore(s => s.removeAccount);
+  const [exchange, setExchange] = useState(account?.exchange || '');
+  const [email, setEmail] = useState(account?.email || '');
+  const [key, setKey] = useState(account?.key || '');
+  const [secret, setSecret] = useState(account?.privateKey || '');
+  const [avatar, setAvatar] = useState(account?.avatarUrl || '');
+  const [notes, setNotes] = useState(account?.notes || '');
+  const [error, setError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  function validateEmail(email: string) {
+    return /^\S+@\S+\.\S+$/.test(email);
+  }
+
+  const handleSave = () => {
+    if (!exchange || !email || !key || !secret) {
+      setError('Fill in all required fields');
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError('Enter a valid email');
+      return;
+    }
+    if (account) {
+      updateAccount(userId, { ...account, exchange, email, key, privateKey: secret, avatarUrl: avatar || undefined, notes });
+    } else {
+      addAccount(userId, { exchange, email, key, privateKey: secret, avatarUrl: avatar || undefined, notes });
+    }
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (!account) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    removeAccount(userId, account.id);
+    onClose();
+  };
+
+  return (
+    <Sheet open onOpenChange={onClose}>
+      <SheetContent side="right" className="w-[400px] bg-terminal-widget border-l border-terminal-border flex flex-col">
+        <SheetHeader>
+          <SheetTitle>{account ? 'Edit account' : 'Add account'}</SheetTitle>
+        </SheetHeader>
+        <form className="flex flex-col gap-3 mt-3 flex-1" onSubmit={e => { e.preventDefault(); handleSave(); }}>
+          <label className="text-xs font-medium">Exchange *</label>
+          <select value={exchange} onChange={e => setExchange(e.target.value)} className="w-full border rounded px-2 py-1">
+            <option value="">Select exchange</option>
+            {EXCHANGES.map(ex => (
+              <option key={ex.id} value={ex.id}>{ex.name}</option>
+            ))}
+          </select>
+          <Input type="email" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} className="w-full" />
+          <Input placeholder="API Key" value={key} onChange={e => setKey(e.target.value)} className="w-full" />
+          <Input placeholder="Secret" value={secret} onChange={e => setSecret(e.target.value)} className="w-full" />
+          <Input placeholder="Avatar URL (optional)" value={avatar} onChange={e => setAvatar(e.target.value)} className="w-full" />
+          <textarea placeholder="Notes (optional)" value={notes} onChange={e => setNotes(e.target.value)} className="w-full min-h-[60px] border rounded px-2 py-1" />
+          {error && <div className="text-red-500 text-xs">{error}</div>}
+          <div className="flex gap-2 mt-2">
+            <Button type="submit" className="flex-1">{account ? 'Save' : 'Add'}</Button>
+            <Button type="button" className="flex-1" variant="outline" onClick={onClose}>Cancel</Button>
+          </div>
+          {account && (
+            <div className="mt-8 border-t pt-4">
+              <Button type="button" variant="destructive" className="w-full" onClick={handleDelete}>
+                {confirmDelete ? 'Are you sure you want to delete?' : 'Delete account'}
+              </Button>
+            </div>
+          )}
+        </form>
       </SheetContent>
     </Sheet>
   );
