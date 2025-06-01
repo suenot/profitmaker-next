@@ -1,6 +1,5 @@
 
 import React, { useState, useCallback, useRef } from 'react';
-import Header from '@/components/Header';
 import Widget from '@/components/Widget';
 import WidgetMenu from '@/components/WidgetMenu';
 import TabNavigation from '@/components/TabNavigation';
@@ -64,7 +63,6 @@ const TradingTerminal: React.FC = () => {
       onContextMenu={handleContextMenu}
       onClick={() => contextMenuPosition && setContextMenuPosition(null)}
     >
-      <Header />
       <TabNavigation />
       
       <main 
