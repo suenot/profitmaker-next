@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { useWidget, WidgetType } from '@/context/WidgetContext';
+import { useDashboardStore } from '@/store/dashboardStore';
 import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar } from 'lucide-react';
+
+type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom';
 
 interface WidgetMenuProps {
   position: { x: number; y: number };
@@ -8,8 +10,14 @@ interface WidgetMenuProps {
 }
 
 const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
-  const { addWidget } = useWidget();
+  const addWidget = useDashboardStore(s => s.addWidget);
+  const activeDashboardId = useDashboardStore(s => s.activeDashboardId);
   const menuRef = useRef<HTMLDivElement>(null);
+  
+  // Debug logging for widget menu
+  React.useEffect(() => {
+    console.log('WidgetMenu: Active dashboard changed', { activeDashboardId });
+  }, [activeDashboardId]);
   
   // Adjust position to ensure menu stays within viewport
   const adjustedPosition = {
@@ -32,7 +40,43 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
   }, [onClose]);
   
   const handleAddWidget = (type: WidgetType) => {
-    addWidget(type);
+    if (!activeDashboardId) return;
+    
+    // Calculate position for new widget
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Default sizes for different widget types
+    const defaultSizes = {
+      chart: { width: 650, height: 330 },
+      portfolio: { width: 800, height: 350 },
+      orderForm: { width: 350, height: 550 },
+      transactionHistory: { width: 400, height: 350 },
+      custom: { width: 400, height: 300 }
+    };
+    
+    const size = defaultSizes[type];
+    let x = Math.max(20, Math.floor((viewportWidth - size.width) / 2));
+    let y = Math.max(80, Math.floor((viewportHeight - size.height) / 2));
+    
+    // Widget titles mapping
+    const widgetTitles = {
+      chart: 'Деньги не спят: график',
+      portfolio: 'Инвестиционный счёт',
+      orderForm: 'Заявка',
+      transactionHistory: 'Деньги не спят: История операций',
+      custom: 'Пользовательский виджет'
+    };
+    
+    addWidget(activeDashboardId, {
+      type,
+      title: widgetTitles[type],
+      position: { x, y, width: size.width, height: size.height },
+      config: {},
+      isVisible: true,
+      isMinimized: false
+    });
+    
     onClose();
   };
 
@@ -40,11 +84,8 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     { type: 'chart' as WidgetType, label: 'График цены', icon: <LineChart size={16} /> },
     { type: 'portfolio' as WidgetType, label: 'Портфель', icon: <PieChart size={16} /> },
     { type: 'orderForm' as WidgetType, label: 'Форма заявки', icon: <FileText size={16} /> },
-    { type: 'transactions' as WidgetType, label: 'История операций', icon: <ListOrdered size={16} /> },
-    { type: 'watchlist' as WidgetType, label: 'Список наблюдения', icon: <BarChart3 size={16} /> },
-    { type: 'news' as WidgetType, label: 'Новости рынка', icon: <Newspaper size={16} /> },
-    { type: 'calendar' as WidgetType, label: 'Экономический календарь', icon: <Calendar size={16} /> },
-    { type: 'positions' as WidgetType, label: 'Открытые позиции', icon: <Clock size={16} /> },
+    { type: 'transactionHistory' as WidgetType, label: 'История операций', icon: <ListOrdered size={16} /> },
+    { type: 'custom' as WidgetType, label: 'Пользовательский виджет', icon: <BarChart3 size={16} /> },
   ];
 
   return (

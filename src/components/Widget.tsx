@@ -2,9 +2,8 @@
 import React, { useRef, useState } from 'react';
 import { X, Maximize2, Minimize2, Settings, Plus, Circle } from 'lucide-react';
 import { useWidgetDrag } from '@/hooks/useWidgetDrag';
-import { useWidget } from '@/context/WidgetContext';
+import { useDashboardStore } from '@/store/dashboardStore';
 import { cn } from '@/lib/utils';
-import GroupMenu from './GroupMenu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface WidgetProps {
