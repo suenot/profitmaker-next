@@ -506,26 +506,28 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
           // Проверяем доступные методы в CCXT Pro
           console.log(`🔍 CCXT Pro ${exchange} available methods:`, Object.keys(exchangeInstance.has || {}));
           
-          // CCXT Pro автоматически поддерживает WebSocket, проверяем только основную поддержку
+          // Проверяем поддержку WebSocket методов в CCXT Pro
           let watchMethod: string;
           let hasSupport: boolean;
 
           switch (dataType) {
             case 'candles':
               watchMethod = 'watchOHLCV';
-              hasSupport = exchangeInstance.has?.[watchMethod] || true; // CCXT Pro поддерживает по умолчанию
+              hasSupport = !!exchangeInstance.has?.[watchMethod];
               break;
             case 'trades':
               watchMethod = 'watchTrades';
-              hasSupport = exchangeInstance.has?.[watchMethod] || true; // CCXT Pro поддерживает по умолчанию
+              hasSupport = !!exchangeInstance.has?.[watchMethod];
               break;
             case 'orderbook':
               watchMethod = 'watchOrderBook';
-              hasSupport = exchangeInstance.has?.[watchMethod] || true; // CCXT Pro поддерживает по умолчанию
+              hasSupport = !!exchangeInstance.has?.[watchMethod];
               break;
             default:
               throw new Error(`Unsupported data type: ${dataType}`);
           }
+
+          console.log(`🔍 CCXT Pro ${exchange} ${watchMethod} support:`, hasSupport);
 
           if (!hasSupport) {
             console.warn(`⚠️ CCXT Pro ${exchange} does not support ${watchMethod}, falling back to REST`);
@@ -577,6 +579,11 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
                   case 'orderbook':
                     const orderbook = await exchangeInstance.watchOrderBook(symbol);
                     if (orderbook) {
+                      console.log(`📋 OrderBook received via WebSocket for ${exchange} ${symbol}:`, {
+                        bids: orderbook.bids?.slice(0, 3),
+                        asks: orderbook.asks?.slice(0, 3),
+                        timestamp: orderbook.timestamp
+                      });
                       get().updateOrderBook(exchange, symbol, orderbook);
                     }
                     break;
@@ -661,6 +668,11 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
                 case 'orderbook':
                   const orderbook = await exchangeInstance.fetchOrderBook(symbol);
                   if (orderbook) {
+                    console.log(`📋 OrderBook received via REST for ${exchange} ${symbol}:`, {
+                      bids: orderbook.bids?.slice(0, 3),
+                      asks: orderbook.asks?.slice(0, 3),
+                      timestamp: orderbook.timestamp
+                    });
                     get().updateOrderBook(exchange, symbol, orderbook);
                   }
                   break;
