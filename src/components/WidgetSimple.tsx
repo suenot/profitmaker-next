@@ -43,6 +43,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   
   const moveWidget = useDashboardStore(s => s.moveWidget);
   const resizeWidget = useDashboardStore(s => s.resizeWidget);
+  const bringWidgetToFront = useDashboardStore(s => s.bringWidgetToFront);
   const activeDashboardId = useDashboardStore(s => s.activeDashboardId);
   const dashboards = useDashboardStore(s => s.dashboards);
 
@@ -82,6 +83,13 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
       setIsMaximized(true);
     }
   }, [isMaximized, preMaximizeState, currentPosition, currentSize, activeDashboardId, moveWidget, resizeWidget, id]);
+
+  // Handle widget click to bring to front
+  const handleWidgetClick = useCallback(() => {
+    if (activeDashboardId && !isMaximized) {
+      bringWidgetToFront(activeDashboardId, id);
+    }
+  }, [activeDashboardId, id, bringWidgetToFront, isMaximized]);
 
   // Snapping logic
   const applySnapping = useCallback((x: number, y: number, width: number, height: number) => {
@@ -243,6 +251,11 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
 
   // Handle drag start - ИСПРАВЛЕННАЯ ЛОГИКА
   const handleDragStart = (e: React.MouseEvent) => {
+    // Поднимаем виджет наверх при начале перетаскивания
+    if (activeDashboardId) {
+      bringWidgetToFront(activeDashboardId, id);
+    }
+    
     // Сохраняем offset относительно текущей позиции виджета в viewport
     setDragOffset({
       x: e.clientX - currentPosition.x,
@@ -262,6 +275,12 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Поднимаем виджет наверх при начале изменения размера
+    if (activeDashboardId) {
+      bringWidgetToFront(activeDashboardId, id);
+    }
+    
     setIsResizing(true);
     console.log('WidgetSimple: Resize start', { widgetId: id, dashboardId: activeDashboardId });
   };
@@ -306,6 +325,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
         zIndex: isMaximized ? 10001 : zIndex,
         position: isMaximized ? 'fixed' : 'absolute',
       }}
+      onClick={handleWidgetClick}
     >
       <div 
         className={cn(

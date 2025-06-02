@@ -37,7 +37,7 @@ function createDefaultDashboard(): Dashboard {
         id: uuidv4(),
         type: 'portfolio',
         title: 'Инвестиционный счёт',
-        position: { x: 20, y: 80, width: 800, height: 350 },
+        position: { x: 20, y: 80, width: 800, height: 350, zIndex: 1 },
         config: {},
         isVisible: true,
         isMinimized: false,
@@ -46,7 +46,7 @@ function createDefaultDashboard(): Dashboard {
         id: uuidv4(),
         type: 'orderForm',
         title: 'Заявка',
-        position: { x: 840, y: 80, width: 350, height: 550 },
+        position: { x: 840, y: 80, width: 350, height: 550, zIndex: 2 },
         config: {},
         isVisible: true,
         isMinimized: false,
@@ -55,7 +55,7 @@ function createDefaultDashboard(): Dashboard {
         id: uuidv4(),
         type: 'chart',
         title: 'Деньги не спят: график',
-        position: { x: 20, y: 450, width: 650, height: 330 },
+        position: { x: 20, y: 450, width: 650, height: 330, zIndex: 3 },
         config: {},
         isVisible: true,
         isMinimized: false,
@@ -64,7 +64,7 @@ function createDefaultDashboard(): Dashboard {
         id: uuidv4(),
         type: 'transactionHistory',
         title: 'Деньги не спят: История операций',
-        position: { x: 690, y: 450, width: 400, height: 330 },
+        position: { x: 690, y: 450, width: 400, height: 330, zIndex: 4 },
         config: {},
         isVisible: true,
         isMinimized: false,
@@ -95,6 +95,7 @@ interface DashboardStore extends DashboardStoreState {
   updateWidget: (dashboardId: string, widgetId: string, data: UpdateWidgetData) => void;
   moveWidget: (dashboardId: string, widgetId: string, x: number, y: number) => void;
   resizeWidget: (dashboardId: string, widgetId: string, width: number, height: number) => void;
+  bringWidgetToFront: (dashboardId: string, widgetId: string) => void;
   toggleWidgetVisibility: (dashboardId: string, widgetId: string) => void;
   toggleWidgetMinimized: (dashboardId: string, widgetId: string) => void;
   
@@ -266,6 +267,23 @@ export const useDashboardStore = create<DashboardStore>()(
           
           widget.position.width = width;
           widget.position.height = height;
+          dashboard.updatedAt = getCurrentTimestamp();
+        });
+      },
+
+      bringWidgetToFront: (dashboardId, widgetId) => {
+        set((state) => {
+          const dashboard = state.dashboards.find(d => d.id === dashboardId);
+          if (!dashboard) return;
+          
+          const widget = dashboard.widgets.find(w => w.id === widgetId);
+          if (!widget) return;
+          
+          // Найти максимальный z-index среди всех виджетов
+          const maxZIndex = Math.max(...dashboard.widgets.map(w => w.position.zIndex || 1));
+          
+          // Установить z-index текущего виджета выше максимального
+          widget.position.zIndex = maxZIndex + 1;
           dashboard.updatedAt = getCurrentTimestamp();
         });
       },
