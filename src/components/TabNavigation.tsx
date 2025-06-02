@@ -10,6 +10,10 @@ const TabNavigation: React.FC = () => {
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [isThemeSheetOpen, setIsThemeSheetOpen] = useState(false);
+  
+  // Состояние для переименования дашбордов
+  const [editingDashboardId, setEditingDashboardId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   // Dashboard store
   const dashboards = useDashboardStore(s => s.dashboards);
@@ -17,6 +21,7 @@ const TabNavigation: React.FC = () => {
   const setActiveDashboard = useDashboardStore(s => s.setActiveDashboard);
   const addDashboard = useDashboardStore(s => s.addDashboard);
   const removeDashboard = useDashboardStore(s => s.removeDashboard);
+  const updateDashboard = useDashboardStore(s => s.updateDashboard);
   const initializeWithDefault = useDashboardStore(s => s.initializeWithDefault);
 
   // Инициализация дефолтного dashboard при первом запуске
@@ -89,6 +94,36 @@ const TabNavigation: React.FC = () => {
     }
   };
 
+  // Обработчики для переименования дашбордов
+  const handleDashboardDoubleClick = (dashboard: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingDashboardId(dashboard.id);
+    setEditingTitle(dashboard.title);
+  };
+
+  const handleTitleSave = () => {
+    if (editingDashboardId && editingTitle.trim()) {
+      updateDashboard(editingDashboardId, { title: editingTitle.trim() });
+    }
+    setEditingDashboardId(null);
+    setEditingTitle('');
+  };
+
+  const handleTitleCancel = () => {
+    setEditingDashboardId(null);
+    setEditingTitle('');
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleTitleCancel();
+    }
+  };
+
   return (
     <div className="flex flex-col h-auto bg-terminal-bg border-b border-terminal-border mb-0 pb-0">
       <div className="flex items-center justify-between h-12 px-2">
@@ -100,12 +135,32 @@ const TabNavigation: React.FC = () => {
                 activeDashboardId === dashboard.id ? 'bg-terminal-accent/20 text-terminal-text' : 'text-terminal-muted hover:bg-terminal-accent/10'
               }`}
               onClick={() => {
-                console.log('TabNavigation: Switching to dashboard', dashboard.id, dashboard.title);
-                setActiveDashboard(dashboard.id);
+                if (editingDashboardId !== dashboard.id) {
+                  console.log('TabNavigation: Switching to dashboard', dashboard.id, dashboard.title);
+                  setActiveDashboard(dashboard.id);
+                }
               }}
             >
-              <span className="text-sm">{dashboard.title}</span>
-              {dashboards.length > 1 && (
+              {editingDashboardId === dashboard.id ? (
+                <input
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onBlur={handleTitleSave}
+                  onKeyDown={handleTitleKeyDown}
+                  className="text-sm bg-transparent border-none outline-none w-full min-w-[80px] max-w-[200px]"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span 
+                  className="text-sm select-none"
+                  onDoubleClick={(e) => handleDashboardDoubleClick(dashboard, e)}
+                >
+                  {dashboard.title}
+                </span>
+              )}
+              {dashboards.length > 1 && editingDashboardId !== dashboard.id && (
                 <button 
                   className="ml-2 p-0.5 rounded-full hover:bg-terminal-accent/50"
                   onClick={(e) => handleRemoveDashboard(dashboard.id, e)}
