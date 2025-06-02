@@ -159,13 +159,13 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
         <>
           {/* Overlay для закрытия */}
           <div
-            className="fixed inset-0 z-[9999]"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
           />
           
           {/* Popover */}
           <div 
-            className="fixed w-96 bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-[10000]"
+            className="fixed w-96 bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-[9999]"
             style={{
               left: buttonPosition.x,
               top: buttonPosition.y + 4,
