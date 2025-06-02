@@ -70,7 +70,9 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     
     addWidget(activeDashboardId, {
       type,
-      title: widgetTitles[type],
+      title: widgetTitles[type], // deprecated
+      defaultTitle: widgetTitles[type],
+      userTitle: undefined,
       position: { x, y, width: size.width, height: size.height },
       config: {},
       isVisible: true,

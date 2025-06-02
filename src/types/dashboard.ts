@@ -18,7 +18,9 @@ export type WidgetConfig = z.infer<typeof WidgetConfigSchema>;
 export const WidgetSchema = z.object({
   id: z.string(), // uuid
   type: z.enum(['chart', 'portfolio', 'orderForm', 'transactionHistory', 'custom']),
-  title: z.string(),
+  title: z.string(), // deprecated - оставляем для совместимости
+  defaultTitle: z.string(),
+  userTitle: z.string().optional(),
   position: WidgetPositionSchema,
   config: WidgetConfigSchema,
   isVisible: z.boolean().default(true),

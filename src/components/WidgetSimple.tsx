@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils';
 
 interface WidgetSimpleProps {
   id: string;
-  title: string;
+  title: string; // deprecated
+  defaultTitle: string;
+  userTitle?: string;
   children: React.ReactNode;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -19,7 +21,9 @@ const HEADER_HEIGHT = 0; // Высота header + tabs navigation в пиксе�
 
 const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   id,
-  title,
+  title, // deprecated
+  defaultTitle,
+  userTitle,
   children,
   position,
   size,
@@ -37,6 +41,10 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     size: { width: number; height: number };
   } | null>(null);
   
+  // Состояние для редактирования названия
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState('');
+  
   // Local state for real-time updates during drag/resize
   const [currentPosition, setCurrentPosition] = useState(position);
   const [currentSize, setCurrentSize] = useState(size);
@@ -44,6 +52,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   const moveWidget = useDashboardStore(s => s.moveWidget);
   const resizeWidget = useDashboardStore(s => s.resizeWidget);
   const bringWidgetToFront = useDashboardStore(s => s.bringWidgetToFront);
+  const updateWidgetTitle = useDashboardStore(s => s.updateWidgetTitle);
   const activeDashboardId = useDashboardStore(s => s.activeDashboardId);
   const dashboards = useDashboardStore(s => s.dashboards);
 
@@ -59,6 +68,47 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   React.useEffect(() => {
     setCurrentSize(size);
   }, [size.width, size.height]);
+
+  // Функции для редактирования названия
+  const handleTitleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsEditingTitle(true);
+    setEditTitleValue(userTitle || defaultTitle);
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditTitleValue(e.target.value);
+  };
+
+  const handleTitleSubmit = () => {
+    if (activeDashboardId) {
+      updateWidgetTitle(activeDashboardId, id, editTitleValue);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit();
+    } else if (e.key === 'Escape') {
+      setIsEditingTitle(false);
+      setEditTitleValue(userTitle || defaultTitle);
+    }
+  };
+
+  const handleTitleBlur = () => {
+    handleTitleSubmit();
+  };
+
+  // Автофокус на input при редактировании
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
 
   // Handle maximize/minimize toggle
   const handleMaximizeToggle = useCallback(() => {
@@ -334,8 +384,27 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
         )}
         onMouseDown={!isMaximized ? handleDragStart : undefined}
       >
-        <div className="flex items-center">
-          <h3 className="text-xs font-medium truncate text-terminal-text">{title}</h3>
+        <div className="flex items-center flex-1 min-w-0">
+          {isEditingTitle ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={editTitleValue}
+              onChange={handleTitleChange}
+              onKeyDown={handleTitleKeyDown}
+              onBlur={handleTitleBlur}
+              className="text-xs font-medium bg-transparent border-none outline-none text-terminal-text w-full min-w-0"
+              style={{ margin: 0, padding: 0 }}
+            />
+          ) : (
+            <h3 
+              className="text-xs font-medium truncate text-terminal-text cursor-pointer"
+              onDoubleClick={handleTitleDoubleClick}
+              title="Двойной клик для редактирования"
+            >
+              {userTitle || defaultTitle}
+            </h3>
+          )}
         </div>
         <div className="flex items-center space-x-1">
           <button 

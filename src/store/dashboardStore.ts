@@ -36,7 +36,9 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'portfolio',
-        title: 'Инвестиционный счёт',
+        title: 'Инвестиционный счёт', // deprecated
+        defaultTitle: 'Инвестиционный счёт',
+        userTitle: undefined,
         position: { x: 20, y: 80, width: 800, height: 350, zIndex: 1 },
         config: {},
         isVisible: true,
@@ -45,7 +47,9 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'orderForm',
-        title: 'Заявка',
+        title: 'Заявка', // deprecated
+        defaultTitle: 'Заявка',
+        userTitle: undefined,
         position: { x: 840, y: 80, width: 350, height: 550, zIndex: 2 },
         config: {},
         isVisible: true,
@@ -54,7 +58,9 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'chart',
-        title: 'Деньги не спят: график',
+        title: 'Деньги не спят: график', // deprecated
+        defaultTitle: 'Деньги не спят: график',
+        userTitle: undefined,
         position: { x: 20, y: 450, width: 650, height: 330, zIndex: 3 },
         config: {},
         isVisible: true,
@@ -63,7 +69,9 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'transactionHistory',
-        title: 'Деньги не спят: История операций',
+        title: 'Деньги не спят: История операций', // deprecated
+        defaultTitle: 'Деньги не спят: История операций',
+        userTitle: undefined,
         position: { x: 690, y: 450, width: 400, height: 330, zIndex: 4 },
         config: {},
         isVisible: true,
@@ -98,6 +106,7 @@ interface DashboardStore extends DashboardStoreState {
   bringWidgetToFront: (dashboardId: string, widgetId: string) => void;
   toggleWidgetVisibility: (dashboardId: string, widgetId: string) => void;
   toggleWidgetMinimized: (dashboardId: string, widgetId: string) => void;
+  updateWidgetTitle: (dashboardId: string, widgetId: string, userTitle: string) => void;
   
   // Utility methods
   getActiveDashboard: () => Dashboard | undefined;
@@ -310,6 +319,20 @@ export const useDashboardStore = create<DashboardStore>()(
           if (!widget) return;
           
           widget.isMinimized = !widget.isMinimized;
+          dashboard.updatedAt = getCurrentTimestamp();
+        });
+      },
+
+      updateWidgetTitle: (dashboardId, widgetId, userTitle) => {
+        set((state) => {
+          const dashboard = state.dashboards.find(d => d.id === dashboardId);
+          if (!dashboard) return;
+          
+          const widget = dashboard.widgets.find(w => w.id === widgetId);
+          if (!widget) return;
+          
+          // Если пустая строка, очищаем userTitle, иначе устанавливаем
+          widget.userTitle = userTitle.trim() === '' ? undefined : userTitle.trim();
           dashboard.updatedAt = getCurrentTimestamp();
         });
       },

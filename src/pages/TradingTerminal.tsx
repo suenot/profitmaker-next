@@ -105,7 +105,9 @@ const TradingTerminal: React.FC = () => {
             <Widget
               key={widget.id}
               id={widget.id}
-              title={widget.title}
+              title={widget.title} // deprecated
+              defaultTitle={widget.defaultTitle}
+              userTitle={widget.userTitle}
               position={{ x: widget.position.x, y: widget.position.y }}
               size={{ width: widget.position.width, height: widget.position.height }}
               zIndex={widget.position.zIndex || 1}
