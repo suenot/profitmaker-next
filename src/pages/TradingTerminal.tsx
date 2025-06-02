@@ -7,6 +7,10 @@ import ChartWidget from '@/components/widgets/Chart';
 import PortfolioWidget from '@/components/widgets/Portfolio';
 import OrderFormWidget from '@/components/widgets/OrderForm';
 import TransactionHistoryWidget from '@/components/widgets/TransactionHistory';
+import { OrderBookWidget } from '@/components/widgets/OrderBookWidget';
+import { TradesWidget } from '@/components/widgets/TradesWidget';
+import { DataProviderSetupWidget } from '@/components/widgets/DataProviderSetupWidget';
+import { DataProviderDebugWidget } from '@/components/widgets/DataProviderDebugWidget';
 import AlignmentGuides from '@/components/AlignmentGuides';
 import { GuideLineType } from '@/types/alignmentGuides';
 
@@ -16,6 +20,10 @@ const widgetComponents: Record<string, React.FC<any>> = {
   orderForm: OrderFormWidget,
   transactionHistory: TransactionHistoryWidget,
   custom: PortfolioWidget, // Placeholder
+  orderbook: OrderBookWidget,
+  trades: TradesWidget,
+  dataProviderSetup: DataProviderSetupWidget,
+  dataProviderDebug: DataProviderDebugWidget,
 };
 
 const TradingTerminal: React.FC = () => {

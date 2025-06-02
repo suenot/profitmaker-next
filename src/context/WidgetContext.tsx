@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 
-export type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactions' | 'watchlist' | 'news' | 'calendar' | 'positions';
+export type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactions' | 'watchlist' | 'news' | 'calendar' | 'positions' | 'orderbook' | 'trades' | 'dataProviderSetup' | 'dataProviderDebug';
 
 export interface WidgetGroup {
   id: string;
@@ -50,7 +50,11 @@ const defaultWidgetSizes: Record<WidgetType, { width: number; height: number }> 
   watchlist: { width: 350, height: 400 },
   news: { width: 400, height: 500 },
   calendar: { width: 400, height: 350 },
-  positions: { width: 500, height: 350 }
+  positions: { width: 500, height: 350 },
+  orderbook: { width: 500, height: 600 },
+  trades: { width: 600, height: 500 },
+  dataProviderSetup: { width: 500, height: 400 },
+  dataProviderDebug: { width: 700, height: 500 }
 };
 
 const widgetTitles: Record<WidgetType, string> = {
@@ -61,7 +65,11 @@ const widgetTitles: Record<WidgetType, string> = {
   watchlist: 'Watchlist',
   news: 'Market News',
   calendar: 'Economic Calendar',
-  positions: 'Open Positions'
+  positions: 'Open Positions',
+  orderbook: 'Order Book',
+  trades: 'Trades',
+  dataProviderSetup: 'Data Provider Setup',
+  dataProviderDebug: 'Data Provider Debug'
 };
 
 // Group color palette

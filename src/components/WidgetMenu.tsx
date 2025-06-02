@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar } from 'lucide-react';
+import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug } from 'lucide-react';
 
-type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom';
+type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'dataProviderSetup' | 'dataProviderDebug';
 
 interface WidgetMenuProps {
   position: { x: number; y: number };
@@ -53,7 +53,11 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       portfolio: { width: 800, height: 350 },
       orderForm: { width: 350, height: 550 },
       transactionHistory: { width: 400, height: 350 },
-      custom: { width: 400, height: 300 }
+      custom: { width: 400, height: 300 },
+      orderbook: { width: 500, height: 600 },
+      trades: { width: 600, height: 500 },
+      dataProviderSetup: { width: 500, height: 400 },
+      dataProviderDebug: { width: 700, height: 500 }
     };
     
     const size = defaultSizes[type];
@@ -73,7 +77,11 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       portfolio: 'Balance',
       orderForm: 'Place Order',
       transactionHistory: 'Transaction History',
-      custom: 'Custom Widget'
+      custom: 'Custom Widget',
+      orderbook: 'Order Book',
+      trades: 'Trades',
+      dataProviderSetup: 'Data Provider Setup',
+      dataProviderDebug: 'Data Provider Debug'
     };
     
     addWidget(activeDashboardId, {
@@ -95,6 +103,10 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     { type: 'portfolio' as WidgetType, label: 'Portfolio', icon: <PieChart size={16} /> },
     { type: 'orderForm' as WidgetType, label: 'Place Order', icon: <FileText size={16} /> },
     { type: 'transactionHistory' as WidgetType, label: 'Transaction History', icon: <ListOrdered size={16} /> },
+    { type: 'orderbook' as WidgetType, label: 'Order Book', icon: <BookOpen size={16} /> },
+    { type: 'trades' as WidgetType, label: 'Trades', icon: <ArrowUpDown size={16} /> },
+    { type: 'dataProviderSetup' as WidgetType, label: 'Data Provider Setup', icon: <Settings size={16} /> },
+    { type: 'dataProviderDebug' as WidgetType, label: 'Data Provider Debug', icon: <Bug size={16} /> },
     { type: 'custom' as WidgetType, label: 'Custom Widget', icon: <BarChart3 size={16} /> },
   ];
 
