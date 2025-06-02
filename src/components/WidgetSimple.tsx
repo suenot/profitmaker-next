@@ -283,23 +283,27 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
         onMouseDown={handleDragStart}
       >
         <div className="flex items-center">
-          <h3 className="text-xs font-medium truncate">{title}</h3>
+          <h3 className="text-xs font-medium truncate text-terminal-text">{title}</h3>
         </div>
         <div className="flex items-center space-x-1">
           <button 
             className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
             onClick={() => {}}
           >
-            <Settings size={14} className="text-terminal-muted" />
+            <Settings size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
           </button>
           <button 
             className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
             onClick={() => setIsMaximized(!isMaximized)}
           >
-            {isMaximized ? <Minimize2 size={14} className="text-terminal-muted" /> : <Maximize2 size={14} className="text-terminal-muted" />}
+            {isMaximized ? (
+              <Minimize2 size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
+            ) : (
+              <Maximize2 size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
+            )}
           </button>
           <button 
-            className="p-1 rounded-sm hover:bg-terminal-widget/50 text-terminal-text transition-colors hover:text-terminal-negative"
+            className="p-1 rounded-sm hover:bg-terminal-widget/50 text-terminal-muted hover:text-terminal-negative transition-colors"
             onClick={onRemove}
           >
             <X size={14} />
@@ -313,7 +317,13 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
       
       {/* Resize handle */}
       <div 
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize opacity-0 hover:opacity-50 bg-gradient-to-br from-transparent to-gray-400"
+        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize opacity-0 hover:opacity-50 transition-opacity"
+        style={{
+          background: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
+          backgroundSize: '4px 4px',
+          backgroundPosition: 'bottom right',
+          color: 'hsl(var(--terminal-muted))'
+        }}
         onMouseDown={handleResizeStart}
       />
     </div>

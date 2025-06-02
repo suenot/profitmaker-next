@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Info, ChevronDown, Search } from 'lucide-react';
 
@@ -176,7 +175,7 @@ const OrderFormWidget: React.FC = () => {
         <div className="grid grid-cols-2 gap-3 mt-auto">
           <button 
             type="button" 
-            className="w-full py-2.5 rounded-md font-medium bg-terminal-positive hover:bg-terminal-positive/90 transition-colors"
+            className="w-full py-2.5 rounded-md font-medium bg-terminal-positive hover:bg-terminal-positive/90 transition-colors text-white"
             onClick={() => {
               setAction('buy');
               handleSubmit(new Event('submit') as unknown as React.FormEvent);
@@ -186,7 +185,7 @@ const OrderFormWidget: React.FC = () => {
           </button>
           <button 
             type="button" 
-            className="w-full py-2.5 rounded-md font-medium bg-terminal-negative hover:bg-terminal-negative/90 transition-colors"
+            className="w-full py-2.5 rounded-md font-medium bg-terminal-negative hover:bg-terminal-negative/90 transition-colors text-white"
             onClick={() => {
               setAction('sell');
               handleSubmit(new Event('submit') as unknown as React.FormEvent);

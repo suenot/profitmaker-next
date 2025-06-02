@@ -116,19 +116,34 @@
   }
 }
 
+/* Widget container styles - адаптивные для светлой и темной темы */
 .widget-container {
   position: absolute;
   border-radius: 8px;
-  background-color: rgba(30, 34, 48, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1), 
               box-shadow 0.3s cubic-bezier(0.2, 0, 0.2, 1),
               opacity 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+  
+  /* Светлая тема */
+  background-color: hsl(var(--terminal-widget));
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dark .widget-container {
+  /* Темная тема */
+  background-color: rgba(30, 34, 48, 0.95);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .widget-container:hover {
+  /* Светлая тема */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.dark .widget-container:hover {
+  /* Темная тема */
   box-shadow: 0 12px 42px rgba(0, 0, 0, 0.25);
 }
 
@@ -146,9 +161,10 @@
   cursor: nwse-resize;
   opacity: 0;
   transition: opacity 0.2s ease;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.7) 1px, transparent 1px);
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
   background-size: 4px 4px;
   background-position: bottom right;
+  color: hsl(var(--terminal-muted));
 }
 
 .widget-container:hover .widget-resize-handle {
@@ -160,8 +176,8 @@
   position: absolute;
   pointer-events: none;
   z-index: 9999;
-  background-color: #2D9CDB;
-  box-shadow: 0 0 0 1px rgba(45, 156, 219, 0.5);
+  background-color: hsl(var(--primary));
+  box-shadow: 0 0 0 1px hsla(var(--primary), 0.5);
   transition: opacity 0.2s ease;
   opacity: 0.8;
 }
@@ -180,8 +196,8 @@
 
 .alignment-guide-distance {
   position: absolute;
-  background-color: rgba(45, 156, 219, 0.8);
-  color: white;
+  background-color: hsla(var(--primary), 0.8);
+  color: hsl(var(--primary-foreground));
   padding: 2px 4px;
   border-radius: 3px;
   font-size: 10px;
@@ -218,27 +234,27 @@
 }
 
 .glass-effect {
-  background: rgba(30, 34, 48, 0.8);
+  background: hsla(var(--terminal-widget), 0.8);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid hsla(var(--terminal-border), 0.5);
 }
 
 .glass-button {
-  background: rgba(255, 255, 255, 0.1);
+  background: hsla(var(--terminal-accent), 0.5);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid hsla(var(--terminal-border), 0.3);
   transition: all 0.2s ease-out;
 }
 
 .glass-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: hsla(var(--terminal-accent), 0.7);
+  border: 1px solid hsla(var(--terminal-border), 0.5);
 }
 
 .line-chart-gradient {
-  stop-color: #4CAF50;
+  stop-color: hsl(var(--terminal-positive));
   stop-opacity: 0.1;
 }
 
@@ -252,7 +268,21 @@
 }
 
 .loading-shimmer {
-  background: linear-gradient(to right, #2A3042 8%, #343e58 18%, #2A3042 33%);
-  background-size: 800px 104px;
-  animation: shimmer 1.5s infinite linear;
+  animation: shimmer 1.2s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    hsla(var(--terminal-muted), 0.1) 0%,
+    hsla(var(--terminal-muted), 0.3) 50%,
+    hsla(var(--terminal-muted), 0.1) 100%
+  );
+  background-size: 468px 100%;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
