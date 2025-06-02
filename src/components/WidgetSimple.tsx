@@ -2,6 +2,8 @@ import React, { useRef, useState, useCallback } from 'react';
 import { X, Maximize2, Minimize2, Settings } from 'lucide-react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { cn } from '@/lib/utils';
+import GroupSelector from './ui/GroupSelector';
+import { useGroupStore } from '@/store/groupStore';
 
 interface WidgetSimpleProps {
   id: string;
@@ -13,6 +15,8 @@ interface WidgetSimpleProps {
   size: { width: number; height: number };
   zIndex: number;
   isActive: boolean;
+  groupId?: string;
+  widgetType?: string; // тип виджета для определения торговой пары
   onRemove: () => void;
 }
 
@@ -29,6 +33,8 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   size,
   zIndex,
   isActive,
+  groupId,
+  widgetType,
   onRemove
 }) => {
   const widgetRef = useRef<HTMLDivElement>(null);
@@ -53,8 +59,12 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   const resizeWidget = useDashboardStore(s => s.resizeWidget);
   const bringWidgetToFront = useDashboardStore(s => s.bringWidgetToFront);
   const updateWidgetTitle = useDashboardStore(s => s.updateWidgetTitle);
+  const updateWidget = useDashboardStore(s => s.updateWidget);
   const activeDashboardId = useDashboardStore(s => s.activeDashboardId);
   const dashboards = useDashboardStore(s => s.dashboards);
+  
+  // Group store
+  const setTradingPair = useGroupStore(s => s.setTradingPair);
 
   // Get other widgets for snapping
   const activeDashboard = dashboards.find(d => d.id === activeDashboardId);
@@ -99,6 +109,66 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
 
   const handleTitleBlur = () => {
     handleTitleSubmit();
+  };
+
+  // Функция для получения торгового инструмента из первого виджета дашборда
+  const getDefaultTradingInstrument = () => {
+    if (!activeDashboard || activeDashboard.widgets.length === 0) {
+      return 'USDRUB'; // fallback
+    }
+
+    // Берем первый виджет в дашборде
+    const firstWidget = activeDashboard.widgets[0];
+    
+    // Пытаемся извлечь торговый инструмент из названия
+    const title = firstWidget.userTitle || firstWidget.defaultTitle || firstWidget.title;
+    
+    // Ищем паттерны торговых пар
+    const tradingPairMatch = title.match(/([A-Z]{3,}[A-Z]{3,})/); // например USDRUB, EURUSD
+    if (tradingPairMatch) {
+      return tradingPairMatch[1];
+    }
+    
+    // Если в названии есть USD, EUR и т.д.
+    if (title.includes('USD')) return 'USDRUB';
+    if (title.includes('EUR')) return 'EURRUB';
+    if (title.includes('BTC')) return 'BTCUSD';
+    
+    // По умолчанию
+    return 'USDRUB';
+  };
+
+  // Функция для обновления группы виджета
+  const handleGroupChange = (newGroupId: string | undefined) => {
+    if (activeDashboardId) {
+      updateWidget(activeDashboardId, id, { groupId: newGroupId });
+      
+      // Автоматически установить торговую пару для группы
+      if (newGroupId && widgetType) {
+        let tradingPair = '';
+        
+        // Определяем торговую пару по типу виджета
+        switch (widgetType) {
+          case 'chart':
+          case 'orderForm':
+            tradingPair = getDefaultTradingInstrument();
+            break;
+          case 'portfolio':
+            tradingPair = 'Portfolio';
+            break;
+          case 'transactionHistory':
+            tradingPair = 'History';
+            break;
+          default:
+            // Пытаемся извлечь из названия текущего виджета
+            const currentTitle = userTitle || defaultTitle;
+            const match = currentTitle.match(/([A-Z]{3,}[A-Z]{3,})/);
+            tradingPair = match ? match[1] : getDefaultTradingInstrument();
+        }
+        
+        setTradingPair(newGroupId, tradingPair);
+      }
+    }
   };
 
   // Автофокус на input при редактировании
@@ -384,27 +454,34 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
         )}
         onMouseDown={!isMaximized ? handleDragStart : undefined}
       >
-        <div className="flex items-center flex-1 min-w-0">
-          {isEditingTitle ? (
-            <input
-              ref={titleInputRef}
-              type="text"
-              value={editTitleValue}
-              onChange={handleTitleChange}
-              onKeyDown={handleTitleKeyDown}
-              onBlur={handleTitleBlur}
-              className="text-xs font-medium bg-transparent border-none outline-none text-terminal-text w-full min-w-0"
-              style={{ margin: 0, padding: 0 }}
-            />
-          ) : (
-            <h3 
-              className="text-xs font-medium truncate text-terminal-text cursor-pointer"
-              onDoubleClick={handleTitleDoubleClick}
-              title="Двойной клик для редактирования"
-            >
-              {userTitle || defaultTitle}
-            </h3>
-          )}
+        <div className="flex items-center flex-1 min-w-0 space-x-2">
+          <GroupSelector
+            selectedGroupId={groupId}
+            onGroupSelect={handleGroupChange}
+            className="flex-shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                type="text"
+                value={editTitleValue}
+                onChange={handleTitleChange}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleBlur}
+                className="text-xs font-medium bg-transparent border-none outline-none text-terminal-text w-full min-w-0"
+                style={{ margin: 0, padding: 0 }}
+              />
+            ) : (
+              <h3 
+                className="text-xs font-medium truncate text-terminal-text cursor-pointer"
+                onDoubleClick={handleTitleDoubleClick}
+                title="Двойной клик для редактирования"
+              >
+                {userTitle || defaultTitle}
+              </h3>
+            )}
+          </div>
         </div>
         <div className="flex items-center space-x-1">
           <button 

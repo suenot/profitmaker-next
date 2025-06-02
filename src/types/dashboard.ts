@@ -23,6 +23,7 @@ export const WidgetSchema = z.object({
   userTitle: z.string().optional(),
   position: WidgetPositionSchema,
   config: WidgetConfigSchema,
+  groupId: z.string().optional(), // ID группы виджета
   isVisible: z.boolean().default(true),
   isMinimized: z.boolean().default(false),
 });

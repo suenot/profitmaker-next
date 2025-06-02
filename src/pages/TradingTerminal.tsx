@@ -112,6 +112,8 @@ const TradingTerminal: React.FC = () => {
               size={{ width: widget.position.width, height: widget.position.height }}
               zIndex={widget.position.zIndex || 1}
               isActive={true} // Dashboard widgets are always "active" in their context
+              groupId={widget.groupId}
+              widgetType={widget.type}
               onRemove={() => activeDashboard && removeWidget(activeDashboard.id, widget.id)}
             >
               <WidgetComponent />
