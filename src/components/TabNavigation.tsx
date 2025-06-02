@@ -74,7 +74,7 @@ const TabNavigation: React.FC = () => {
   // Обработчики для dashboard tabs
   const handleAddDashboard = () => {
     const newId = addDashboard({
-      title: `Dashboard ${dashboards.length + 1}`,
+      title: 'Dashboard',
       description: 'New dashboard',
       widgets: [],
       layout: {

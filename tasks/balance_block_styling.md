@@ -30,6 +30,15 @@
 - Скругление углов: `rounded-md`
 - Позиция от края: `2` (bottom-2, left-2/right-2)
 
+## Дополнительные изменения
+
+### ✅ Добавлено актуальное время в `src/pages/TradingTerminal.tsx`
+- Добавлен import `useEffect` в React
+- Добавлено состояние `currentTime` с типом `Date`
+- Добавлен `useEffect` для обновления времени каждую секунду
+- Изменено статичное время `"22:54:42"` на динамическое `currentTime.toLocaleTimeString('ru-RU', { hour12: false })`
+- Время теперь отображается в формате HH:MM:SS и обновляется в реальном времени
+
 ## Проверенные пути
 - `src/components/BottomLeftInfo.tsx` - ✅ обновлен
-- `src/pages/TradingTerminal.tsx` - ✅ проверен, стили правого блока корректны 
+- `src/pages/TradingTerminal.tsx` - ✅ обновлен, добавлено актуальное время 

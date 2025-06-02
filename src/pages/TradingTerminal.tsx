@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Widget from '@/components/WidgetSimple';
 import WidgetMenu from '@/components/WidgetMenu';
 import TabNavigation from '@/components/TabNavigation';
@@ -20,6 +20,7 @@ const widgetComponents: Record<string, React.FC<any>> = {
 
 const TradingTerminal: React.FC = () => {
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
   
   // Subscribe to dashboard store changes
   const activeDashboardId = useDashboardStore(s => s.activeDashboardId);
@@ -61,6 +62,15 @@ const TradingTerminal: React.FC = () => {
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   // Debug logging for dashboard changes
@@ -116,7 +126,7 @@ const TradingTerminal: React.FC = () => {
       )}
       
       <div className="fixed bottom-2 right-2 flex items-center text-terminal-muted text-xs bg-terminal-accent/30 px-3 py-1 rounded-md">
-        <span className="mr-2">22:54:42</span>
+        <span className="mr-2">{currentTime.toLocaleTimeString('ru-RU', { hour12: false })}</span>
         <div className="flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
           <span>Онлайн</span>
