@@ -54,14 +54,14 @@ const defaultWidgetSizes: Record<WidgetType, { width: number; height: number }> 
 };
 
 const widgetTitles: Record<WidgetType, string> = {
-  chart: 'Деньги не спят: график',
-  portfolio: 'Инвестиционный счёт',
-  orderForm: 'Заявка',
-  transactions: 'Деньги не спят: История операций',
-  watchlist: 'Список наблюдения',
-  news: 'Новости рынка',
-  calendar: 'Экономический календарь',
-  positions: 'Открытые позиции'
+  chart: 'Chart',
+  portfolio: 'Balance',
+  orderForm: 'Place Order',
+  transactions: 'Transaction History',
+  watchlist: 'Watchlist',
+  news: 'Market News',
+  calendar: 'Economic Calendar',
+  positions: 'Open Positions'
 };
 
 // Group color palette
@@ -87,7 +87,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       {
         id: '1',
         type: 'portfolio',
-        title: 'Инвестиционный счёт',
+        title: 'Balance',
         position: { x: 20, y: 80 },
         size: { width: 800, height: 350 },
         zIndex: 1,
@@ -97,7 +97,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       {
         id: '2',
         type: 'orderForm',
-        title: 'Заявка',
+        title: 'Place Order',
         position: { x: 830, y: 80 },
         size: { width: 350, height: 550 },
         zIndex: 2,
@@ -107,7 +107,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       {
         id: '3',
         type: 'chart',
-        title: 'Деньги не спят: график',
+        title: 'Chart',
         position: { x: 20, y: 440 },
         size: { width: 650, height: 330 },
         zIndex: 3,
@@ -117,7 +117,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       {
         id: '4',
         type: 'transactions',
-        title: 'Деньги не спят: История операций',
+        title: 'Transaction History',
         position: { x: 680, y: 440 },
         size: { width: 400, height: 330 },
         zIndex: 4,
@@ -137,44 +137,44 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       },
       {
         id: 'group-2',
-        name: 'Группа 2',
+        name: 'Group 2',
         color: groupColors[1],
-        symbol: 'ГРУППА 2',
+        symbol: 'GROUP 2',
         isActive: false
       },
       {
         id: 'group-3',
-        name: 'Группа 3',
+        name: 'Group 3',
         color: groupColors[2],
-        symbol: 'ГРУППА 3',
+        symbol: 'GROUP 3',
         isActive: false
       },
       {
         id: 'group-4',
-        name: 'Группа 4',
+        name: 'Group 4',
         color: groupColors[3],
-        symbol: 'ГРУППА 4',
+        symbol: 'GROUP 4',
         isActive: false
       },
       {
         id: 'group-5',
-        name: 'Группа 5',
+        name: 'Group 5',
         color: groupColors[4],
-        symbol: 'ГРУППА 5',
+        symbol: 'GROUP 5',
         isActive: false
       },
       {
         id: 'group-6',
-        name: 'Группа 6',
+        name: 'Group 6',
         color: groupColors[5],
-        symbol: 'ГРУППА 6',
+        symbol: 'GROUP 6',
         isActive: false
       },
       {
         id: 'group-7',
-        name: 'Группа 7',
+        name: 'Group 7',
         color: groupColors[6],
-        symbol: 'ГРУППА 7',
+        symbol: 'GROUP 7',
         isActive: false
       }
     ];
@@ -218,7 +218,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setWidgets(prev => [...prev, newWidget]);
     setNextZIndex(prev => prev + 1);
     
-    toast(`Виджет "${widgetTitles[type]}" добавлен`, {
+    toast(`Widget "${widgetTitles[type]}" added`, {
       duration: 2000,
     });
     
@@ -231,7 +231,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setWidgets(prev => prev.filter(widget => widget.id !== id));
     
     if (widgetToRemove) {
-      toast(`Виджет "${widgetToRemove.title}" удален`, {
+      toast(`Widget "${widgetToRemove.title}" removed`, {
         duration: 2000,
       });
     }
@@ -277,7 +277,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     setWidgetGroups(prev => [...prev, newGroup]);
     
-    toast(`Группа "${name}" создана`, {
+    toast(`Group "${name}" created`, {
       duration: 2000,
     });
     
@@ -297,7 +297,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const updatedGroup = widgetGroups.find(g => g.id === id);
       if (updatedGroup) {
         const newName = data.name || updatedGroup.name;
-        toast(`Группа "${newName}" обновлена`, {
+        toast(`Group "${newName}" updated`, {
           duration: 2000,
         });
       }
@@ -322,7 +322,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
     
     if (groupToDelete) {
-      toast(`Группа "${groupToDelete.name}" удалена`, {
+      toast(`Group "${groupToDelete.name}" deleted`, {
         duration: 2000,
       });
     }
@@ -339,7 +339,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const group = widgetGroups.find(g => g.id === groupId);
     
     if (widget && group) {
-      toast(`Виджет "${widget.title}" добавлен в группу "${group.name}"`, {
+      toast(`Widget "${widget.title}" added to group "${group.name}"`, {
         duration: 2000,
       });
     }
@@ -356,7 +356,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     );
     
     if (widget && group) {
-      toast(`Виджет "${widget.title}" удален из группы "${group.name}"`, {
+      toast(`Widget "${widget.title}" removed from group "${group.name}"`, {
         duration: 2000,
       });
     }
@@ -373,7 +373,7 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     const group = widgetGroups.find(g => g.id === groupId);
     if (group) {
-      toast(`Группа "${group.name}" активирована`, {
+      toast(`Group "${group.name}" activated`, {
         duration: 2000,
       });
     }

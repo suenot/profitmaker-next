@@ -4,22 +4,22 @@ import { v4 as uuidv4 } from 'uuid';
 import { Group, CreateGroupData, UpdateGroupData, GroupStoreState, GroupColors, GroupColor } from '../types/groups';
 
 interface GroupStoreActions {
-  // Действия с группами
-  createGroup: (data: CreateGroupData) => Group; // только для внутреннего использования
+  // Group actions
+  createGroup: (data: CreateGroupData) => Group; // for internal use only
   updateGroup: (id: string, data: UpdateGroupData) => void;
   deleteGroup: (id: string) => void;
   
-  // Выбор группы
+  // Group selection
   selectGroup: (groupId: string | undefined) => void;
   
-  // Получение данных
+  // Data retrieval
   getGroupById: (id: string) => Group | undefined;
   setTradingPair: (groupId: string, tradingPair: string | undefined) => void;
   setAccount: (groupId: string, account: string | undefined) => void;
   setExchange: (groupId: string, exchange: string | undefined) => void;
   resetGroup: (groupId: string) => void;
   
-  // Инициализация тестовых данных
+  // Test data initialization
   initializeDefaultGroups: () => void;
 }
 
@@ -28,11 +28,11 @@ type GroupStore = GroupStoreState & GroupStoreActions;
 export const useGroupStore = create<GroupStore>()(
   persist(
     (set, get) => ({
-      // Начальное состояние
+      // Initial state
       groups: [],
       selectedGroupId: undefined,
       
-      // Создание группы
+      // Create group
       createGroup: (data: CreateGroupData) => {
         const newGroup: Group = {
           ...data,
@@ -48,7 +48,7 @@ export const useGroupStore = create<GroupStore>()(
         return newGroup;
       },
       
-      // Обновление группы
+      // Update group
       updateGroup: (id: string, data: UpdateGroupData) => {
         set((state) => ({
           groups: state.groups.map(group =>
@@ -59,7 +59,7 @@ export const useGroupStore = create<GroupStore>()(
         }));
       },
       
-      // Удаление группы
+      // Delete group
       deleteGroup: (id: string) => {
         set((state) => ({
           groups: state.groups.filter(group => group.id !== id),
@@ -67,17 +67,17 @@ export const useGroupStore = create<GroupStore>()(
         }));
       },
       
-      // Выбор группы
+      // Select group
       selectGroup: (groupId: string | undefined) => {
         set({ selectedGroupId: groupId });
       },
       
-      // Получение группы по ID
+      // Get group by ID
       getGroupById: (id: string) => {
         return get().groups.find(group => group.id === id);
       },
       
-      // Установка торговой пары для группы
+      // Set trading pair for group
       setTradingPair: (groupId: string, tradingPair: string | undefined) => {
         set((state) => ({
           groups: state.groups.map(group =>
@@ -88,7 +88,7 @@ export const useGroupStore = create<GroupStore>()(
         }));
       },
 
-      // Установка аккаунта для группы
+      // Set account for group
       setAccount: (groupId: string, account: string | undefined) => {
         set((state) => ({
           groups: state.groups.map(group =>
@@ -99,7 +99,7 @@ export const useGroupStore = create<GroupStore>()(
         }));
       },
 
-      // Установка биржи для группы
+      // Set exchange for group
       setExchange: (groupId: string, exchange: string | undefined) => {
         set((state) => ({
           groups: state.groups.map(group =>
@@ -110,7 +110,7 @@ export const useGroupStore = create<GroupStore>()(
         }));
       },
 
-      // Сброс настроек группы
+      // Reset group settings
       resetGroup: (groupId: string) => {
         set((state) => ({
           groups: state.groups.map(group =>
@@ -127,12 +127,12 @@ export const useGroupStore = create<GroupStore>()(
         }));
       },
       
-      // Инициализация тестовых данных
+      // Initialize test data
       initializeDefaultGroups: () => {
         const { groups } = get();
         if (groups.length === 0) {
           const defaultGroups: CreateGroupData[] = [
-            { name: 'Transparent', color: 'transparent' }, // прозрачная группа по умолчанию
+            { name: 'Transparent', color: 'transparent' }, // transparent group by default
             { name: 'Cyan', color: '#00BCD4' },
             { name: 'Red', color: '#F44336' },
             { name: 'Purple', color: '#9C27B0' },

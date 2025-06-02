@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Доступные цвета групп
+// Available group colors
 export const GroupColors = [
   'transparent', // no group
   '#00BCD4', // cyan
@@ -15,14 +15,14 @@ export const GroupColors = [
 
 export type GroupColor = typeof GroupColors[number];
 
-// Схема группы
+// Group schema
 export const GroupSchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.enum(GroupColors),
-  tradingPair: z.string().optional(), // торговая пара для отображения вместо цвета
-  account: z.string().optional(), // email аккаунта
-  exchange: z.string().optional(), // название биржи
+  tradingPair: z.string().optional(), // trading pair for display instead of color
+  account: z.string().optional(), // account email
+  exchange: z.string().optional(), // exchange name
   description: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -30,11 +30,11 @@ export const GroupSchema = z.object({
 
 export type Group = z.infer<typeof GroupSchema>;
 
-// Типы для создания и обновления групп
+// Types for creating and updating groups
 export type CreateGroupData = Omit<Group, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateGroupData = Partial<Omit<Group, 'id' | 'createdAt' | 'updatedAt'>>;
 
-// Схема состояния groupStore
+// GroupStore state schema
 export const GroupStoreStateSchema = z.object({
   groups: z.array(GroupSchema),
   selectedGroupId: z.string().optional(),

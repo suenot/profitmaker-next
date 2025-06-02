@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Схема позиции и размера виджета
+// Widget position and size schema
 export const WidgetPositionSchema = z.object({
   x: z.number(),
   y: z.number(),
@@ -10,26 +10,26 @@ export const WidgetPositionSchema = z.object({
 });
 export type WidgetPosition = z.infer<typeof WidgetPositionSchema>;
 
-// Схема конфигурации виджета
+// Widget configuration schema
 export const WidgetConfigSchema = z.record(z.any()).optional();
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>;
 
-// Схема виджета
+// Widget schema
 export const WidgetSchema = z.object({
   id: z.string(), // uuid
   type: z.enum(['chart', 'portfolio', 'orderForm', 'transactionHistory', 'custom']),
-  title: z.string(), // deprecated - оставляем для совместимости
+  title: z.string(), // deprecated - keep for compatibility
   defaultTitle: z.string(),
   userTitle: z.string().optional(),
   position: WidgetPositionSchema,
   config: WidgetConfigSchema,
-  groupId: z.string().optional(), // ID группы виджета
+  groupId: z.string().optional(), // Widget group ID
   isVisible: z.boolean().default(true),
   isMinimized: z.boolean().default(false),
 });
 export type Widget = z.infer<typeof WidgetSchema>;
 
-// Схема layout dashboard'а
+// Dashboard layout schema
 export const DashboardLayoutSchema = z.object({
   gridSize: z.object({
     width: z.number().default(1920),
@@ -40,7 +40,7 @@ export const DashboardLayoutSchema = z.object({
 });
 export type DashboardLayout = z.infer<typeof DashboardLayoutSchema>;
 
-// Схема dashboard'а
+// Dashboard schema
 export const DashboardSchema = z.object({
   id: z.string(), // uuid
   title: z.string(),
@@ -53,14 +53,14 @@ export const DashboardSchema = z.object({
 });
 export type Dashboard = z.infer<typeof DashboardSchema>;
 
-// Схема состояния dashboardStore
+// Dashboard store state schema
 export const DashboardStoreStateSchema = z.object({
   dashboards: z.array(DashboardSchema),
   activeDashboardId: z.string().optional(),
 });
 export type DashboardStoreState = z.infer<typeof DashboardStoreStateSchema>;
 
-// Типы для создания новых сущностей (без id и dates)
+// Types for creating new entities (without id and dates)
 export type CreateDashboardData = Omit<Dashboard, 'id' | 'createdAt' | 'updatedAt'>;
 export type CreateWidgetData = Omit<Widget, 'id'>;
 export type UpdateDashboardData = Partial<Omit<Dashboard, 'id' | 'createdAt' | 'updatedAt'>>;

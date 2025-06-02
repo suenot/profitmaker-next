@@ -69,11 +69,11 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     
     // Widget titles mapping
     const widgetTitles = {
-      chart: 'Деньги не спят: график',
-      portfolio: 'Инвестиционный счёт',
-      orderForm: 'Заявка',
-      transactionHistory: 'Деньги не спят: История операций',
-      custom: 'Пользовательский виджет'
+      chart: 'Chart',
+      portfolio: 'Balance',
+      orderForm: 'Place Order',
+      transactionHistory: 'Transaction History',
+      custom: 'Custom Widget'
     };
     
     addWidget(activeDashboardId, {
@@ -91,11 +91,11 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
   };
 
   const widgetOptions = [
-    { type: 'chart' as WidgetType, label: 'График цены', icon: <LineChart size={16} /> },
-    { type: 'portfolio' as WidgetType, label: 'Портфель', icon: <PieChart size={16} /> },
-    { type: 'orderForm' as WidgetType, label: 'Форма заявки', icon: <FileText size={16} /> },
-    { type: 'transactionHistory' as WidgetType, label: 'История операций', icon: <ListOrdered size={16} /> },
-    { type: 'custom' as WidgetType, label: 'Пользовательский виджет', icon: <BarChart3 size={16} /> },
+    { type: 'chart' as WidgetType, label: 'Price Chart', icon: <LineChart size={16} /> },
+    { type: 'portfolio' as WidgetType, label: 'Portfolio', icon: <PieChart size={16} /> },
+    { type: 'orderForm' as WidgetType, label: 'Place Order', icon: <FileText size={16} /> },
+    { type: 'transactionHistory' as WidgetType, label: 'Transaction History', icon: <ListOrdered size={16} /> },
+    { type: 'custom' as WidgetType, label: 'Custom Widget', icon: <BarChart3 size={16} /> },
   ];
 
   return (
@@ -105,7 +105,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       style={{ left: adjustedPosition.x, top: adjustedPosition.y, width: '300px' }}
     >
       <div className="px-3 py-2 border-b border-terminal-border/50">
-        <h3 className="text-sm font-medium">Добавить виджет</h3>
+        <h3 className="text-sm font-medium">Add Widget</h3>
       </div>
       
       <div className="p-2">
@@ -122,7 +122,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       </div>
       
       <div className="p-2 border-t border-terminal-border/50 text-xs text-terminal-muted px-3">
-        Выберите виджет для добавления на рабочую область
+        Select a widget to add to the workspace
       </div>
     </div>
   );

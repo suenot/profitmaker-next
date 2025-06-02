@@ -93,16 +93,16 @@ const GroupManagerDialog: React.FC<GroupManagerDialogProps> = ({ open, onOpenCha
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px] bg-terminal-widget text-terminal-text">
         <DialogHeader>
-          <DialogTitle>Управление группами виджетов</DialogTitle>
+          <DialogTitle>Widget Group Management</DialogTitle>
           <DialogDescription>
-            Организуйте виджеты по группам для совместной работы с инструментами
+            Organize widgets into groups for collaborative work with instruments
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
           {/* Create new group */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium">Создать новую группу</h3>
+            <h3 className="text-sm font-medium">Create New Group</h3>
             <div className="flex items-center gap-2">
               <div className="flex-shrink-0">
                 <div className="flex gap-1">
@@ -117,13 +117,13 @@ const GroupManagerDialog: React.FC<GroupManagerDialogProps> = ({ open, onOpenCha
                 </div>
               </div>
               <Input 
-                placeholder="Название группы" 
+                placeholder="Group Name" 
                 value={newGroupName} 
                 onChange={(e) => setNewGroupName(e.target.value)}
                 className="flex-grow bg-terminal-accent/30 border-terminal-border"
               />
               <Input 
-                placeholder="Тикер" 
+                placeholder="Ticker" 
                 value={newGroupSymbol} 
                 onChange={(e) => setNewGroupSymbol(e.target.value)}
                 className="w-24 bg-terminal-accent/30 border-terminal-border"
@@ -133,19 +133,19 @@ const GroupManagerDialog: React.FC<GroupManagerDialogProps> = ({ open, onOpenCha
                 onClick={handleCreateGroup}
                 disabled={!newGroupName || !newGroupSymbol}
               >
-                Создать
+                Create
               </Button>
             </div>
           </div>
           
           {/* Group list */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium">Существующие группы</h3>
+            <h3 className="text-sm font-medium">Existing Groups</h3>
             <div className="border rounded-md border-terminal-border">
               {widgetGroups.length === 0 ? (
-                <div className="p-4 text-center text-terminal-muted text-sm">
-                  Нет созданных групп
-                </div>
+                                  <div className="p-4 text-center text-terminal-muted text-sm">
+                    No groups created
+                  </div>
               ) : (
                 <div className="divide-y divide-terminal-border">
                   {widgetGroups.map(group => (
@@ -192,7 +192,7 @@ const GroupManagerDialog: React.FC<GroupManagerDialogProps> = ({ open, onOpenCha
                             <span>{group.name}</span>
                             <span className="text-xs text-terminal-muted">{group.symbol}</span>
                             <span className="text-xs px-2 py-0.5 bg-terminal-accent/30 rounded-full">
-                              {getWidgetCount(group.id)} виджетов
+                              {getWidgetCount(group.id)} widgets
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -221,7 +221,7 @@ const GroupManagerDialog: React.FC<GroupManagerDialogProps> = ({ open, onOpenCha
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Закрыть
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>

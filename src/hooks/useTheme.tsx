@@ -22,27 +22,27 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Обновленные цвета для современных тем (HSL для Tailwind)
+// Updated colors for modern themes (HSL for Tailwind)
 const modernDarkColors: ThemeColors = {
-  bg: '220 13% 11%',              // #181B20 глубокий графитовый
-  widget: '222 16% 16%',          // #23272F тёмно-серый для панелей
-  accent: '217 29% 16%',          // #242D39 для hover/выделения
-  text: '210 40% 98%',            // #F7FAFC почти белый текст
-  muted: '210 13% 69%',           // #A0AEC0 светло-серый для второстепенного текста
-  positive: '152 77% 43%',        // #16C784 ярко-зелёный (buy)
-  negative: '356 77% 57%',        // #EA3943 ярко-красный (sell)
-  border: '220 21% 23%'           // #2D3748 тёмно-серый для границ
+  bg: '220 13% 11%',              // #181B20 deep graphite
+  widget: '222 16% 16%',          // #23272F dark gray for panels
+  accent: '217 29% 16%',          // #242D39 for hover/selection
+  text: '210 40% 98%',            // #F7FAFC almost white text
+  muted: '210 13% 69%',           // #A0AEC0 light gray for secondary text
+  positive: '152 77% 43%',        // #16C784 bright green (buy)
+  negative: '356 77% 57%',        // #EA3943 bright red (sell)
+  border: '220 21% 23%'           // #2D3748 dark gray for borders
 };
 
 const modernLightColors: ThemeColors = {
-  bg: '210 28% 98%',              // #F7F9FB светлый фон
-  widget: '0 0% 100%',            // #FFFFFF белый для панелей
-  accent: '210 28% 96%',          // #F1F5F9 светло-серый для выделения
-  text: '222 44% 14%',            // #1A202C тёмно-серый текст
-  muted: '220 15% 35%',           // #4A5568 серый для второстепенного текста
-  positive: '152 77% 43%',        // #16C784 ярко-зелёный (buy)
-  negative: '356 77% 57%',        // #EA3943 ярко-красный (sell)
-  border: '210 28% 90%'           // #E2E8F0 светло-серый для границ
+  bg: '210 28% 98%',              // #F7F9FB light background
+  widget: '0 0% 100%',            // #FFFFFF white for panels
+  accent: '210 28% 96%',          // #F1F5F9 light gray for selection
+  text: '222 44% 14%',            // #1A202C dark gray text
+  muted: '220 15% 35%',           // #4A5568 gray for secondary text
+  positive: '152 77% 43%',        // #16C784 bright green (buy)
+  negative: '356 77% 57%',        // #EA3943 bright red (sell)
+  border: '210 28% 90%'           // #E2E8F0 light gray for borders
 };
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
@@ -62,14 +62,14 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('🎨 Applying theme colors:', colors);
     const root = document.documentElement;
     
-    // Применяем цвета напрямую
+    // Apply colors directly
     Object.entries(colors).forEach(([key, value]) => {
       const cssVar = `--terminal-${key}`;
       console.log(`🎨 Setting ${cssVar}: ${value}`);
       root.style.setProperty(cssVar, value);
     });
     
-    // Принудительно обновляем стили
+    // Force update styles
     root.style.setProperty('--terminal-bg', colors.bg);
     root.style.setProperty('--terminal-widget', colors.widget);
     root.style.setProperty('--terminal-accent', colors.accent);
@@ -79,7 +79,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     root.style.setProperty('--terminal-negative', colors.negative);
     root.style.setProperty('--terminal-border', colors.border);
     
-    // Проверяем применение
+    // Verify application
     setTimeout(() => {
       const computedStyle = getComputedStyle(root);
       console.log('🎨 Verification - Applied CSS variables:');
@@ -94,7 +94,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('🎨 Theme effect triggered - theme:', theme);
     
-    // Применяем класс темы
+    // Apply theme class
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
@@ -103,14 +103,14 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       document.documentElement.classList.add('light');
     }
     
-    // Сохраняем в localStorage
+    // Save to localStorage
     localStorage.setItem('theme', theme);
     
-    // Применяем современные цвета сразу
+    // Apply modern colors immediately
     const modernColors = theme === 'dark' ? modernDarkColors : modernLightColors;
     applyThemeColors(modernColors);
     
-    // Обновляем вариант темы
+    // Update theme variant
     const newVariant = theme === 'dark' ? 'dark' : 'light';
     setThemeVariantState(newVariant);
     localStorage.setItem('themeVariant', newVariant);

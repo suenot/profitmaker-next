@@ -12,7 +12,7 @@ import {
   Widget,
 } from '@/types/dashboard';
 
-// Вспомогательная функция для генерации uuid (v4, простая)
+// Helper function for generating uuid (v4, simple)
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -20,12 +20,12 @@ function uuidv4() {
   });
 }
 
-// Функция для создания timestamp
+// Function for creating timestamp
 function getCurrentTimestamp() {
   return new Date().toISOString();
 }
 
-// Функция для создания дефолтного dashboard'а
+// Function for creating default dashboard
 function createDefaultDashboard(): Dashboard {
   const now = getCurrentTimestamp();
   return {
@@ -36,8 +36,8 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'portfolio',
-        title: 'Инвестиционный счёт', // deprecated
-        defaultTitle: 'Инвестиционный счёт',
+        title: 'Balance', // deprecated
+        defaultTitle: 'Balance',
         userTitle: undefined,
         position: { x: 20, y: 80, width: 800, height: 350, zIndex: 1 },
         config: {},
@@ -47,8 +47,8 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'orderForm',
-        title: 'Заявка', // deprecated
-        defaultTitle: 'Заявка',
+        title: 'Place Order', // deprecated
+        defaultTitle: 'Place Order',
         userTitle: undefined,
         position: { x: 840, y: 80, width: 350, height: 550, zIndex: 2 },
         config: {},
@@ -58,8 +58,8 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'chart',
-        title: 'Деньги не спят: график', // deprecated
-        defaultTitle: 'Деньги не спят: график',
+        title: 'Chart', // deprecated
+        defaultTitle: 'Chart',
         userTitle: undefined,
         position: { x: 20, y: 450, width: 650, height: 330, zIndex: 3 },
         config: {},
@@ -69,8 +69,8 @@ function createDefaultDashboard(): Dashboard {
       {
         id: uuidv4(),
         type: 'transactionHistory',
-        title: 'Деньги не спят: История операций', // deprecated
-        defaultTitle: 'Деньги не спят: История операций',
+        title: 'Transaction History', // deprecated
+        defaultTitle: 'Transaction History',
         userTitle: undefined,
         position: { x: 690, y: 450, width: 400, height: 330, zIndex: 4 },
         config: {},
@@ -146,7 +146,7 @@ export const useDashboardStore = create<DashboardStore>()(
           
           state.dashboards.splice(index, 1);
           
-          // Если удаляем активный dashboard, выбираем другой
+          // If removing active dashboard, select another one
           if (state.activeDashboardId === dashboardId) {
             state.activeDashboardId = state.dashboards[0]?.id;
           }
@@ -301,10 +301,10 @@ export const useDashboardStore = create<DashboardStore>()(
           const widget = dashboard.widgets.find(w => w.id === widgetId);
           if (!widget) return;
           
-          // Найти максимальный z-index среди всех виджетов
+          // Find maximum z-index among all widgets
           const maxZIndex = Math.max(...dashboard.widgets.map(w => w.position.zIndex || 1));
           
-          // Установить z-index текущего виджета выше максимального
+          // Set current widget z-index higher than maximum
           widget.position.zIndex = maxZIndex + 1;
           dashboard.updatedAt = getCurrentTimestamp();
         });
@@ -344,7 +344,7 @@ export const useDashboardStore = create<DashboardStore>()(
           const widget = dashboard.widgets.find(w => w.id === widgetId);
           if (!widget) return;
           
-          // Если пустая строка, очищаем userTitle, иначе устанавливаем
+          // If empty string, clear userTitle, otherwise set it
           widget.userTitle = userTitle.trim() === '' ? undefined : userTitle.trim();
           dashboard.updatedAt = getCurrentTimestamp();
         });
@@ -388,7 +388,7 @@ export const useDashboardStore = create<DashboardStore>()(
         dashboards: state.dashboards, 
         activeDashboardId: state.activeDashboardId 
       }),
-      // Валидация через zod при загрузке
+      // Validation via zod on load
       merge: (persisted, current) => {
         try {
           const parsed = DashboardStoreStateSchema.parse(persisted);
@@ -397,7 +397,7 @@ export const useDashboardStore = create<DashboardStore>()(
           return current;
         }
       },
-      // После загрузки из localStorage инициализируем дефолтный dashboard если нужно
+      // After loading from localStorage initialize default dashboard if needed
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.initializeWithDefault();

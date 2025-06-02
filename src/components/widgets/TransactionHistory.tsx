@@ -7,52 +7,52 @@ const transactionData = [
   { 
     id: 'transfer-1', 
     type: 'transfer', 
-    description: 'Перевод денег между счетами', 
+    description: 'Money transfer between accounts', 
     amount: '-500 000 ₽', 
     isNegative: true,
-    date: 'Сегодня', 
+    date: 'Today', 
     time: '16:23', 
-    account: 'Спекулятивный счёт'
+    account: 'Speculative Account'
   },
   { 
     id: 'deposit-1', 
     type: 'deposit', 
-    description: 'Пополнение счета', 
+    description: 'Account deposit', 
     amount: '500 000 ₽', 
     isNegative: false,
-    date: 'Сегодня', 
+    date: 'Today', 
     time: '16:23', 
-    account: 'Спекулятивный счёт'
+    account: 'Speculative Account'
   },
   { 
     id: 'tax-1', 
     type: 'tax', 
-    description: 'Корректировка налога', 
+    description: 'Tax adjustment', 
     amount: '1 026 ₽', 
     isNegative: false,
-    date: '20 января 2025', 
+    date: 'January 20, 2025', 
     time: '23:35', 
-    account: 'Спекулятивный счёт'
+    account: 'Speculative Account'
   },
   { 
     id: 'tax-2', 
     type: 'tax', 
-    description: 'Удержание налога', 
+    description: 'Tax withholding', 
     amount: '-25 873 ₽', 
     isNegative: true,
-    date: '01 января 2025', 
+    date: 'January 01, 2025', 
     time: '01:57', 
-    account: 'Спекулятивный счёт'
+    account: 'Speculative Account'
   },
   { 
     id: 'fee-1', 
     type: 'fee', 
-    description: 'Списание вариационной маржи', 
+    description: 'Variation margin deduction', 
     amount: '-5,47 ₽', 
     isNegative: true,
-    date: '13 сентября 2024', 
+    date: 'September 13, 2024', 
     time: '19:03', 
-    account: 'Спекулятивный счёт'
+    account: 'Speculative Account'
   },
 ];
 
@@ -88,7 +88,7 @@ const TransactionHistoryWidget: React.FC = () => {
           <input
             type="text"
             className="bg-terminal-accent/30 border border-terminal-border rounded-md py-2 pl-10 pr-3 text-sm w-64"
-            placeholder="Деньги не спят: История операций"
+            placeholder="Transaction History"
             readOnly
           />
         </div>

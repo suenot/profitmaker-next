@@ -133,7 +133,7 @@ const TradingTerminal: React.FC = () => {
         <span className="mr-2">{currentTime.toLocaleTimeString('ru-RU', { hour12: false })}</span>
         <div className="flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-          <span>Онлайн</span>
+          <span>Online</span>
         </div>
       </div>
     </div>

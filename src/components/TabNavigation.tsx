@@ -11,7 +11,7 @@ const TabNavigation: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [isThemeSheetOpen, setIsThemeSheetOpen] = useState(false);
   
-  // Состояние для переименования дашбордов
+  // State for renaming dashboards
   const [editingDashboardId, setEditingDashboardId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
 
@@ -24,7 +24,7 @@ const TabNavigation: React.FC = () => {
   const updateDashboard = useDashboardStore(s => s.updateDashboard);
   const initializeWithDefault = useDashboardStore(s => s.initializeWithDefault);
 
-  // Инициализация дефолтного dashboard при первом запуске
+  // Initialize default dashboard on first launch
   useEffect(() => {
     initializeWithDefault();
   }, [initializeWithDefault]);
@@ -58,7 +58,7 @@ const TabNavigation: React.FC = () => {
     };
   }, [activeDashboardId, dashboards, setActiveDashboard]);
 
-  // Получаем активного пользователя
+  // Get active user
   const activeUserId = useUserStore(s => s.activeUserId);
   const users = useUserStore(s => s.users);
   const activeUser = users.find(u => u.id === activeUserId);
@@ -71,7 +71,7 @@ const TabNavigation: React.FC = () => {
     }
   };
 
-  // Обработчики для dashboard tabs
+  // Handlers for dashboard tabs
   const handleAddDashboard = () => {
     const newId = addDashboard({
       title: 'Dashboard',
@@ -94,7 +94,7 @@ const TabNavigation: React.FC = () => {
     }
   };
 
-  // Обработчики для переименования дашбордов
+  // Handlers for renaming dashboards
   const handleDashboardDoubleClick = (dashboard: any, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingDashboardId(dashboard.id);
@@ -177,7 +177,7 @@ const TabNavigation: React.FC = () => {
             <Plus size={18} />
           </button>
         </div>
-        {/* Блок с тремя иконками */}
+        {/* Block with three icons */}
         <div className="flex items-center space-x-3">
           <button className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors">
             <Bell size={18} className="text-terminal-muted" />

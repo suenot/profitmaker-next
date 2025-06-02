@@ -116,7 +116,7 @@
   }
 }
 
-/* Widget container styles - адаптивные для светлой и темной темы */
+/* Widget container styles - adaptive for light and dark themes */
 .widget-container {
   position: absolute;
   border-radius: 8px;
@@ -125,25 +125,25 @@
               box-shadow 0.3s cubic-bezier(0.2, 0, 0.2, 1),
               opacity 0.3s cubic-bezier(0.2, 0, 0.2, 1);
   
-  /* Светлая тема */
+  /* Light theme */
   background-color: hsl(var(--terminal-widget));
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .dark .widget-container {
-  /* Темная тема */
+  /* Dark theme */
   background-color: rgba(30, 34, 48, 0.95);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .widget-container:hover {
-  /* Светлая тема */
+  /* Light theme */
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .dark .widget-container:hover {
-  /* Темная тема */
+  /* Dark theme */
   box-shadow: 0 12px 42px rgba(0, 0, 0, 0.25);
 }
 

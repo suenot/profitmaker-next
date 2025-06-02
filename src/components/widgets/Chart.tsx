@@ -33,14 +33,14 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
   const [currentPrice, setCurrentPrice] = useState(86.56);
   
   const timeframes = [
-    { id: '1M', label: '1М' },
-    { id: '5M', label: '5М' },
-    { id: '10M', label: '10М' },
-    { id: '1H', label: '1Ч' },
-    { id: '4H', label: '4Ч' },
-    { id: 'D', label: 'Д' },
-    { id: 'W', label: 'Н' },
-    { id: 'M', label: 'Мес' },
+    { id: '1M', label: '1M' },
+    { id: '5M', label: '5M' },
+    { id: '10M', label: '10M' },
+    { id: '1H', label: '1H' },
+    { id: '4H', label: '4H' },
+    { id: 'D', label: 'D' },
+    { id: 'W', label: 'W' },
+    { id: 'M', label: 'M' },
   ];
   
   return (
@@ -48,7 +48,7 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
       <div className="flex items-center space-x-2 mb-2">
         <span className="text-sm flex items-center text-terminal-muted">
           <Clock size={14} className="mr-1" />
-          Деньги не спят: график {symbol}
+                      Chart {symbol}
         </span>
       </div>
       
@@ -67,7 +67,7 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
         
         <div className="flex items-center space-x-2">
           <button className="px-3 py-1 text-xs rounded bg-terminal-accent/30 text-terminal-muted hover:bg-terminal-accent/50">
-            Индикаторы
+            Indicators
           </button>
           <button className="p-1 rounded hover:bg-terminal-accent/30">
             <Maximize size={14} className="text-terminal-muted" />
@@ -106,7 +106,7 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
                 fontSize: '12px'
               }} 
               labelStyle={{ color: 'var(--terminal-text)' }}
-              formatter={(value: number) => [`${value.toFixed(4)}`, 'Цена']}
+              formatter={(value: number) => [`${value.toFixed(4)}`, 'Price']}
             />
             <Area 
               type="monotone" 
@@ -130,12 +130,12 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({ symbol = 'USDRUB' }) => {
         </ResponsiveContainer>
         
         <div className="absolute bottom-4 left-4 text-xs text-terminal-muted flex space-x-8">
-          <span>сент.</span>
-          <span>окт.</span>
-          <span>нояб.</span>
-          <span>дек.</span>
+          <span>Sep</span>
+          <span>Oct</span>
+          <span>Nov</span>
+          <span>Dec</span>
           <span>2025</span>
-          <span>февр.</span>
+          <span>Feb</span>
         </div>
         
         <div className="absolute bottom-4 right-4 text-xs text-terminal-muted">

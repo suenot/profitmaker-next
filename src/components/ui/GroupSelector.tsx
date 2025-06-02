@@ -31,25 +31,25 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     resetGroup
   } = useGroupStore();
 
-  // User store для получения данных аккаунта
+  // User store for getting account data
   const { users, activeUserId } = useUserStore();
   const activeUser = users.find(u => u.id === activeUserId);
   const firstAccount = activeUser?.accounts[0];
 
-  // Инициализация групп и пользователя при первом рендере
+  // Initialize groups and user on first render
   React.useEffect(() => {
     initializeDefaultGroups();
     
-    // Инициализируем тестового пользователя если нет активного
+    // Initialize test user if no active user
     if (!activeUser && users.length === 0) {
-      // Используем хук внутри компонента - добавляем пользователя через store
+      // Use hook inside component - add user through store
       const { addUser, addAccount } = useUserStore.getState();
       addUser({ 
         email: 'suenot@gmail.com',
         name: 'Test User'
       });
       
-      // Находим созданного пользователя
+      // Find created user
       const newUser = useUserStore.getState().users.find(u => u.email === 'suenot@gmail.com');
       if (newUser) {
         addAccount(newUser.id, {
@@ -64,22 +64,22 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
   const selectedGroup = selectedGroupId ? getGroupById(selectedGroupId) : undefined;
 
-  // Инициализация значений input'ов на основе данных пользователя и группы
+  // Initialize input values based on user and group data
   React.useEffect(() => {
     if (selectedGroup) {
-      // Если группа выбрана, показываем данные из группы
+      // If group is selected, show data from group
       setAccountInput(selectedGroup.account || firstAccount?.email || activeUser?.email || 'suenot@gmail.com');
       setExchangeInput(selectedGroup.exchange || firstAccount?.exchange || 'binance');
       setTradingPairInput(selectedGroup.tradingPair || 'btcusdt');
     } else {
-      // Если группа не выбрана, показываем данные пользователя
+      // If no group is selected, show user data
       setAccountInput(firstAccount?.email || activeUser?.email || 'suenot@gmail.com');
       setExchangeInput(firstAccount?.exchange || 'binance');
       setTradingPairInput('btcusdt');
     }
   }, [firstAccount, activeUser, selectedGroup]);
 
-  // Обработчики изменения input'ов с синхронизацией в store
+  // Input change handlers with store synchronization
   const handleAccountChange = (value: string) => {
     setAccountInput(value);
     if (selectedGroup) {
@@ -106,7 +106,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     setIsOpen(false);
   };
 
-  // Функция для получения названия цвета на английском
+  // Function to get color name in English
   const getColorName = (color: string) => {
     const colorMap: Record<string, string> = {
       'transparent': 'Transparent',
@@ -122,16 +122,16 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     return colorMap[color] || 'Unknown';
   };
 
-  // Функция для сброса группы
+  // Function to reset group
   const handleResetGroup = (e: React.MouseEvent, groupId: string) => {
-    e.stopPropagation(); // предотвращаем выбор группы при клике на крестик
+    e.stopPropagation(); // prevent group selection when clicking on cross
     resetGroup(groupId);
   };
 
   return (
     <>
       <div className={`relative ${className}`}>
-        {/* Кнопка селектора */}
+        {/* Selector button */}
         <button
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
@@ -146,7 +146,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
             backgroundColor: selectedGroup ? selectedGroup.color : 'transparent',
             borderColor: selectedGroup ? selectedGroup.color : undefined,
           }}
-          title={selectedGroup ? `Группа: ${selectedGroup.name}` : 'Выбрать группу'}
+          title={selectedGroup ? `Group: ${selectedGroup.name}` : 'Select group'}
         >
           {!selectedGroup && (
             <Plus size={8} className="text-terminal-muted" />
@@ -154,10 +154,10 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
         </button>
       </div>
 
-      {/* Portal для popover */}
+      {/* Portal for popover */}
       {isOpen && buttonPosition && createPortal(
         <>
-          {/* Overlay для закрытия */}
+          {/* Overlay for closing */}
           <div
             className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
@@ -172,9 +172,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
             }}
           >
             <div className="p-3">
-              {/* Три input'а для аккаунта, биржи и торговой пары */}
+              {/* Three inputs for account, exchange and trading pair */}
               <div className="space-y-2 mb-3">
-                {/* Аккаунт */}
+                                  {/* Account */}
                 <div className="relative">
                   <input
                     type="text"
@@ -185,7 +185,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   />
                 </div>
                 
-                {/* Биржа */}
+                {/* Exchange */}
                 <div className="relative">
                   <input
                     type="text"
@@ -196,7 +196,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   />
                 </div>
                 
-                {/* Торговая пара с крестиком для сброса группы */}
+                {/* Trading pair with cross for group reset */}
                 <div className="relative">
                   <input
                     type="text"
@@ -206,12 +206,12 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                     className={`w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent ${selectedGroup ? 'pr-8' : ''}`}
                     autoFocus
                   />
-                  {/* Крестик для сброса группы - только если группа выбрана */}
+                  {/* Cross for group reset - only if group is selected */}
                   {selectedGroup && (
                     <button
                       onClick={() => handleGroupSelect(null)}
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-terminal-accent/20 transition-colors"
-                      title="Убрать привязку к группе"
+                      title="Remove group binding"
                     >
                       <X size={12} className="text-terminal-muted hover:text-terminal-text" />
                     </button>
@@ -219,7 +219,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                 </div>
               </div>
               
-              {/* Список групп */}
+              {/* Group list */}
               <div className="max-h-48 overflow-y-auto">
                 {groups.map((group) => (
                   <div
@@ -242,12 +242,12 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                         : getColorName(group.color)
                       }
                     </span>
-                    {/* Крестик для сброса группы - показывается при hover, скрыт для прозрачной группы */}
+                    {/* Cross for group reset - shown on hover, hidden for transparent group */}
                     {group.color !== 'transparent' && (
                       <button
                         onClick={(e) => handleResetGroup(e, group.id)}
                         className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-terminal-accent/30 transition-opacity"
-                        title="Сбросить настройки группы"
+                        title="Reset group settings"
                       >
                         <X size={12} className="text-terminal-muted hover:text-terminal-text" />
                       </button>

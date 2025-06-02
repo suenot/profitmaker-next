@@ -14,7 +14,7 @@ import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Plus, Trash2, Check } from 'lucide-react';
 
-// Статический список бирж
+// Static list of exchanges
 const EXCHANGES = [
   { id: 'binance', name: 'Binance' },
   { id: 'bybit', name: 'Bybit' },
@@ -36,16 +36,16 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
   const removeUser = useUserStore((s) => s.removeUser);
   const setActiveUser = useUserStore((s) => s.setActiveUser);
 
-  // Для добавления пользователя
+  // For adding user
   const [showAddUser, setShowAddUser] = useState(false);
-  // Для редактирования пользователя
+  // For editing user
   const [editUserId, setEditUserId] = useState<string | null>(null);
-  // Для редактирования аккаунта
+  // For editing account
   const [editAccount, setEditAccount] = useState<{ userId: string; account: ExchangeAccount } | null>(null);
-  // Для добавления аккаунта
+  // For adding account
   const [addAccountUserId, setAddAccountUserId] = useState<string | null>(null);
 
-  // Пустое состояние
+  // Empty state
   if (users.length === 0) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -121,7 +121,7 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
           <Button onClick={() => setShowAddUser(true)} className="w-full" variant="outline">
             <Plus className="mr-2" size={16} /> Add user
           </Button>
-          {/* Аккаунты активного пользователя */}
+          {/* Active user accounts */}
           {activeUserId && (
             <UserAccountsBlock
               user={users.find(u => u.id === activeUserId)!}
@@ -136,20 +136,20 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
           </SheetClose>
         </SheetFooter>
       </SheetContent>
-      {/* Sheet для добавления пользователя */}
+      {/* Sheet for adding user */}
       {showAddUser && (
         <EditUserSheet
           onClose={() => setShowAddUser(false)}
         />
       )}
-      {/* Sheet для редактирования пользователя */}
+      {/* Sheet for editing user */}
       {editUserId && (
         <EditUserSheet
           user={users.find(u => u.id === editUserId)!}
           onClose={() => setEditUserId(null)}
         />
       )}
-      {/* Sheet для редактирования аккаунта */}
+      {/* Sheet for editing account */}
       {editAccount && (
         <EditAccountSheet
           userId={editAccount.userId}
@@ -157,7 +157,7 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
           onClose={() => setEditAccount(null)}
         />
       )}
-      {/* Sheet для добавления аккаунта */}
+      {/* Sheet for adding account */}
       {addAccountUserId && (
         <EditAccountSheet
           userId={addAccountUserId}
@@ -168,7 +168,7 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
   );
 };
 
-// Блок аккаунтов пользователя
+// User accounts block
 const UserAccountsBlock: React.FC<{
   user: User;
   onEditAccount: (acc: ExchangeAccount) => void;
@@ -194,7 +194,7 @@ const UserAccountsBlock: React.FC<{
   );
 };
 
-// Sheet для редактирования пользователя
+// Sheet for editing user
 const EditUserSheet: React.FC<{ user?: User; onClose: () => void; }> = ({ user, onClose }) => {
   const addUser = useUserStore(s => s.addUser);
   const updateUser = useUserStore(s => s.updateUser);
@@ -272,7 +272,7 @@ const EditUserSheet: React.FC<{ user?: User; onClose: () => void; }> = ({ user, 
   );
 };
 
-// Sheet для редактирования/добавления аккаунта
+// Sheet for editing/adding account
 const EditAccountSheet: React.FC<{
   userId: string;
   account?: ExchangeAccount;

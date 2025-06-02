@@ -16,12 +16,12 @@ interface WidgetSimpleProps {
   zIndex: number;
   isActive: boolean;
   groupId?: string;
-  widgetType?: string; // тип виджета для определения торговой пары
+  widgetType?: string; // widget type for determining trading pair
   onRemove: () => void;
 }
 
-const SNAP_DISTANCE = 8; // Расстояние для прилипания в пикселях
-const HEADER_HEIGHT = 0; // Высота header + tabs navigation в пикселях
+const SNAP_DISTANCE = 8; // Snap distance in pixels
+const HEADER_HEIGHT = 0; // Header + tabs navigation height in pixels
 
 const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   id,
@@ -47,7 +47,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     size: { width: number; height: number };
   } | null>(null);
   
-  // Состояние для редактирования названия
+  // State for title editing
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitleValue, setEditTitleValue] = useState('');
   
@@ -79,7 +79,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     setCurrentSize(size);
   }, [size.width, size.height]);
 
-  // Функции для редактирования названия
+  // Functions for title editing
   const handleTitleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -111,43 +111,43 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     handleTitleSubmit();
   };
 
-  // Функция для получения торгового инструмента из первого виджета дашборда
+  // Function to get trading instrument from first widget in dashboard
   const getDefaultTradingInstrument = () => {
     if (!activeDashboard || activeDashboard.widgets.length === 0) {
       return 'USDRUB'; // fallback
     }
 
-    // Берем первый виджет в дашборде
+    // Take first widget in dashboard
     const firstWidget = activeDashboard.widgets[0];
     
-    // Пытаемся извлечь торговый инструмент из названия
+    // Try to extract trading instrument from title
     const title = firstWidget.userTitle || firstWidget.defaultTitle || firstWidget.title;
     
-    // Ищем паттерны торговых пар
-    const tradingPairMatch = title.match(/([A-Z]{3,}[A-Z]{3,})/); // например USDRUB, EURUSD
+    // Look for trading pair patterns
+    const tradingPairMatch = title.match(/([A-Z]{3,}[A-Z]{3,})/); // e.g. USDRUB, EURUSD
     if (tradingPairMatch) {
       return tradingPairMatch[1];
     }
     
-    // Если в названии есть USD, EUR и т.д.
+    // If title contains USD, EUR etc.
     if (title.includes('USD')) return 'USDRUB';
     if (title.includes('EUR')) return 'EURRUB';
     if (title.includes('BTC')) return 'BTCUSD';
     
-    // По умолчанию
+    // Default
     return 'USDRUB';
   };
 
-  // Функция для обновления группы виджета
+  // Function to update widget group
   const handleGroupChange = (newGroupId: string | undefined) => {
     if (activeDashboardId) {
       updateWidget(activeDashboardId, id, { groupId: newGroupId });
       
-      // Автоматически установить торговую пару для группы
+      // Automatically set trading pair for group
       if (newGroupId && widgetType) {
         let tradingPair = '';
         
-        // Определяем торговую пару по типу виджета
+        // Determine trading pair by widget type
         switch (widgetType) {
           case 'chart':
           case 'orderForm':
@@ -160,7 +160,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
             tradingPair = 'pair';
             break;
           default:
-            // Пытаемся извлечь из названия текущего виджета
+            // Try to extract from current widget title
             const currentTitle = userTitle || defaultTitle;
             const match = currentTitle.match(/([A-Z]{3,}[A-Z]{3,})/);
             tradingPair = match ? match[1] : getDefaultTradingInstrument();
@@ -171,7 +171,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     }
   };
 
-  // Автофокус на input при редактировании
+  // Auto focus on input when editing
   const titleInputRef = useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (isEditingTitle && titleInputRef.current) {
@@ -276,15 +276,15 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   // Handle drag with useCallback to prevent recreation
   const handleDrag = useCallback((e: MouseEvent) => {
     if (isDragging) {
-      // Исправленная логика: вычисляем позицию относительно изначального клика
+      // Fixed logic: calculate position relative to initial click
       let newX = e.clientX - dragOffset.x;
       let newY = e.clientY - dragOffset.y;
       
-      // Применяем границы экрана
+      // Apply screen boundaries
       newX = Math.max(0, Math.min(newX, window.innerWidth - currentSize.width));
       newY = Math.max(HEADER_HEIGHT, Math.min(newY, window.innerHeight - currentSize.height));
       
-      // Применяем snapping
+      // Apply snapping
       const snapped = applySnapping(newX, newY, currentSize.width, currentSize.height);
       
       // Update local state immediately for smooth visual feedback
@@ -369,14 +369,14 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     setIsResizing(false);
   }, [isResizing, activeDashboardId, resizeWidget, id, currentSize]);
 
-  // Handle drag start - ИСПРАВЛЕННАЯ ЛОГИКА
+  // Handle drag start - FIXED LOGIC
   const handleDragStart = (e: React.MouseEvent) => {
-    // Поднимаем виджет наверх при начале перетаскивания
+    // Bring widget to front when starting drag
     if (activeDashboardId) {
       bringWidgetToFront(activeDashboardId, id);
     }
     
-    // Сохраняем offset относительно текущей позиции виджета в viewport
+    // Save offset relative to current widget position in viewport
     setDragOffset({
       x: e.clientX - currentPosition.x,
       y: e.clientY - currentPosition.y
@@ -396,7 +396,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    // Поднимаем виджет наверх при начале изменения размера
+    // Bring widget to front when starting resize
     if (activeDashboardId) {
       bringWidgetToFront(activeDashboardId, id);
     }
@@ -476,7 +476,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
               <h3 
                 className="text-xs font-medium truncate text-terminal-text cursor-pointer"
                 onDoubleClick={handleTitleDoubleClick}
-                title="Двойной клик для редактирования"
+                title="Double click to edit"
               >
                 {userTitle || defaultTitle}
               </h3>

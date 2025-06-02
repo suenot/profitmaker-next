@@ -27,8 +27,8 @@ const OrderFormWidget: React.FC = () => {
           <input
             type="text"
             className="bg-terminal-accent/30 border border-terminal-border rounded-md py-2 pl-10 pr-3 text-sm w-48"
-            placeholder="Заявка USDRUB"
-            value={`Заявка ${symbol}`}
+            placeholder="Order USDRUB"
+            value={`Order ${symbol}`}
             readOnly
           />
         </div>
@@ -45,9 +45,9 @@ const OrderFormWidget: React.FC = () => {
             $
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium">Доллар США</span>
+            <span className="text-sm font-medium">US Dollar</span>
             <span className="text-xs flex items-center">
-              0,001 лота · 57,8625 ₽
+              0.001 lot · 57.8625 ₽
             </span>
           </div>
         </div>
@@ -57,7 +57,7 @@ const OrderFormWidget: React.FC = () => {
       </div>
       
       <div className="bg-terminal-accent/30 p-3 rounded-md mb-4">
-        <div className="text-sm text-terminal-muted">Торги недоступны</div>
+        <div className="text-sm text-terminal-muted">Trading unavailable</div>
       </div>
       
       <div className="mb-4">
@@ -68,7 +68,7 @@ const OrderFormWidget: React.FC = () => {
             }`}
             onClick={() => setOrderType('market')}
           >
-            Рыночная
+            Market
           </button>
           <button 
             className={`flex-1 py-2 text-sm font-medium ${
@@ -76,7 +76,7 @@ const OrderFormWidget: React.FC = () => {
             }`}
             onClick={() => setOrderType('limit')}
           >
-            Лимитная
+            Limit
           </button>
           <button 
             className={`flex-1 py-2 text-sm font-medium ${
@@ -84,19 +84,19 @@ const OrderFormWidget: React.FC = () => {
             }`}
             onClick={() => setOrderType('deferred')}
           >
-            Отложенная
+            Stop
           </button>
         </div>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4 flex-grow">
         <div>
-          <label className="block text-sm text-terminal-muted mb-1">Цена исполнения</label>
+          <label className="block text-sm text-terminal-muted mb-1">Execution Price</label>
           <div className="relative">
             <input 
               type="text" 
               className="w-full bg-terminal-accent/30 border border-terminal-border rounded-md py-2 px-3 text-sm"
-              value={orderType === 'market' ? 'Рыночная' : `${price.toFixed(4)} ₽`}
+              value={orderType === 'market' ? 'Market' : `${price.toFixed(4)} ₽`}
               readOnly={orderType === 'market'}
               onChange={(e) => setPrice(Number(e.target.value))}
             />
@@ -105,7 +105,7 @@ const OrderFormWidget: React.FC = () => {
         
         <div>
           <div className="flex justify-between mb-1">
-            <label className="text-sm text-terminal-muted">Количество</label>
+            <label className="text-sm text-terminal-muted">Quantity</label>
             <div className="flex items-center">
               <span className="text-xs mr-1">×1</span>
               <ChevronDown size={14} className="text-terminal-muted" />
@@ -139,7 +139,7 @@ const OrderFormWidget: React.FC = () => {
         </div>
         
         <div>
-          <label className="block text-sm text-terminal-muted mb-1">Примерная стоимость</label>
+          <label className="block text-sm text-terminal-muted mb-1">Estimated Cost</label>
           <div className="w-full bg-terminal-accent/20 border border-terminal-border rounded-md py-2 px-3 text-sm flex justify-between">
             <span>—</span>
             <Info size={14} className="text-terminal-muted" />
@@ -147,26 +147,26 @@ const OrderFormWidget: React.FC = () => {
         </div>
         
         <div>
-          <label className="block text-sm text-terminal-muted mb-1">Комиссия</label>
+          <label className="block text-sm text-terminal-muted mb-1">Commission</label>
           <div className="w-full bg-terminal-accent/20 border border-terminal-border rounded-md py-2 px-3 text-sm">
-            по факту сделки
+            upon transaction
           </div>
         </div>
         
         <div className="grid grid-cols-2 gap-2 mt-4">
           <div>
-            <div className="text-sm text-terminal-muted mb-1">Доступно</div>
+            <div className="text-sm text-terminal-muted mb-1">Available</div>
             <div className="flex justify-between">
               <span>0</span>
-              <span>Доступно</span>
+              <span>Available</span>
               <span>0</span>
             </div>
           </div>
           <div>
-            <div className="text-sm text-terminal-muted mb-1">С плечом</div>
+            <div className="text-sm text-terminal-muted mb-1">With Leverage</div>
             <div className="flex justify-between">
               <span>0</span>
-              <span>С плечом</span>
+              <span>With Leverage</span>
               <span>0</span>
             </div>
           </div>
@@ -181,7 +181,7 @@ const OrderFormWidget: React.FC = () => {
               handleSubmit(new Event('submit') as unknown as React.FormEvent);
             }}
           >
-            Покупка
+            Buy
           </button>
           <button 
             type="button" 
@@ -191,7 +191,7 @@ const OrderFormWidget: React.FC = () => {
               handleSubmit(new Event('submit') as unknown as React.FormEvent);
             }}
           >
-            Продажа
+            Sell
           </button>
         </div>
       </form>

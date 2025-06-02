@@ -3,24 +3,24 @@ import { immer } from 'zustand/middleware/immer';
 import { persist } from 'zustand/middleware';
 import { z } from 'zod';
 
-// Типы через zod
+// Types via zod
 export const ExchangeAccountSchema = z.object({
   id: z.string(), // uuid
-  exchange: z.string(), // например, 'binance', 'bybit' (обязательное)
+  exchange: z.string(), // e.g., 'binance', 'bybit' (required)
   key: z.string(),
   privateKey: z.string(),
-  email: z.string(), // обязательное
+  email: z.string(), // required
   avatarUrl: z.string().url().optional(),
-  notes: z.string().optional(), // опционально
+  notes: z.string().optional(), // optional
 });
 export type ExchangeAccount = z.infer<typeof ExchangeAccountSchema>;
 
 export const UserSchema = z.object({
   id: z.string(), // uuid
-  email: z.string(), // обязательное, уникальное
+  email: z.string(), // required, unique
   avatarUrl: z.string().url().optional(),
-  notes: z.string().optional(), // опционально
-  name: z.string().optional(), // опционально
+  notes: z.string().optional(), // optional
+  name: z.string().optional(), // optional
   accounts: z.array(ExchangeAccountSchema),
 });
 export type User = z.infer<typeof UserSchema>;
@@ -31,7 +31,7 @@ export const UserStoreStateSchema = z.object({
 });
 export type UserStoreState = z.infer<typeof UserStoreStateSchema>;
 
-// Вспомогательная функция для генерации uuid (v4, простая)
+// Helper function for generating uuid (v4, simple)
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -57,7 +57,7 @@ export const useUserStore = create<UserStore>()(
 
       addUser: ({ email, avatarUrl, notes, name }) => {
         set((state) => {
-          // Проверка уникальности email
+          // Check email uniqueness
           if (state.users.some(u => u.email === email)) return;
           const id = uuidv4();
           const user: User = { id, email, avatarUrl, notes, name, accounts: [] };
@@ -127,7 +127,7 @@ export const useUserStore = create<UserStore>()(
     {
       name: 'user-store',
       partialize: (state) => ({ users: state.users, activeUserId: state.activeUserId }),
-      // Валидация через zod при загрузке
+      // Validation via zod on load
       merge: (persisted, current) => {
         try {
           const parsed = UserStoreStateSchema.parse(persisted);

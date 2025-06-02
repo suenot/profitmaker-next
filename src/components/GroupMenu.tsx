@@ -41,12 +41,12 @@ const GroupMenu: React.FC<GroupMenuProps> = ({ widgetId, position, onClose }) =>
   // Predefined group colors in the project
   const groupColors = [
     { id: 'group-1', name: 'USDRUB', color: '#FFD700' }, // Gold/Yellow
-    { id: 'group-2', name: 'Группа 2', color: '#F87171' }, // Red
-    { id: 'group-3', name: 'Группа 3', color: '#A78BFA' }, // Purple
-    { id: 'group-4', name: 'Группа 4', color: '#60A5FA' }, // Blue
-    { id: 'group-5', name: 'Группа 5', color: '#BEF264' }, // Light Green
-    { id: 'group-6', name: 'Группа 6', color: '#6EE7B7' }, // Teal
-    { id: 'group-7', name: 'Группа 7', color: '#FCD34D' }, // Amber/Orange
+    { id: 'group-2', name: 'Group 2', color: '#F87171' }, // Red
+    { id: 'group-3', name: 'Group 3', color: '#A78BFA' }, // Purple
+    { id: 'group-4', name: 'Group 4', color: '#60A5FA' }, // Blue
+    { id: 'group-5', name: 'Group 5', color: '#BEF264' }, // Light Green
+    { id: 'group-6', name: 'Group 6', color: '#6EE7B7' }, // Teal
+    { id: 'group-7', name: 'Group 7', color: '#FCD34D' }, // Amber/Orange
   ];
 
   return (
@@ -66,7 +66,7 @@ const GroupMenu: React.FC<GroupMenuProps> = ({ widgetId, position, onClose }) =>
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="Об инструменте"
+            placeholder="About instrument"
             className="w-full px-2 py-1 pl-8 bg-terminal-widget rounded-sm text-sm border border-terminal-border/50"
           />
           <Search size={16} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-terminal-muted" />
@@ -90,9 +90,9 @@ const GroupMenu: React.FC<GroupMenuProps> = ({ widgetId, position, onClose }) =>
         <div className="w-20 h-20 rounded-full bg-gray-700/50 flex items-center justify-center mb-4">
           <Search size={32} className="text-gray-500" />
         </div>
-        <h3 className="text-lg font-medium mb-2">Выберите инструмент</h3>
+        <h3 className="text-lg font-medium mb-2">Select Instrument</h3>
         <p className="text-sm text-gray-400">
-          Чтобы начать работу в виджете, найдите необходимый инструмент
+          To start working in the widget, find the necessary instrument
         </p>
       </div>
     </div>
