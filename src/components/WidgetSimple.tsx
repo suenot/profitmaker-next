@@ -32,6 +32,10 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [preMaximizeState, setPreMaximizeState] = useState<{
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+  } | null>(null);
   
   // Local state for real-time updates during drag/resize
   const [currentPosition, setCurrentPosition] = useState(position);
@@ -54,6 +58,30 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   React.useEffect(() => {
     setCurrentSize(size);
   }, [size.width, size.height]);
+
+  // Handle maximize/minimize toggle
+  const handleMaximizeToggle = useCallback(() => {
+    if (isMaximized) {
+      // Restore previous state
+      if (preMaximizeState) {
+        setCurrentPosition(preMaximizeState.position);
+        setCurrentSize(preMaximizeState.size);
+        if (activeDashboardId) {
+          moveWidget(activeDashboardId, id, preMaximizeState.position.x, preMaximizeState.position.y);
+          resizeWidget(activeDashboardId, id, preMaximizeState.size.width, preMaximizeState.size.height);
+        }
+      }
+      setPreMaximizeState(null);
+      setIsMaximized(false);
+    } else {
+      // Save current state and maximize
+      setPreMaximizeState({
+        position: currentPosition,
+        size: currentSize
+      });
+      setIsMaximized(true);
+    }
+  }, [isMaximized, preMaximizeState, currentPosition, currentSize, activeDashboardId, moveWidget, resizeWidget, id]);
 
   // Snapping logic
   const applySnapping = useCallback((x: number, y: number, width: number, height: number) => {
@@ -267,20 +295,24 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
       ref={widgetRef}
       className={cn(
         "widget-container animate-fade-in border border-terminal-border",
-        isActive && "ring-1 ring-blue-500"
+        isActive && "ring-1 ring-blue-500",
+        isMaximized && "border-0"
       )}
       style={{
-        left: `${currentPosition.x}px`,
-        top: `${currentPosition.y}px`,
-        width: `${currentSize.width}px`,
-        height: `${currentSize.height}px`,
-        zIndex,
-        position: 'absolute',
+        left: isMaximized ? 0 : `${currentPosition.x}px`,
+        top: isMaximized ? 0 : `${currentPosition.y}px`,
+        width: isMaximized ? '100vw' : `${currentSize.width}px`,
+        height: isMaximized ? '100vh' : `${currentSize.height}px`,
+        zIndex: isMaximized ? 10001 : zIndex,
+        position: isMaximized ? 'fixed' : 'absolute',
       }}
     >
       <div 
-        className="widget-header h-10 px-3 py-2 bg-terminal-accent/60 flex items-center justify-between cursor-move"
-        onMouseDown={handleDragStart}
+        className={cn(
+          "widget-header h-10 px-3 py-2 bg-terminal-accent/60 flex items-center justify-between",
+          !isMaximized && "cursor-move"
+        )}
+        onMouseDown={!isMaximized ? handleDragStart : undefined}
       >
         <div className="flex items-center">
           <h3 className="text-xs font-medium truncate text-terminal-text">{title}</h3>
@@ -294,7 +326,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
           </button>
           <button 
             className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
-            onClick={() => setIsMaximized(!isMaximized)}
+            onClick={handleMaximizeToggle}
           >
             {isMaximized ? (
               <Minimize2 size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
@@ -316,16 +348,18 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
       </div>
       
       {/* Resize handle */}
-      <div 
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize opacity-0 hover:opacity-50 transition-opacity"
-        style={{
-          background: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
-          backgroundSize: '4px 4px',
-          backgroundPosition: 'bottom right',
-          color: 'hsl(var(--terminal-muted))'
-        }}
-        onMouseDown={handleResizeStart}
-      />
+      {!isMaximized && (
+        <div 
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize opacity-0 hover:opacity-50 transition-opacity"
+          style={{
+            background: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
+            backgroundSize: '4px 4px',
+            backgroundPosition: 'bottom right',
+            color: 'hsl(var(--terminal-muted))'
+          }}
+          onMouseDown={handleResizeStart}
+        />
+      )}
     </div>
   );
 };
