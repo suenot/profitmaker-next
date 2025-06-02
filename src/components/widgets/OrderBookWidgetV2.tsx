@@ -60,15 +60,54 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
   const processedOrderBook = useMemo(() => {
     if (!rawOrderBook) return null;
 
-    const formatEntry = (entry: OrderBookEntry) => ({
-      price: entry.price,
-      amount: entry.amount,
-      total: entry.price * entry.amount
-    });
+    try {
+      // Проверяем, что данные в правильном формате
+      if (!rawOrderBook.bids || !rawOrderBook.asks || 
+          !Array.isArray(rawOrderBook.bids) || !Array.isArray(rawOrderBook.asks)) {
+        console.warn('❌ Invalid orderbook data format:', rawOrderBook);
+        return null;
+      }
 
-    // Берем только нужную глубину
-    const bids = rawOrderBook.bids.slice(0, displayDepth).map(formatEntry);
-    const asks = rawOrderBook.asks.slice(0, displayDepth).map(formatEntry);
+      // Логируем формат первой записи для отладки
+      if (rawOrderBook.bids.length > 0) {
+        const firstBid = rawOrderBook.bids[0];
+        console.log(`📊 OrderBook format sample - bid:`, {
+          isArray: Array.isArray(firstBid),
+          type: typeof firstBid,
+          value: firstBid
+        });
+      }
+
+      const formatEntry = (entry: OrderBookEntry | [number, number]) => {
+        // Обрабатываем формат массива [price, amount] от CCXT Pro
+        if (Array.isArray(entry)) {
+          const [price, amount] = entry;
+          if (typeof price !== 'number' || typeof amount !== 'number') {
+            console.warn('❌ Invalid orderbook array entry:', entry);
+            return null;
+          }
+          return {
+            price,
+            amount,
+            total: price * amount
+          };
+        }
+        
+        // Обрабатываем формат объекта {price, amount}
+        if (!entry || typeof entry.price !== 'number' || typeof entry.amount !== 'number') {
+          console.warn('❌ Invalid orderbook object entry:', entry);
+          return null;
+        }
+        return {
+          price: entry.price,
+          amount: entry.amount,
+          total: entry.price * entry.amount
+        };
+      };
+
+      // Берем только нужную глубину и фильтруем null значения
+      const bids = (rawOrderBook.bids as (OrderBookEntry | [number, number])[]).slice(0, displayDepth).map(formatEntry).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+      const asks = (rawOrderBook.asks as (OrderBookEntry | [number, number])[]).slice(0, displayDepth).map(formatEntry).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
 
     // Добавляем кумулятивные объемы если нужно
     if (showCumulative) {
@@ -86,15 +125,19 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
       });
     }
 
-    return {
-      bids,
-      asks,
-      timestamp: rawOrderBook.timestamp,
-      spread: asks.length > 0 && bids.length > 0 ? asks[0].price - bids[0].price : 0,
-      spreadPercent: asks.length > 0 && bids.length > 0 
-        ? ((asks[0].price - bids[0].price) / bids[0].price) * 100 
-        : 0
-    };
+      return {
+        bids,
+        asks,
+        timestamp: rawOrderBook.timestamp,
+        spread: asks.length > 0 && bids.length > 0 ? asks[0].price - bids[0].price : 0,
+        spreadPercent: asks.length > 0 && bids.length > 0 
+          ? ((asks[0].price - bids[0].price) / bids[0].price) * 100 
+          : 0
+      };
+    } catch (error) {
+      console.error('❌ Error processing orderbook data:', error);
+      return null;
+    }
   }, [rawOrderBook, displayDepth, showCumulative]);
 
   // Статистика
