@@ -22,7 +22,11 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   const { 
     groups, 
     getGroupById, 
-    initializeDefaultGroups 
+    initializeDefaultGroups,
+    setTradingPair,
+    setAccount,
+    setExchange,
+    resetGroup
   } = useGroupStore();
 
   // User store для получения данных аккаунта
@@ -58,20 +62,70 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
   const selectedGroup = selectedGroupId ? getGroupById(selectedGroupId) : undefined;
 
-  // Инициализация значений input'ов на основе данных пользователя
+  // Инициализация значений input'ов на основе данных пользователя и группы
   React.useEffect(() => {
-    if (firstAccount || activeUser) {
+    if (selectedGroup) {
+      // Если группа выбрана, показываем данные из группы
+      setAccountInput(selectedGroup.account || firstAccount?.email || activeUser?.email || 'suenot@gmail.com');
+      setExchangeInput(selectedGroup.exchange || firstAccount?.exchange || 'binance');
+      setTradingPairInput(selectedGroup.tradingPair || 'btcusdt');
+    } else {
+      // Если группа не выбрана, показываем данные пользователя
       setAccountInput(firstAccount?.email || activeUser?.email || 'suenot@gmail.com');
       setExchangeInput(firstAccount?.exchange || 'binance');
-      setTradingPairInput(selectedGroup?.tradingPair || 'btcusdt');
+      setTradingPairInput('btcusdt');
     }
   }, [firstAccount, activeUser, selectedGroup]);
+
+  // Обработчики изменения input'ов с синхронизацией в store
+  const handleAccountChange = (value: string) => {
+    setAccountInput(value);
+    if (selectedGroup) {
+      setAccount(selectedGroup.id, value);
+    }
+  };
+
+  const handleExchangeChange = (value: string) => {
+    setExchangeInput(value);
+    if (selectedGroup) {
+      setExchange(selectedGroup.id, value);
+    }
+  };
+
+  const handleTradingPairChange = (value: string) => {
+    setTradingPairInput(value);
+    if (selectedGroup) {
+      setTradingPair(selectedGroup.id, value);
+    }
+  };
 
 
 
   const handleGroupSelect = (group: Group | null) => {
     onGroupSelect(group?.id);
     setIsOpen(false);
+  };
+
+  // Функция для получения названия цвета на английском
+  const getColorName = (color: string) => {
+    const colorMap: Record<string, string> = {
+      'transparent': 'Transparent',
+      '#00BCD4': 'Cyan',
+      '#F44336': 'Red',
+      '#9C27B0': 'Purple',
+      '#2196F3': 'Blue',
+      '#4CAF50': 'Green',
+      '#FFC107': 'Yellow',
+      '#FF9800': 'Orange',
+      '#E91E63': 'Pink',
+    };
+    return colorMap[color] || 'Unknown';
+  };
+
+  // Функция для сброса группы
+  const handleResetGroup = (e: React.MouseEvent, groupId: string) => {
+    e.stopPropagation(); // предотвращаем выбор группы при клике на крестик
+    resetGroup(groupId);
   };
 
   // Убрали функциональность создания групп - используем только фиксированные 8 групп
@@ -95,7 +149,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
       {/* Popover */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-50">
+        <div className="absolute top-full left-0 mt-1 w-96 bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-50">
           <div className="p-3">
             {/* Три input'а для аккаунта, биржи и торговой пары */}
             <div className="space-y-2 mb-3">
@@ -105,7 +159,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   type="text"
                   placeholder="Аккаунт"
                   value={accountInput}
-                  onChange={(e) => setAccountInput(e.target.value)}
+                  onChange={(e) => handleAccountChange(e.target.value)}
                   className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
                 />
               </div>
@@ -116,7 +170,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   type="text"
                   placeholder="Биржа"
                   value={exchangeInput}
-                  onChange={(e) => setExchangeInput(e.target.value)}
+                  onChange={(e) => handleExchangeChange(e.target.value)}
                   className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
                 />
               </div>
@@ -127,7 +181,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                   type="text"
                   placeholder="Торговая пара"
                   value={tradingPairInput}
-                  onChange={(e) => setTradingPairInput(e.target.value)}
+                  onChange={(e) => handleTradingPairChange(e.target.value)}
                   className={`w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent ${selectedGroup ? 'pr-8' : ''}`}
                   autoFocus
                 />
@@ -147,19 +201,37 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
             {/* Список групп */}
             <div className="max-h-48 overflow-y-auto">
               {groups.map((group) => (
-                <button
+                <div
                   key={group.id}
-                  onClick={() => handleGroupSelect(group)}
-                  className={`w-full flex items-center px-3 py-2 text-sm rounded hover:bg-terminal-accent/20 ${
+                  className={`group w-full flex items-center px-3 py-2 text-sm rounded hover:bg-terminal-accent/20 cursor-pointer relative ${
                     selectedGroupId === group.id ? 'bg-terminal-accent/30' : ''
                   }`}
+                  onClick={() => handleGroupSelect(group)}
                 >
                   <div
-                    className="w-4 h-4 rounded-full mr-3"
-                    style={{ backgroundColor: group.color }}
+                    className="w-4 h-4 rounded-full mr-3 flex-shrink-0 border"
+                    style={{ 
+                      backgroundColor: group.color === 'transparent' ? 'transparent' : group.color,
+                      borderColor: group.color === 'transparent' ? 'hsl(var(--terminal-border))' : group.color
+                    }}
                   />
-                  <span>{group.tradingPair || group.name}</span>
-                </button>
+                  <span className="text-left flex-1">
+                    {group.account || group.exchange || group.tradingPair 
+                      ? `${group.account || 'account'} | ${group.exchange || 'exchange'} | ${group.tradingPair || 'pair'}`
+                      : getColorName(group.color)
+                    }
+                  </span>
+                  {/* Крестик для сброса группы - показывается при hover, скрыт для прозрачной группы */}
+                  {group.color !== 'transparent' && (
+                    <button
+                      onClick={(e) => handleResetGroup(e, group.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-terminal-accent/30 transition-opacity"
+                      title="Сбросить настройки группы"
+                    >
+                      <X size={12} className="text-terminal-muted hover:text-terminal-text" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           </div>

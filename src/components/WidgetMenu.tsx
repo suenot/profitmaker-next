@@ -93,7 +93,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
   return (
     <div
       ref={menuRef}
-      className="widget-menu absolute rounded-lg shadow-lg overflow-hidden z-50 border border-terminal-border bg-terminal-widget/95 backdrop-blur-md text-terminal-text"
+      className="widget-menu absolute rounded-lg shadow-lg overflow-hidden z-[10002] border border-terminal-border bg-terminal-widget/95 backdrop-blur-md text-terminal-text"
       style={{ left: adjustedPosition.x, top: adjustedPosition.y, width: '300px' }}
     >
       <div className="px-3 py-2 border-b border-terminal-border/50">

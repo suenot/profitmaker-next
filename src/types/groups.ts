@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 // Доступные цвета групп
 export const GroupColors = [
+  'transparent', // no group
   '#00BCD4', // cyan
   '#F44336', // red  
   '#9C27B0', // purple
@@ -20,6 +21,8 @@ export const GroupSchema = z.object({
   name: z.string(),
   color: z.enum(GroupColors),
   tradingPair: z.string().optional(), // торговая пара для отображения вместо цвета
+  account: z.string().optional(), // email аккаунта
+  exchange: z.string().optional(), // название биржи
   description: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
