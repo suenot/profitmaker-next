@@ -12,6 +12,7 @@ interface WidgetMenuProps {
 const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
   const addWidget = useDashboardStore(s => s.addWidget);
   const activeDashboardId = useDashboardStore(s => s.activeDashboardId);
+  const getActiveDashboard = useDashboardStore(s => s.getActiveDashboard);
   const menuRef = useRef<HTMLDivElement>(null);
   
   // Debug logging for widget menu
@@ -59,6 +60,13 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     let x = Math.max(20, Math.floor((viewportWidth - size.width) / 2));
     let y = Math.max(80, Math.floor((viewportHeight - size.height) / 2));
     
+    // Calculate z-index to be higher than all existing widgets
+    const dashboard = getActiveDashboard();
+    const maxZIndex = dashboard?.widgets?.length > 0 
+      ? Math.max(...dashboard.widgets.map(w => w.position.zIndex || 1))
+      : 1;
+    const newZIndex = maxZIndex + 1;
+    
     // Widget titles mapping
     const widgetTitles = {
       chart: 'Деньги не спят: график',
@@ -73,7 +81,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       title: widgetTitles[type], // deprecated
       defaultTitle: widgetTitles[type],
       userTitle: undefined,
-      position: { x, y, width: size.width, height: size.height },
+      position: { x, y, width: size.width, height: size.height, zIndex: newZIndex },
       config: {},
       isVisible: true,
       isMinimized: false

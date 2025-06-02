@@ -154,10 +154,10 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
             tradingPair = getDefaultTradingInstrument();
             break;
           case 'portfolio':
-            tradingPair = 'Portfolio';
+            tradingPair = 'pair';
             break;
           case 'transactionHistory':
-            tradingPair = 'History';
+            tradingPair = 'pair';
             break;
           default:
             // Пытаемся извлечь из названия текущего виджета

@@ -214,9 +214,22 @@ export const useDashboardStore = create<DashboardStore>()(
           const dashboard = state.dashboards.find(d => d.id === dashboardId);
           if (!dashboard) return;
           
+          // Ensure new widget has proper z-index (higher than all existing widgets)
+          let zIndex = widgetData.position.zIndex;
+          if (!zIndex || zIndex <= 0) {
+            const maxZIndex = dashboard.widgets.length > 0 
+              ? Math.max(...dashboard.widgets.map(w => w.position.zIndex || 1))
+              : 1;
+            zIndex = maxZIndex + 1;
+          }
+          
           const widget: Widget = {
             ...widgetData,
             id: widgetId,
+            position: {
+              ...widgetData.position,
+              zIndex
+            }
           };
           
           dashboard.widgets.push(widget);

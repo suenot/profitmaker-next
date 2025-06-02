@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, X } from 'lucide-react';
 import { useGroupStore } from '../../store/groupStore';
 import { useUserStore } from '../../store/userStore';
@@ -19,6 +20,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   const [accountInput, setAccountInput] = useState('');
   const [exchangeInput, setExchangeInput] = useState('');
   const [tradingPairInput, setTradingPairInput] = useState('');
+  const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | null>(null);
   const { 
     groups, 
     getGroupById, 
@@ -99,8 +101,6 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     }
   };
 
-
-
   const handleGroupSelect = (group: Group | null) => {
     onGroupSelect(group?.id);
     setIsOpen(false);
@@ -128,124 +128,139 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     resetGroup(groupId);
   };
 
-  // Убрали функциональность создания групп - используем только фиксированные 8 групп
-
   return (
-    <div className={`relative ${className}`}>
-      {/* Кнопка селектора */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-4 h-4 rounded-full border border-terminal-border hover:border-terminal-accent transition-colors flex items-center justify-center"
-        style={{
-          backgroundColor: selectedGroup ? selectedGroup.color : 'transparent',
-          borderColor: selectedGroup ? selectedGroup.color : undefined,
-        }}
-        title={selectedGroup ? `Группа: ${selectedGroup.name}` : 'Выбрать группу'}
-      >
-        {!selectedGroup && (
-          <Plus size={8} className="text-terminal-muted" />
-        )}
-      </button>
+    <>
+      <div className={`relative ${className}`}>
+        {/* Кнопка селектора */}
+        <button
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setButtonPosition({
+              x: rect.left,
+              y: rect.bottom + window.scrollY
+            });
+            setIsOpen(!isOpen);
+          }}
+          className="w-4 h-4 rounded-full border border-terminal-border hover:border-terminal-accent transition-colors flex items-center justify-center"
+          style={{
+            backgroundColor: selectedGroup ? selectedGroup.color : 'transparent',
+            borderColor: selectedGroup ? selectedGroup.color : undefined,
+          }}
+          title={selectedGroup ? `Группа: ${selectedGroup.name}` : 'Выбрать группу'}
+        >
+          {!selectedGroup && (
+            <Plus size={8} className="text-terminal-muted" />
+          )}
+        </button>
+      </div>
 
-      {/* Popover */}
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-96 bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-50">
-          <div className="p-3">
-            {/* Три input'а для аккаунта, биржи и торговой пары */}
-            <div className="space-y-2 mb-3">
-              {/* Аккаунт */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Аккаунт"
-                  value={accountInput}
-                  onChange={(e) => handleAccountChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
-                />
-              </div>
-              
-              {/* Биржа */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Биржа"
-                  value={exchangeInput}
-                  onChange={(e) => handleExchangeChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
-                />
-              </div>
-              
-              {/* Торговая пара с крестиком для сброса группы */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Торговая пара"
-                  value={tradingPairInput}
-                  onChange={(e) => handleTradingPairChange(e.target.value)}
-                  className={`w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent ${selectedGroup ? 'pr-8' : ''}`}
-                  autoFocus
-                />
-                {/* Крестик для сброса группы - только если группа выбрана */}
-                {selectedGroup && (
-                  <button
-                    onClick={() => handleGroupSelect(null)}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-terminal-accent/20 transition-colors"
-                    title="Убрать привязку к группе"
-                  >
-                    <X size={12} className="text-terminal-muted hover:text-terminal-text" />
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            {/* Список групп */}
-            <div className="max-h-48 overflow-y-auto">
-              {groups.map((group) => (
-                <div
-                  key={group.id}
-                  className={`group w-full flex items-center px-3 py-2 text-sm rounded hover:bg-terminal-accent/20 cursor-pointer relative ${
-                    selectedGroupId === group.id ? 'bg-terminal-accent/30' : ''
-                  }`}
-                  onClick={() => handleGroupSelect(group)}
-                >
-                  <div
-                    className="w-4 h-4 rounded-full mr-3 flex-shrink-0 border"
-                    style={{ 
-                      backgroundColor: group.color === 'transparent' ? 'transparent' : group.color,
-                      borderColor: group.color === 'transparent' ? 'hsl(var(--terminal-border))' : group.color
-                    }}
+      {/* Portal для popover */}
+      {isOpen && buttonPosition && createPortal(
+        <>
+          {/* Overlay для закрытия */}
+          <div
+            className="fixed inset-0 z-[9999]"
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Popover */}
+          <div 
+            className="fixed w-96 bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-[10000]"
+            style={{
+              left: buttonPosition.x,
+              top: buttonPosition.y + 4,
+            }}
+          >
+            <div className="p-3">
+              {/* Три input'а для аккаунта, биржи и торговой пары */}
+              <div className="space-y-2 mb-3">
+                {/* Аккаунт */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Account"
+                    value={accountInput}
+                    onChange={(e) => handleAccountChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
                   />
-                  <span className="text-left flex-1">
-                    {group.account || group.exchange || group.tradingPair 
-                      ? `${group.account || 'account'} | ${group.exchange || 'exchange'} | ${group.tradingPair || 'pair'}`
-                      : getColorName(group.color)
-                    }
-                  </span>
-                  {/* Крестик для сброса группы - показывается при hover, скрыт для прозрачной группы */}
-                  {group.color !== 'transparent' && (
+                </div>
+                
+                {/* Биржа */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Exchange"
+                    value={exchangeInput}
+                    onChange={(e) => handleExchangeChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
+                  />
+                </div>
+                
+                {/* Торговая пара с крестиком для сброса группы */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Trading Pair"
+                    value={tradingPairInput}
+                    onChange={(e) => handleTradingPairChange(e.target.value)}
+                    className={`w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent ${selectedGroup ? 'pr-8' : ''}`}
+                    autoFocus
+                  />
+                  {/* Крестик для сброса группы - только если группа выбрана */}
+                  {selectedGroup && (
                     <button
-                      onClick={(e) => handleResetGroup(e, group.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-terminal-accent/30 transition-opacity"
-                      title="Сбросить настройки группы"
+                      onClick={() => handleGroupSelect(null)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-terminal-accent/20 transition-colors"
+                      title="Убрать привязку к группе"
                     >
                       <X size={12} className="text-terminal-muted hover:text-terminal-text" />
                     </button>
                   )}
                 </div>
-              ))}
+              </div>
+              
+              {/* Список групп */}
+              <div className="max-h-48 overflow-y-auto">
+                {groups.map((group) => (
+                  <div
+                    key={group.id}
+                    className={`group w-full flex items-center px-3 py-2 text-sm rounded hover:bg-terminal-accent/20 cursor-pointer relative ${
+                      selectedGroupId === group.id ? 'bg-terminal-accent/30' : ''
+                    }`}
+                    onClick={() => handleGroupSelect(group)}
+                  >
+                    <div
+                      className="w-4 h-4 rounded-full mr-3 flex-shrink-0 border"
+                      style={{ 
+                        backgroundColor: group.color === 'transparent' ? 'transparent' : group.color,
+                        borderColor: group.color === 'transparent' ? 'hsl(var(--terminal-border))' : group.color
+                      }}
+                    />
+                    <span className="text-left flex-1">
+                      {group.account || group.exchange || group.tradingPair 
+                        ? `${group.account || 'account'} | ${group.exchange || 'exchange'} | ${group.tradingPair || 'pair'}`
+                        : getColorName(group.color)
+                      }
+                    </span>
+                    {/* Крестик для сброса группы - показывается при hover, скрыт для прозрачной группы */}
+                    {group.color !== 'transparent' && (
+                      <button
+                        onClick={(e) => handleResetGroup(e, group.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-terminal-accent/30 transition-opacity"
+                        title="Сбросить настройки группы"
+                      >
+                        <X size={12} className="text-terminal-muted hover:text-terminal-text" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </>,
+        document.body
       )}
-
-      {/* Overlay для закрытия */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-    </div>
+    </>
   );
 };
 
