@@ -8,6 +8,7 @@ import PortfolioWidget from '@/components/widgets/Portfolio';
 import OrderFormWidget from '@/components/widgets/OrderForm';
 import TransactionHistoryWidget from '@/components/widgets/TransactionHistory';
 import { OrderBookWidget } from '@/components/widgets/OrderBookWidget';
+import { OrderBookWidgetV2 } from '@/components/widgets/OrderBookWidgetV2';
 import { TradesWidget } from '@/components/widgets/TradesWidget';
 import { TradesWidgetV2 } from '@/components/widgets/TradesWidgetV2';
 import { DataProviderSettingsWidget } from '@/components/widgets/DataProviderSettingsWidget';
@@ -24,6 +25,7 @@ const widgetComponents: Record<string, React.FC<any>> = {
   transactionHistory: TransactionHistoryWidget,
   custom: PortfolioWidget, // Placeholder
   orderbook: OrderBookWidget,
+  orderbookV2: OrderBookWidgetV2,
   trades: TradesWidget,
   tradesV2: TradesWidgetV2,
   dataProviderSettings: DataProviderSettingsWidget,

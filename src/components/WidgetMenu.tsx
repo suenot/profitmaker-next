@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug } from 'lucide-react';
 
-type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'tradesV2' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug';
+type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'orderbookV2' | 'trades' | 'tradesV2' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug';
 
 interface WidgetMenuProps {
   position: { x: number; y: number };
@@ -55,6 +55,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       transactionHistory: { width: 400, height: 350 },
       custom: { width: 400, height: 300 },
       orderbook: { width: 500, height: 600 },
+      orderbookV2: { width: 500, height: 650 },
       trades: { width: 600, height: 500 },
       tradesV2: { width: 600, height: 550 },
       dataProviderSettings: { width: 500, height: 450 },
@@ -82,6 +83,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       transactionHistory: 'Transaction History',
       custom: 'Custom Widget',
       orderbook: 'Order Book',
+      orderbookV2: 'Order Book V2',
       trades: 'Trades',
       tradesV2: 'Trades V2',
       dataProviderSettings: 'Data Provider Settings',
@@ -110,6 +112,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     { type: 'orderForm' as WidgetType, label: 'Place Order', icon: <FileText size={16} /> },
     { type: 'transactionHistory' as WidgetType, label: 'Transaction History', icon: <ListOrdered size={16} /> },
     { type: 'orderbook' as WidgetType, label: 'Order Book', icon: <BookOpen size={16} /> },
+    { type: 'orderbookV2' as WidgetType, label: 'Order Book V2 (with Deduplication)', icon: <BookOpen size={16} /> },
     { type: 'trades' as WidgetType, label: 'Trades', icon: <ArrowUpDown size={16} /> },
     { type: 'tradesV2' as WidgetType, label: 'Trades V2 (with Deduplication)', icon: <ArrowUpDown size={16} /> },
     { type: 'dataProviderSettings' as WidgetType, label: 'Data Provider Settings (REST/WS)', icon: <Settings size={16} /> },

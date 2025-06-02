@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from "sonner";
 
-export type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactions' | 'watchlist' | 'news' | 'calendar' | 'positions' | 'orderbook' | 'trades' | 'tradesV2' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug';
+export type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactions' | 'watchlist' | 'news' | 'calendar' | 'positions' | 'orderbook' | 'orderbookV2' | 'trades' | 'tradesV2' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug';
 
 export interface WidgetGroup {
   id: string;
@@ -52,6 +52,7 @@ const defaultWidgetSizes: Record<WidgetType, { width: number; height: number }> 
   calendar: { width: 400, height: 350 },
   positions: { width: 500, height: 350 },
   orderbook: { width: 500, height: 600 },
+  orderbookV2: { width: 500, height: 650 },
   trades: { width: 600, height: 500 },
   tradesV2: { width: 600, height: 550 },
   dataProviderSettings: { width: 500, height: 450 },
@@ -70,6 +71,7 @@ const widgetTitles: Record<WidgetType, string> = {
   calendar: 'Economic Calendar',
   positions: 'Open Positions',
   orderbook: 'Order Book',
+  orderbookV2: 'Order Book V2',
   trades: 'Trades',
   tradesV2: 'Trades V2',
   dataProviderSettings: 'Data Provider Settings',
