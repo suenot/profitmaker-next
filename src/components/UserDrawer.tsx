@@ -60,7 +60,7 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
             </div>
             <div className="text-lg font-semibold">No users</div>
             <div className="text-terminal-muted text-center">Start by adding users to manage their exchange accounts</div>
-            <Button onClick={() => setShowAddUser(true)} className="w-full max-w-xs" variant="default">
+            <Button onClick={() => setShowAddUser(true)} className="w-full max-w-xs" variant="outline">
               <Plus className="mr-2" size={16} /> Add first user
             </Button>
           </div>
@@ -87,9 +87,6 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
           <SheetDescription>Manage users and accounts</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-4 py-2 flex-1 overflow-auto">
-          <Button onClick={() => setShowAddUser(true)} className="w-full" variant="default">
-            <Plus className="mr-2" size={16} /> Add user
-          </Button>
           <div className="flex flex-col gap-2">
             {users.map(user => (
               <div
@@ -121,6 +118,9 @@ const UserDrawer: React.FC<UserDrawerProps> = ({ open, onOpenChange }) => {
               </div>
             ))}
           </div>
+          <Button onClick={() => setShowAddUser(true)} className="w-full" variant="outline">
+            <Plus className="mr-2" size={16} /> Add user
+          </Button>
           {/* Аккаунты активного пользователя */}
           {activeUserId && (
             <UserAccountsBlock
