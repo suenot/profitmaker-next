@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug } from 'lucide-react';
 
-type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'dataProviderSetup' | 'dataProviderDebug';
+type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'tradesV2' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug';
 
 interface WidgetMenuProps {
   position: { x: number; y: number };
@@ -56,6 +56,9 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       custom: { width: 400, height: 300 },
       orderbook: { width: 500, height: 600 },
       trades: { width: 600, height: 500 },
+      tradesV2: { width: 600, height: 550 },
+      dataProviderSettings: { width: 500, height: 450 },
+      dataProviderDemo: { width: 700, height: 400 },
       dataProviderSetup: { width: 500, height: 400 },
       dataProviderDebug: { width: 700, height: 500 }
     };
@@ -80,6 +83,9 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       custom: 'Custom Widget',
       orderbook: 'Order Book',
       trades: 'Trades',
+      tradesV2: 'Trades V2',
+      dataProviderSettings: 'Data Provider Settings',
+      dataProviderDemo: 'Data Provider Demo',
       dataProviderSetup: 'Data Provider Setup',
       dataProviderDebug: 'Data Provider Debug'
     };
@@ -105,6 +111,9 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     { type: 'transactionHistory' as WidgetType, label: 'Transaction History', icon: <ListOrdered size={16} /> },
     { type: 'orderbook' as WidgetType, label: 'Order Book', icon: <BookOpen size={16} /> },
     { type: 'trades' as WidgetType, label: 'Trades', icon: <ArrowUpDown size={16} /> },
+    { type: 'tradesV2' as WidgetType, label: 'Trades V2 (with Deduplication)', icon: <ArrowUpDown size={16} /> },
+    { type: 'dataProviderSettings' as WidgetType, label: 'Data Provider Settings (REST/WS)', icon: <Settings size={16} /> },
+    { type: 'dataProviderDemo' as WidgetType, label: 'Data Provider Demo (Deduplication)', icon: <Bug size={16} /> },
     { type: 'dataProviderSetup' as WidgetType, label: 'Data Provider Setup', icon: <Settings size={16} /> },
     { type: 'dataProviderDebug' as WidgetType, label: 'Data Provider Debug', icon: <Bug size={16} /> },
     { type: 'custom' as WidgetType, label: 'Custom Widget', icon: <BarChart3 size={16} /> },

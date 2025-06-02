@@ -34,7 +34,12 @@ import {
   Trade,
   OrderBook,
   ConnectionStatus,
-  ProviderOperationResult
+  ProviderOperationResult,
+  DataFetchMethod,
+  DataFetchSettings,
+  SubscriptionKey,
+  ActiveSubscription,
+  RestCycleManager
 } from '../types/dataProviders';
 
 interface DataProviderState {
@@ -42,13 +47,22 @@ interface DataProviderState {
   providers: Record<string, DataProvider>;
   activeProviderId: string | null;
   
-  // WebSocket соединения
+  // Настройки получения данных
+  dataFetchSettings: DataFetchSettings;
+  
+  // Активные подписки с дедупликацией
+  activeSubscriptions: Record<string, ActiveSubscription>;
+  
+  // REST циклы
+  restCycles: Record<string, RestCycleManager>;
+  
+  // WebSocket соединения (legacy для совместимости)
   connections: Record<string, WebSocketConnection>;
   
-  // Подписки
+  // Подписки (legacy для совместимости)
   subscriptions: Record<string, DataSubscription>;
   
-  // Данные по подпискам
+  // Централизованное хранилище данных
   data: SubscriptionData;
   
   // Статистика соединений
@@ -66,7 +80,15 @@ interface DataProviderActions {
   setActiveProvider: (providerId: string) => void;
   updateProviderStatus: (providerId: string, status: ConnectionStatus) => void;
   
-  // Управление подписками
+  // Управление настройками получения данных
+  setDataFetchMethod: (method: DataFetchMethod) => void;
+  setRestInterval: (dataType: DataType, interval: number) => void;
+  
+  // Управление дедуплицированными подписками
+  subscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => Promise<ProviderOperationResult>;
+  unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => void;
+  
+  // Legacy управление подписками (для совместимости)
   createSubscription: (params: CreateSubscriptionParams) => Promise<ProviderOperationResult>;
   removeSubscription: (subscriptionId: string) => void;
   
@@ -75,13 +97,19 @@ interface DataProviderActions {
   closeConnection: (connectionKey: string) => void;
   updateConnectionStatus: (connectionKey: string, status: ConnectionStatus, error?: string) => void;
   
-  // Обновление данных
+  // Обновление данных в центральном store
   updateCandles: (symbol: string, exchange: string, candles: Candle[]) => void;
   updateTrades: (symbol: string, exchange: string, trades: Trade[]) => void;
   updateOrderBook: (symbol: string, exchange: string, orderbook: OrderBook) => void;
   
+  // Получение данных из store
+  getCandles: (exchange: string, symbol: string) => Candle[];
+  getTrades: (exchange: string, symbol: string) => Trade[];
+  getOrderBook: (exchange: string, symbol: string) => OrderBook | null;
+  
   // Утилиты
   getConnectionKey: (exchange: string, symbol: string, dataType: DataType) => string;
+  getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType) => string;
   getActiveSubscriptions: () => DataSubscription[];
   getConnectionsByProvider: (providerId: string) => WebSocketConnection[];
   
@@ -106,6 +134,16 @@ export const useDataProviderStore = create<DataProviderStore>()(
       // Начальное состояние
       providers: {},
       activeProviderId: null,
+      dataFetchSettings: {
+        method: 'websocket',
+        restIntervals: {
+          trades: 1000,   // 1 секунда
+          candles: 5000,  // 5 секунд
+          orderbook: 500  // 0.5 секунды
+        }
+      },
+      activeSubscriptions: {},
+      restCycles: {},
       connections: {},
       subscriptions: {},
       data: {
@@ -169,6 +207,78 @@ export const useDataProviderStore = create<DataProviderStore>()(
         set(state => {
           if (state.providers[providerId]) {
             state.providers[providerId].status = status;
+          }
+        });
+      },
+
+      // Управление настройками получения данных
+      setDataFetchMethod: (method: DataFetchMethod) => {
+        set(state => {
+          state.dataFetchSettings.method = method;
+          console.log(`🔄 Data fetch method changed to: ${method}`);
+        });
+      },
+
+      setRestInterval: (dataType: DataType, interval: number) => {
+        set(state => {
+          state.dataFetchSettings.restIntervals[dataType] = interval;
+          console.log(`⏱️ REST interval for ${dataType} set to: ${interval}ms`);
+        });
+      },
+
+      // Управление дедуплицированными подписками
+      subscribe: async (subscriberId: string, exchange: string, symbol: string, dataType: DataType): Promise<ProviderOperationResult> => {
+        const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType);
+        
+        try {
+          set(state => {
+            // Ищем существующую подписку
+            if (state.activeSubscriptions[subscriptionKey]) {
+              // Увеличиваем счетчик подписчиков
+              state.activeSubscriptions[subscriptionKey].subscriberCount++;
+              console.log(`📈 Subscriber added to existing subscription: ${subscriptionKey} (count: ${state.activeSubscriptions[subscriptionKey].subscriberCount})`);
+            } else {
+              // Создаем новую подписку
+              state.activeSubscriptions[subscriptionKey] = {
+                key: { exchange, symbol, dataType },
+                subscriberCount: 1,
+                method: state.dataFetchSettings.method,
+                isActive: false,
+                lastUpdate: 0
+              };
+              console.log(`🆕 New subscription created: ${subscriptionKey}`);
+            }
+          });
+
+          // Запускаем получение данных если подписка новая
+          const subscription = get().activeSubscriptions[subscriptionKey];
+          if (subscription && !subscription.isActive) {
+            // TODO: Implement startDataFetching for old store
+            console.log(`📝 TODO: Implement data fetching for ${subscriptionKey}`);
+          }
+
+          return { success: true };
+        } catch (error) {
+          console.error(`❌ Failed to create subscription ${subscriptionKey}:`, error);
+          return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
+      },
+
+      unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => {
+        const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType);
+        
+        set(state => {
+          if (state.activeSubscriptions[subscriptionKey]) {
+            state.activeSubscriptions[subscriptionKey].subscriberCount--;
+            console.log(`📉 Subscriber removed from subscription: ${subscriptionKey} (count: ${state.activeSubscriptions[subscriptionKey].subscriberCount})`);
+            
+            // Если подписчиков не осталось - останавливаем получение данных
+            if (state.activeSubscriptions[subscriptionKey].subscriberCount <= 0) {
+              // TODO: Implement stopDataFetching for old store
+              console.log(`📝 TODO: Stop data fetching for ${subscriptionKey}`);
+              delete state.activeSubscriptions[subscriptionKey];
+              console.log(`🗑️ Subscription removed: ${subscriptionKey}`);
+            }
           }
         });
       },
@@ -355,9 +465,32 @@ export const useDataProviderStore = create<DataProviderStore>()(
         });
       },
 
+      // Получение данных из store
+      getCandles: (exchange: string, symbol: string): Candle[] => {
+        const state = get();
+        const key = `${exchange}-${symbol}`;
+        return state.data.candles[key]?.data || [];
+      },
+
+      getTrades: (exchange: string, symbol: string): Trade[] => {
+        const state = get();
+        const key = `${exchange}-${symbol}`;
+        return state.data.trades[key]?.data || [];
+      },
+
+      getOrderBook: (exchange: string, symbol: string): OrderBook | null => {
+        const state = get();
+        const key = `${exchange}-${symbol}`;
+        return state.data.orderbook[key]?.data || null;
+      },
+
       // Утилиты
       getConnectionKey: (exchange: string, symbol: string, dataType: DataType): string => {
         return `${exchange}-${symbol}-${dataType}`;
+      },
+
+      getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType): string => {
+        return `${exchange}:${symbol}:${dataType}`;
       },
 
       getActiveSubscriptions: (): DataSubscription[] => {

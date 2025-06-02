@@ -7,7 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
-import { useDataProviderStore } from '../../store/dataProviderStore';
+import { useDataProviderStoreV2 } from '../../store/dataProviderStoreV2';
 import { 
   DataProviderType, 
   CCXTBrowserProvider, 
@@ -173,7 +173,7 @@ interface CCXTServerFormData {
 }
 
 const DataProviderSetupWidgetInner: React.FC = () => {
-  const { addProvider, initializeProvider, loading } = useDataProviderStore();
+  const { addProvider } = useDataProviderStoreV2();
   
   const [providerType, setProviderType] = useState<DataProviderType>('ccxt-browser');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
@@ -260,25 +260,64 @@ const DataProviderSetupWidgetInner: React.FC = () => {
         return;
       }
 
-      // Добавляем временный провайдер в store для тестирования
-      addProvider(tempProvider);
+      // Прямое тестирование через CCXT
+      if (tempProvider.type === 'ccxt-browser') {
+        const ccxt = window.ccxt;
+        if (!ccxt) {
+          setTestResult({ success: false, message: '❌ CCXT не загружен! Проверьте подключение CDN' });
+          return;
+        }
 
-      const result = await initializeProvider(tempProvider.id);
-      
-      // Безопасное удаление временного провайдера
-      try {
-        const { removeProvider } = useDataProviderStore.getState();
-        removeProvider(tempProvider.id);
-      } catch (removeError) {
-        console.warn('⚠️ Предупреждение при удалении временного провайдера:', removeError);
+        const config = tempProvider.config as CCXTBrowserConfig;
+        const ExchangeClass = ccxt[config.exchangeId];
+        
+        if (!ExchangeClass) {
+          setTestResult({ success: false, message: `❌ Биржа ${config.exchangeId} не найдена в CCXT` });
+          return;
+        }
+
+        const exchange = new ExchangeClass({
+          ...config,
+          enableRateLimit: true,
+          timeout: 10000
+        });
+
+        // Тестируем загрузку рынков
+        const markets = await exchange.loadMarkets();
+        const marketCount = Object.keys(markets).length;
+        
+        setTestResult({
+          success: true,
+          message: `✅ Соединение успешно! Биржа ${exchange.name}, найдено ${marketCount} торговых пар`
+        });
+      } else if (tempProvider.type === 'ccxt-server') {
+        // Для CCXT Server можно добавить простую проверку URL
+        const config = tempProvider.config as CCXTServerConfig;
+        try {
+          const response = await fetch(config.serverUrl + '/health', { 
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${config.privateKey}` },
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (response.ok) {
+            setTestResult({
+              success: true,
+              message: `✅ Сервер доступен! URL: ${config.serverUrl}`
+            });
+          } else {
+            setTestResult({
+              success: false,
+              message: `❌ Сервер недоступен. Статус: ${response.status}`
+            });
+          }
+        } catch (fetchError) {
+          setTestResult({
+            success: false,
+            message: `❌ Ошибка подключения к серверу: ${fetchError instanceof Error ? fetchError.message : 'Неизвестная ошибка'}`
+          });
+        }
       }
-      
-      setTestResult({
-        success: result.success,
-        message: result.success 
-          ? `✅ Соединение успешно! Найдено ${result.data?.markets?.length || 0} торговых пар`
-          : `❌ ${result.error || 'Неизвестная ошибка'}`
-      });
     } catch (error) {
       console.error('🛡️ Перехваченная ошибка тестирования:', error);
       setTestResult({ 
@@ -336,40 +375,57 @@ const DataProviderSetupWidgetInner: React.FC = () => {
     return null;
   };
 
+  const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async () => {
     const provider = createTempProvider();
     if (!provider) return;
 
-    // Создаем реальный ID
-    provider.id = `${provider.type}-${Date.now()}`;
-    
-    addProvider(provider);
-    
-    // Тестируем соединение
-    await initializeProvider(provider.id);
-    
-    // Очищаем форму
-    if (providerType === 'ccxt-browser') {
-      setCcxtBrowserForm({
-        name: '',
-        exchangeId: '',
-        sandbox: false,
-        apiKey: '',
-        secret: '',
-        password: '',
-        uid: ''
+    setIsSubmitting(true);
+    setSubmitResult(null);
+
+    try {
+      // Создаем реальный ID
+      provider.id = `${provider.type}-${Date.now()}`;
+      
+      addProvider(provider);
+      
+      setSubmitResult({
+        success: true,
+        message: `Поставщик "${provider.name}" успешно добавлен!`
       });
-    } else if (providerType === 'ccxt-server') {
-      setCcxtServerForm({
-        name: '',
-        exchangeId: '',
-        serverUrl: '',
-        privateKey: '',
-        timeout: 30000
+      
+      // Очищаем форму
+      if (providerType === 'ccxt-browser') {
+        setCcxtBrowserForm({
+          name: '',
+          exchangeId: '',
+          sandbox: false,
+          apiKey: '',
+          secret: '',
+          password: '',
+          uid: ''
+        });
+      } else if (providerType === 'ccxt-server') {
+        setCcxtServerForm({
+          name: '',
+          exchangeId: '',
+          serverUrl: '',
+          privateKey: '',
+          timeout: 30000
+        });
+      }
+      
+      setTestResult(null);
+    } catch (error) {
+      setSubmitResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Неизвестная ошибка при добавлении поставщика'
       });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setTestResult(null);
   };
 
   const isFormValid = providerType === 'ccxt-browser' 
@@ -587,6 +643,17 @@ const DataProviderSetupWidgetInner: React.FC = () => {
             </div>
           )}
 
+          {/* Результат добавления */}
+          {submitResult && (
+            <div className={`p-3 rounded-lg ${
+              submitResult.success 
+                ? 'bg-green-50 border border-green-200 text-green-800' 
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}>
+              <p className="text-sm">{submitResult.message}</p>
+            </div>
+          )}
+
           {/* Кнопки */}
           <div className="flex gap-2">
             <Button
@@ -601,11 +668,11 @@ const DataProviderSetupWidgetInner: React.FC = () => {
             
             <Button
               onClick={handleSubmit}
-              disabled={!isFormValid || loading}
+              disabled={!isFormValid || isSubmitting}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              {loading ? 'Добавляем...' : 'Добавить поставщика'}
+              {isSubmitting ? 'Добавляем...' : 'Добавить поставщика'}
             </Button>
           </div>
         </CardContent>

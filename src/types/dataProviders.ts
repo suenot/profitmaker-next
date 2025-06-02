@@ -154,4 +154,43 @@ export interface ProviderOperationResult {
   success: boolean;
   error?: string;
   data?: any;
+}
+
+// Добавляю новые типы в начало файла после существующих импортов и базовых типов
+export type DataFetchMethod = 'rest' | 'websocket';
+
+export interface DataFetchSettings {
+  method: DataFetchMethod;
+  restIntervals: {
+    trades: number; // milliseconds
+    candles: number; // milliseconds  
+    orderbook: number; // milliseconds
+  };
+}
+
+export interface SubscriptionKey {
+  exchange: string;
+  symbol: string;
+  dataType: DataType;
+}
+
+export interface ActiveSubscription {
+  key: SubscriptionKey;
+  subscriberCount: number;
+  method: DataFetchMethod;
+  isFallback?: boolean; // true если REST используется как fallback от WebSocket
+  isActive: boolean;
+  lastUpdate: number;
+  intervalId?: number; // для REST интервалов
+  wsConnection?: WebSocket; // для WebSocket соединений
+}
+
+export interface RestCycleManager {
+  intervalId: number;
+  exchange: string;
+  symbol: string;
+  dataType: DataType;
+  interval: number;
+  lastFetch: number;
+  subscriberIds: Set<string>;
 } 

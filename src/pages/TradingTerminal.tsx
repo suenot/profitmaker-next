@@ -9,6 +9,9 @@ import OrderFormWidget from '@/components/widgets/OrderForm';
 import TransactionHistoryWidget from '@/components/widgets/TransactionHistory';
 import { OrderBookWidget } from '@/components/widgets/OrderBookWidget';
 import { TradesWidget } from '@/components/widgets/TradesWidget';
+import { TradesWidgetV2 } from '@/components/widgets/TradesWidgetV2';
+import { DataProviderSettingsWidget } from '@/components/widgets/DataProviderSettingsWidget';
+import { DataProviderDemoWidget } from '@/components/widgets/DataProviderDemoWidget';
 import { DataProviderSetupWidget } from '@/components/widgets/DataProviderSetupWidget';
 import { DataProviderDebugWidget } from '@/components/widgets/DataProviderDebugWidget';
 import AlignmentGuides from '@/components/AlignmentGuides';
@@ -22,6 +25,9 @@ const widgetComponents: Record<string, React.FC<any>> = {
   custom: PortfolioWidget, // Placeholder
   orderbook: OrderBookWidget,
   trades: TradesWidget,
+  tradesV2: TradesWidgetV2,
+  dataProviderSettings: DataProviderSettingsWidget,
+  dataProviderDemo: DataProviderDemoWidget,
   dataProviderSetup: DataProviderSetupWidget,
   dataProviderDebug: DataProviderDebugWidget,
 };
