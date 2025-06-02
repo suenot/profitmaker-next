@@ -183,6 +183,26 @@ export interface ActiveSubscription {
   lastUpdate: number;
   intervalId?: number; // для REST интервалов
   wsConnection?: WebSocket; // для WebSocket соединений
+  ccxtMethod?: string; // какой именно CCXT метод используется (watchOrderBook, watchBidsAsks, etc.)
+}
+
+// Новые типы для интеллектуального выбора CCXT методов
+export type CCXTOrderBookMethod = 
+  | 'watchOrderBookForSymbols'  // Приоритет 1: diff обновления
+  | 'watchOrderBook'            // Приоритет 2: полные снепшоты
+  | 'fetchOrderBook';           // Fallback: REST
+
+export interface CCXTMethodCapabilities {
+  watchOrderBookForSymbols: boolean;
+  watchOrderBook: boolean;
+  fetchOrderBook: boolean;
+}
+
+export interface OrderBookMethodSelection {
+  selectedMethod: CCXTOrderBookMethod;
+  reason: string;
+  capabilities: CCXTMethodCapabilities;
+  isOptimal: boolean;
 }
 
 export interface RestCycleManager {

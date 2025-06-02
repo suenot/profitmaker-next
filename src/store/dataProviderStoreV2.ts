@@ -43,7 +43,10 @@ import {
   DataFetchSettings,
   SubscriptionKey,
   ActiveSubscription,
-  RestCycleManager
+  RestCycleManager,
+  CCXTOrderBookMethod,
+  CCXTMethodCapabilities,
+  OrderBookMethodSelection
 } from '../types/dataProviders';
 
 interface DataProviderStateV2 {
@@ -105,6 +108,9 @@ interface DataProviderActionsV2 {
   stopDataFetching: (subscriptionKey: string) => void;
   startWebSocketFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => Promise<void>;
   startRestFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => Promise<void>;
+  
+  // Интеллектуальный выбор CCXT методов
+  selectOptimalOrderBookMethod: (exchange: string, exchangeInstance: any) => OrderBookMethodSelection;
   
   // Очистка
   cleanup: () => void;
@@ -520,8 +526,23 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
               hasSupport = !!exchangeInstance.has?.[watchMethod];
               break;
             case 'orderbook':
-              watchMethod = 'watchOrderBook';
-              hasSupport = !!exchangeInstance.has?.[watchMethod];
+              // Используем интеллектуальный выбор метода для orderbook
+              const methodSelection = get().selectOptimalOrderBookMethod(exchange, exchangeInstance);
+              watchMethod = methodSelection.selectedMethod;
+              hasSupport = methodSelection.selectedMethod !== 'fetchOrderBook'; // все кроме REST имеют WebSocket поддержку
+              
+              console.log(`🎯 Выбран оптимальный метод для ${exchange} orderbook:`, {
+                method: methodSelection.selectedMethod,
+                reason: methodSelection.reason,
+                isOptimal: methodSelection.isOptimal
+              });
+              
+              // Сохраняем выбранный метод в подписке для отображения в UI
+              set(state => {
+                if (state.activeSubscriptions[subscriptionKey]) {
+                  state.activeSubscriptions[subscriptionKey].ccxtMethod = methodSelection.selectedMethod;
+                }
+              });
               break;
             default:
               throw new Error(`Unsupported data type: ${dataType}`);
@@ -577,9 +598,29 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
                     }
                     break;
                   case 'orderbook':
-                    const orderbook = await exchangeInstance.watchOrderBook(symbol);
+                    // Получаем информацию о выбранном методе
+                    const currentSubscription = get().activeSubscriptions[subscriptionKey];
+                    const selectedMethod = currentSubscription?.ccxtMethod || 'watchOrderBook';
+                    
+                    let orderbook;
+                    switch (selectedMethod) {
+                      case 'watchOrderBookForSymbols':
+                        // Для множественных пар (возвращает объект с парами)
+                        const multiOrderbook = await exchangeInstance.watchOrderBookForSymbols([symbol]);
+                        orderbook = multiOrderbook[symbol];
+                        console.log(`📋 OrderBook (watchOrderBookForSymbols) received for ${exchange} ${symbol}`);
+                        break;
+                      case 'watchOrderBook':
+                      default:
+                        // Стандартный полный orderbook
+                        orderbook = await exchangeInstance.watchOrderBook(symbol);
+                        console.log(`📋 OrderBook (watchOrderBook) received for ${exchange} ${symbol}`);
+                        break;
+                    }
+                    
                     if (orderbook) {
-                      console.log(`📋 OrderBook received via WebSocket for ${exchange} ${symbol}:`, {
+                      console.log(`📊 OrderBook data sample:`, {
+                        method: selectedMethod,
                         bids: orderbook.bids?.slice(0, 3),
                         asks: orderbook.asks?.slice(0, 3),
                         timestamp: orderbook.timestamp
@@ -699,6 +740,48 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
           console.error(`❌ Failed to start REST polling for ${exchange} ${symbol} ${dataType}:`, error);
           throw error;
         }
+      },
+
+      // Интеллектуальный выбор CCXT методов
+      selectOptimalOrderBookMethod: (exchange: string, exchangeInstance: any): OrderBookMethodSelection => {
+        console.log(`🔍 Анализ возможностей ${exchange} для выбора оптимального orderbook метода...`);
+        
+        // Проверяем доступные возможности биржи
+        const capabilities: CCXTMethodCapabilities = {
+          watchOrderBookForSymbols: !!exchangeInstance.has?.['watchOrderBookForSymbols'],
+          watchOrderBook: !!exchangeInstance.has?.['watchOrderBook'],
+          fetchOrderBook: !!exchangeInstance.has?.['fetchOrderBook']
+        };
+
+        console.log(`📊 ${exchange} возможности:`, capabilities);
+
+        // Приоритет 1: watchOrderBookForSymbols (diff обновления, наиболее эффективно)
+        if (capabilities.watchOrderBookForSymbols) {
+          return {
+            selectedMethod: 'watchOrderBookForSymbols',
+            reason: 'Оптимальный выбор: поддерживает diff обновления для множества пар',
+            capabilities,
+            isOptimal: true
+          };
+        }
+
+        // Приоритет 2: watchOrderBook (полный orderbook, стандартная эффективность)
+        if (capabilities.watchOrderBook) {
+          return {
+            selectedMethod: 'watchOrderBook',
+            reason: 'Стандартный WebSocket: полные снепшоты orderbook',
+            capabilities,
+            isOptimal: true
+          };
+        }
+
+        // Fallback: fetchOrderBook (REST запросы)
+        return {
+          selectedMethod: 'fetchOrderBook',
+          reason: 'Fallback: REST запросы, WebSocket методы не поддерживаются',
+          capabilities,
+          isOptimal: false
+        };
       },
 
       // Очистка

@@ -301,6 +301,16 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
               {currentSubscription.lastUpdate > 0 && (
                 <div>🕐 Последнее обновление: <strong>{formatTime(currentSubscription.lastUpdate)}</strong></div>
               )}
+
+              {/* Отображаем используемый CCXT метод */}
+              {currentSubscription.ccxtMethod && (
+                <div className="text-xs bg-blue-100 p-1 rounded">
+                  🔧 CCXT метод: <strong>{currentSubscription.ccxtMethod}</strong>
+                  {currentSubscription.ccxtMethod === 'watchOrderBookForSymbols' && ' (⚡ diff обновления)'}
+                  {currentSubscription.ccxtMethod === 'watchOrderBook' && ' (📋 полные снепшоты)'}
+                  {currentSubscription.ccxtMethod === 'fetchOrderBook' && ' (🔄 REST запросы)'}
+                </div>
+              )}
             </div>
           )}
           
