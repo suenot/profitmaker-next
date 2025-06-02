@@ -19,6 +19,17 @@ const getCCXT = () => {
   return window.ccxt;
 };
 
+// Получение CCXT Pro (для WebSocket)
+const getCCXTPro = () => {
+  const ccxt = getCCXT();
+  if (ccxt && ccxt.pro) {
+    return ccxt.pro;
+  }
+  
+  console.error('❌ CCXT Pro не доступен. Убедитесь что используется полная версия CCXT с поддержкой WebSocket');
+  return null;
+};
+
 import {
   DataProvider,
   DataType,
@@ -463,7 +474,7 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
         });
       },
 
-      // Запуск WebSocket получения данных
+      // Запуск WebSocket получения данных через CCXT Pro
       startWebSocketFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => {
         if (provider.type !== 'ccxt-browser') {
           console.warn(`⚠️ WebSocket не поддерживается для провайдера типа ${provider.type}`);
@@ -471,44 +482,53 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
         }
 
         const ccxtProvider = provider as CCXTBrowserProvider;
-        const ccxt = getCCXT();
-        if (!ccxt) return;
+        const ccxtPro = getCCXTPro();
+        if (!ccxtPro) {
+          console.warn(`⚠️ CCXT Pro недоступен, переключаемся на REST`);
+          await get().startRestFetching(exchange, symbol, dataType, provider);
+          return;
+        }
 
         try {
-          const ExchangeClass = ccxt[exchange];
+          const ExchangeClass = ccxtPro[exchange];
           if (!ExchangeClass) {
-            throw new Error(`Exchange ${exchange} not found in CCXT`);
+            console.warn(`⚠️ Exchange ${exchange} not found in CCXT Pro, falling back to REST`);
+            await get().startRestFetching(exchange, symbol, dataType, provider);
+            return;
           }
 
           const exchangeInstance = new ExchangeClass(ccxtProvider.config);
           const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType);
 
-          // Проверяем поддержку WebSocket для типа данных
+          // CCXT Pro поддерживает WebSocket по умолчанию для всех основных бирж
+          console.log(`📡 Starting CCXT Pro WebSocket stream: ${exchange} ${symbol} ${dataType}`);
+          
+          // Проверяем доступные методы в CCXT Pro
+          console.log(`🔍 CCXT Pro ${exchange} available methods:`, Object.keys(exchangeInstance.has || {}));
+          
+          // CCXT Pro автоматически поддерживает WebSocket, проверяем только основную поддержку
           let watchMethod: string;
           let hasSupport: boolean;
 
           switch (dataType) {
             case 'candles':
               watchMethod = 'watchOHLCV';
-              hasSupport = exchangeInstance.has?.[watchMethod] || false;
+              hasSupport = exchangeInstance.has?.[watchMethod] || true; // CCXT Pro поддерживает по умолчанию
               break;
             case 'trades':
               watchMethod = 'watchTrades';
-              hasSupport = exchangeInstance.has?.[watchMethod] || false;
+              hasSupport = exchangeInstance.has?.[watchMethod] || true; // CCXT Pro поддерживает по умолчанию
               break;
             case 'orderbook':
               watchMethod = 'watchOrderBook';
-              hasSupport = exchangeInstance.has?.[watchMethod] || false;
+              hasSupport = exchangeInstance.has?.[watchMethod] || true; // CCXT Pro поддерживает по умолчанию
               break;
             default:
               throw new Error(`Unsupported data type: ${dataType}`);
           }
 
           if (!hasSupport) {
-            console.warn(`⚠️ Exchange ${exchange} does not support ${watchMethod}, falling back to REST`);
-            console.log(`🔍 Debug info: exchangeInstance.has =`, exchangeInstance.has);
-            console.log(`🔍 Debug info: exchangeInstance.has?.${watchMethod} =`, exchangeInstance.has?.[watchMethod]);
-            console.log(`🔍 Debug info: Available methods:`, Object.keys(exchangeInstance.has || {}));
+            console.warn(`⚠️ CCXT Pro ${exchange} does not support ${watchMethod}, falling back to REST`);
             
             // Автоматически переключаемся на REST с флагом fallback
             set(state => {
@@ -521,38 +541,67 @@ export const useDataProviderStoreV2 = create<DataProviderStoreV2>()(
             return;
           }
 
-          console.log(`📡 Starting WebSocket stream: ${exchange} ${symbol} ${dataType}`);
-
-          // Запускаем WebSocket поток
+          // Запускаем CCXT Pro WebSocket поток с бесконечным циклом
           const startWebSocketStream = async () => {
-            try {
-              switch (dataType) {
-                case 'candles':
-                  const candles = await exchangeInstance.watchOHLCV(symbol, '1m');
-                  get().updateCandles(exchange, symbol, candles);
-                  break;
-                case 'trades':
-                  const trades = await exchangeInstance.watchTrades(symbol);
-                  get().updateTrades(exchange, symbol, trades);
-                  break;
-                case 'orderbook':
-                  const orderbook = await exchangeInstance.watchOrderBook(symbol);
-                  get().updateOrderBook(exchange, symbol, orderbook);
-                  break;
-              }
-            } catch (error) {
-              console.error(`❌ WebSocket stream error for ${subscriptionKey}:`, error);
-              // Не останавливаем подписку при ошибках - пытаемся переподключиться
-              setTimeout(() => {
+            console.log(`🚀 Starting CCXT Pro WebSocket loop for ${exchange} ${symbol} ${dataType}`);
+            
+            while (true) {
+              try {
                 const subscription = get().activeSubscriptions[subscriptionKey];
-                if (subscription?.isActive) {
-                  startWebSocketStream();
+                if (!subscription?.isActive) {
+                  console.log(`🛑 WebSocket loop stopped for ${subscriptionKey} - subscription inactive`);
+                  break;
                 }
-              }, 5000);
+
+                switch (dataType) {
+                  case 'candles':
+                    const candles = await exchangeInstance.watchOHLCV(symbol, '1m');
+                    if (candles && candles.length > 0) {
+                      const formattedCandles = candles.map((c: any[]) => ({
+                        timestamp: c[0],
+                        open: c[1],
+                        high: c[2],
+                        low: c[3],
+                        close: c[4],
+                        volume: c[5]
+                      }));
+                      get().updateCandles(exchange, symbol, formattedCandles);
+                    }
+                    break;
+                  case 'trades':
+                    const trades = await exchangeInstance.watchTrades(symbol);
+                    if (trades && trades.length > 0) {
+                      get().updateTrades(exchange, symbol, trades);
+                    }
+                    break;
+                  case 'orderbook':
+                    const orderbook = await exchangeInstance.watchOrderBook(symbol);
+                    if (orderbook) {
+                      get().updateOrderBook(exchange, symbol, orderbook);
+                    }
+                    break;
+                }
+              } catch (error) {
+                console.error(`❌ CCXT Pro WebSocket error for ${subscriptionKey}:`, error);
+                
+                // При ошибке WebSocket - переключаемся на REST с флагом fallback
+                console.log(`🔄 Switching to REST fallback due to WebSocket error`);
+                set(state => {
+                  if (state.activeSubscriptions[subscriptionKey]) {
+                    state.activeSubscriptions[subscriptionKey].method = 'rest';
+                    state.activeSubscriptions[subscriptionKey].isFallback = true;
+                  }
+                });
+                await get().startRestFetching(exchange, symbol, dataType, provider);
+                break;
+              }
             }
           };
 
-          startWebSocketStream();
+          // Запускаем WebSocket поток в фоновом режиме
+          startWebSocketStream().catch(error => {
+            console.error(`❌ Failed to start CCXT Pro WebSocket for ${subscriptionKey}:`, error);
+          });
 
         } catch (error) {
           console.error(`❌ Failed to start WebSocket for ${exchange} ${symbol} ${dataType}:`, error);
