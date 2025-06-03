@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
-import { BarChart2, Maximize, RefreshCw, Clock, TrendingUp, TrendingDown, Settings, Play, Pause } from 'lucide-react';
+import { BarChart2, Maximize, RefreshCw, Clock, Settings, Play, Pause } from 'lucide-react';
 import { NightVision } from 'night-vision';
 import { useDataProviderStore } from '../../store/dataProviderStore';
 import { Timeframe, MarketType, ChartUpdateEvent, Candle } from '../../types/dataProviders';
@@ -425,12 +425,7 @@ const Chart: React.FC<ChartProps> = ({
   }, []);
 
   // Format display values
-  const formatPrice = (price: number): string => {
-    return price.toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 8 
-    });
-  };
+
 
   const getConnectionStatus = () => {
     if (!currentSubscription) return 'disconnected';
@@ -447,22 +442,7 @@ const Chart: React.FC<ChartProps> = ({
     }
   };
 
-  const getLastPrice = () => {
-    if (rawCandles.length === 0) return null;
-    return rawCandles[rawCandles.length - 1]?.close;
-  };
 
-  const getPriceChange = () => {
-    if (rawCandles.length < 2) return { change: 0, percent: 0 };
-    const current = rawCandles[rawCandles.length - 1]?.close || 0;
-    const previous = rawCandles[rawCandles.length - 2]?.close || 0;
-    const change = current - previous;
-    const percent = previous > 0 ? (change / previous) * 100 : 0;
-    return { change, percent };
-  };
-
-  const priceChange = getPriceChange();
-  const lastPrice = getLastPrice();
 
   return (
     <div className="flex flex-col h-full bg-terminal-bg border border-terminal-border rounded-lg">
@@ -478,16 +458,6 @@ const Chart: React.FC<ChartProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
-          {lastPrice && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-terminal-text font-mono">${formatPrice(lastPrice)}</span>
-              <span className={`flex items-center gap-1 ${priceChange.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {priceChange.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {priceChange.percent.toFixed(2)}%
-              </span>
-            </div>
-          )}
-          
           <button
             onClick={() => setShowSettings(!showSettings)}
             className="p-1.5 text-terminal-muted hover:text-terminal-text hover:bg-terminal-hover rounded transition-colors"
