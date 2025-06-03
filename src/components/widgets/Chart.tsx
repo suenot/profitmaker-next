@@ -62,7 +62,7 @@ const Chart: React.FC<ChartProps> = ({
   const { 
     subscribe, 
     unsubscribe, 
-    getCandles, 
+    initializeChartData,
     providers,
     activeProviderId,
     dataFetchSettings,
@@ -85,8 +85,6 @@ const Chart: React.FC<ChartProps> = ({
   const [showVolume, setShowVolume] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Get real-time data from store
-  const rawCandles = getCandles(exchange, symbol, timeframe, market);
   const activeSubscriptions = getActiveSubscriptionsList();
   
   // Check if we have active subscription for current settings
@@ -99,71 +97,9 @@ const Chart: React.FC<ChartProps> = ({
     sub.key.market === market
   );
 
-  // Convert store data to NightVision format
-  const chartData = useMemo(() => {
-    if (!rawCandles || rawCandles.length === 0) {
-      return null;
-    }
-
-    // Convert OHLCV data to NightVision format
-    const ohlcvData = rawCandles.map(candle => [
-      candle.timestamp,
-      candle.open,
-      candle.high,
-      candle.low,
-      candle.close,
-      candle.volume
-    ]);
-
-    // Sort by timestamp to ensure proper order
-    ohlcvData.sort((a, b) => a[0] - b[0]);
-
-    const panes = [
-      {
-        overlays: [
-          {
-            name: 'OHLCV',
-            type: 'Candles',
-            data: ohlcvData,
-            main: true,
-            props: {
-              colorCandleUp: CHART_COLORS.candleUp,
-              colorCandleDw: CHART_COLORS.candleDw,
-              colorWickUp: CHART_COLORS.wickUp,
-              colorWickDw: CHART_COLORS.wickDw,
-            }
-          }
-        ]
-      }
-    ];
-
-    // Add volume pane if enabled
-    if (showVolume) {
-      const volumeData = rawCandles.map(candle => [
-        candle.timestamp,
-        candle.volume
-      ]);
-
-             panes.push({
-         overlays: [
-           {
-             name: 'Volume',
-             type: 'Volume',
-             data: volumeData,
-             main: false,
-             props: {
-               colorCandleUp: CHART_COLORS.volUp,
-               colorCandleDw: CHART_COLORS.volDw,
-               colorWickUp: CHART_COLORS.volUp,
-               colorWickDw: CHART_COLORS.volDw,
-             }
-           }
-         ]
-       });
-    }
-
-    return { panes };
-  }, [rawCandles, showVolume]);
+  // Chart initialization flag
+  const [isChartInitialized, setIsChartInitialized] = useState(false);
+  const [chartDataLoaded, setChartDataLoaded] = useState(false);
 
   // Handle chart resize
   useLayoutEffect(() => {
@@ -182,9 +118,9 @@ const Chart: React.FC<ChartProps> = ({
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Initialize NightVision chart
+  // Initialize empty NightVision chart
   useEffect(() => {
-    if (!chartRef.current || !chartData) return;
+    if (!chartRef.current) return;
 
     try {
       // Destroy existing chart
@@ -192,24 +128,26 @@ const Chart: React.FC<ChartProps> = ({
         nightVisionRef.current.destroy?.();
       }
 
-             // Create new NightVision instance
-       const chartId = `chart-${Date.now()}`;
-       chartRef.current.id = chartId;
-       nightVisionRef.current = new NightVision(chartId, {
-         width: chartDimensions.width,
-         height: chartDimensions.height,
-         colors: {
-           back: CHART_COLORS.back,
-           grid: CHART_COLORS.grid
-         },
-         data: chartData,
-         autoResize: true
-       });
+      // Create new NightVision instance with empty data
+      const chartId = `chart-${Date.now()}`;
+      chartRef.current.id = chartId;
+      nightVisionRef.current = new NightVision(chartId, {
+        width: chartDimensions.width,
+        height: chartDimensions.height,
+        colors: {
+          back: CHART_COLORS.back,
+          grid: CHART_COLORS.grid
+        },
+        data: { panes: [] }, // Empty data initially
+        autoResize: true
+      });
 
-      console.log(`📊 NightVision chart initialized for ${exchange}:${symbol}:${timeframe}`);
+      console.log(`📊 Empty NightVision chart initialized for ${exchange}:${symbol}:${timeframe}`);
+      setIsChartInitialized(true);
     } catch (error) {
       console.error('❌ Failed to initialize NightVision chart:', error);
       setError('Failed to initialize chart');
+      setIsChartInitialized(false);
     }
 
     return () => {
@@ -217,13 +155,102 @@ const Chart: React.FC<ChartProps> = ({
         nightVisionRef.current.destroy?.();
         nightVisionRef.current = null;
       }
+      setIsChartInitialized(false);
     };
-  }, [chartData, chartDimensions]);
+  }, [chartDimensions, exchange, symbol, timeframe, market]);
+
+  // REST инициализация данных
+  useEffect(() => {
+    if (!isChartInitialized || !nightVisionRef.current) return;
+
+    const loadInitialData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        setChartDataLoaded(false);
+
+        console.log(`🚀 [Chart] Loading initial data via REST for ${exchange}:${market}:${symbol}:${timeframe}`);
+        
+        const candles = await initializeChartData(exchange, symbol, timeframe, market);
+        
+        if (candles && candles.length > 0 && nightVisionRef.current) {
+          // Конвертируем в NightVision формат
+          const ohlcvData = candles.map(candle => [
+            candle.timestamp,
+            candle.open,
+            candle.high,
+            candle.low,
+            candle.close,
+            candle.volume
+          ]);
+
+          // Создаем panes структуру
+          const panes = [
+            {
+              overlays: [
+                {
+                  name: 'OHLCV',
+                  type: 'Candles',
+                  data: ohlcvData,
+                  main: true,
+                  props: {
+                    colorCandleUp: CHART_COLORS.candleUp,
+                    colorCandleDw: CHART_COLORS.candleDw,
+                    colorWickUp: CHART_COLORS.wickUp,
+                    colorWickDw: CHART_COLORS.wickDw,
+                  }
+                }
+              ]
+            }
+          ];
+
+          // Добавляем volume pane если включен
+          if (showVolume) {
+            const volumeData = candles.map(candle => [
+              candle.timestamp,
+              candle.volume
+            ]);
+
+            panes.push({
+              overlays: [
+                {
+                  name: 'Volume',
+                  type: 'Volume',
+                  data: volumeData,
+                  main: false,
+                  props: {
+                    colorCandleUp: CHART_COLORS.volUp,
+                    colorCandleDw: CHART_COLORS.volDw,
+                    colorWickUp: CHART_COLORS.volUp,
+                    colorWickDw: CHART_COLORS.volDw,
+                  }
+                }
+              ]
+            });
+          }
+
+          // Обновляем chart напрямую
+          nightVisionRef.current.data = { panes };
+          nightVisionRef.current.update("data");
+          
+          setChartDataLoaded(true);
+          console.log(`✅ [Chart] Initial data loaded: ${candles.length} candles`);
+        }
+      } catch (error) {
+        console.error(`❌ [Chart] Failed to load initial data:`, error);
+        setError(error instanceof Error ? error.message : 'Failed to load data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [isChartInitialized, exchange, symbol, timeframe, market, showVolume, initializeChartData]);
 
   // Event-driven chart updates (заменяем polling на events из store)
   const chartUpdateListener = useCallback((event: ChartUpdateEvent) => {
-    if (!nightVisionRef.current) {
-      console.log(`📊 [Chart] Event received but chart not ready:`, event.type);
+    if (!nightVisionRef.current || !chartDataLoaded) {
+      console.log(`📊 [Chart] Event received but chart not ready:`, event.type, { chartReady: !!nightVisionRef.current, dataLoaded: chartDataLoaded });
       return;
     }
 
@@ -238,25 +265,7 @@ const Chart: React.FC<ChartProps> = ({
     });
 
     try {
-      if (event.type === 'initial_load') {
-        // Первоначальная загрузка данных
-        if (event.data?.newCandles && chartInstance.hub && chartInstance.hub.mainOv) {
-          const ohlcvData = event.data.newCandles.map((candle: Candle) => [
-            candle.timestamp,
-            candle.open,
-            candle.high,
-            candle.low,
-            candle.close,
-            candle.volume
-          ]);
-          
-          chartInstance.hub.mainOv.data.length = 0; // Clear existing
-          chartInstance.hub.mainOv.data.push(...ohlcvData);
-          chartInstance.update("data");
-          console.log(`📊 [Chart] Initial load completed: ${ohlcvData.length} candles`);
-        }
-      }
-      else if (event.type === 'new_candles') {
+      if (event.type === 'new_candles') {
         // Новые свечи - добавляем в конец
         if (event.data?.newCandles && chartInstance.hub && chartInstance.hub.mainOv && chartInstance.hub.mainOv.data) {
           const newOhlcvData = event.data.newCandles.map((candle: Candle) => [
@@ -296,10 +305,11 @@ const Chart: React.FC<ChartProps> = ({
           }
         }
       }
+      // Игнорируем initial_load - используем REST инициализацию
     } catch (error) {
       console.error('❌ [Chart] Event processing error:', error);
     }
-  }, []);
+  }, [chartDataLoaded]);
 
   // Ref для хранения предыдущих настроек event listener
   const previousEventListenerRef = useRef<{
@@ -552,7 +562,7 @@ const Chart: React.FC<ChartProps> = ({
           <div className="mt-3 flex items-center justify-between text-xs text-terminal-muted">
             <div className="flex items-center gap-4">
               <span>Method: {dataFetchSettings.method.toUpperCase()}</span>
-              <span>Candles: {rawCandles.length}</span>
+              <span>Chart: {isChartInitialized ? 'Ready' : 'Initializing'}</span>
               {currentSubscription && (
                 <span className={getStatusColor()}>
                   {currentSubscription.isFallback ? 'Fallback' : 'Primary'} • 
@@ -593,7 +603,7 @@ const Chart: React.FC<ChartProps> = ({
         />
         
         {/* Loading/Error Overlay */}
-        {(isLoading || error || rawCandles.length === 0) && (
+        {(isLoading || error || !chartDataLoaded) && (
           <div className="absolute inset-0 flex items-center justify-center bg-terminal-bg/80">
             {isLoading ? (
               <div className="flex items-center gap-2 text-terminal-muted">
@@ -607,8 +617,8 @@ const Chart: React.FC<ChartProps> = ({
               </div>
             ) : (
               <div className="text-terminal-muted text-center">
-                <div className="font-medium">No Data</div>
-                <div className="text-sm">Click Start to load chart data</div>
+                <div className="font-medium">Chart Ready</div>
+                <div className="text-sm">Start subscription to see real-time data</div>
               </div>
             )}
           </div>

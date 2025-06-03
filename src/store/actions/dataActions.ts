@@ -12,6 +12,9 @@ export interface DataActions {
   getTrades: (exchange: string, symbol: string, market?: MarketType) => Trade[];
   getOrderBook: (exchange: string, symbol: string, market?: MarketType) => OrderBook | null;
   
+  // REST инициализация данных для Chart widgets
+  initializeChartData: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType) => Promise<Candle[]>;
+  
   // Обновление данных в центральном store
   updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe?: Timeframe, market?: MarketType) => void;
   updateTrades: (exchange: string, symbol: string, trades: Trade[], market?: MarketType) => void;
@@ -283,5 +286,69 @@ export const createDataActions: StateCreator<
 
   getActiveSubscriptionsList: (): ActiveSubscription[] => {
     return Object.values(get().activeSubscriptions);
+  },
+
+  // REST инициализация данных для Chart widgets
+  initializeChartData: async (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType): Promise<Candle[]> => {
+    const state = get();
+    const activeProviderId = state.activeProviderId;
+    
+    if (!activeProviderId) {
+      throw new Error('No active data provider');
+    }
+    
+    const provider = state.providers[activeProviderId];
+    if (!provider) {
+      throw new Error(`Provider ${activeProviderId} not found`);
+    }
+    
+    if (provider.type !== 'ccxt-browser') {
+      throw new Error(`REST initialization not supported for provider type: ${provider.type}`);
+    }
+    
+    console.log(`🚀 [initializeChartData] Loading initial data for ${exchange}:${market}:${symbol}:${timeframe}`);
+    
+    try {
+      // Импортируем CCXT утилиты
+      const { getCCXT } = await import('../utils/ccxtUtils');
+      const ccxt = getCCXT();
+      
+      if (!ccxt) {
+        throw new Error('CCXT not available');
+      }
+      
+      const ExchangeClass = ccxt[exchange];
+      if (!ExchangeClass) {
+        throw new Error(`Exchange ${exchange} not found in CCXT`);
+      }
+      
+      const exchangeInstance = new ExchangeClass(provider.config);
+      
+      // Загружаем исторические данные (последние 100 свечей)
+      const ohlcvData = await exchangeInstance.fetchOHLCV(symbol, timeframe, undefined, 100);
+      
+      if (!ohlcvData || ohlcvData.length === 0) {
+        throw new Error('No data received from exchange');
+      }
+      
+      // Конвертируем в формат Candle
+      const candles: Candle[] = ohlcvData.map((c: any[]) => ({
+        timestamp: c[0],
+        open: c[1],
+        high: c[2],
+        low: c[3],
+        close: c[4],
+        volume: c[5]
+      }));
+      
+      console.log(`✅ [initializeChartData] Loaded ${candles.length} candles for ${exchange}:${market}:${symbol}:${timeframe}`);
+      
+      // НЕ сохраняем в store - возвращаем напрямую для chart
+      return candles;
+      
+    } catch (error) {
+      console.error(`❌ [initializeChartData] Failed to load data:`, error);
+      throw error;
+    }
   }
 }); 
