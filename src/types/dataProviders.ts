@@ -225,4 +225,24 @@ export interface RestCycleManager {
   interval: number;
   lastFetch: number;
   subscriberIds: Set<string>;
-} 
+}
+
+// Event system для уведомления Chart widgets
+export type ChartUpdateEventType = 'initial_load' | 'new_candles' | 'update_last_candle' | 'full_refresh';
+
+export interface ChartUpdateEvent {
+  type: ChartUpdateEventType;
+  exchange: string;
+  symbol: string;
+  timeframe: Timeframe;
+  market: MarketType;
+  data?: {
+    newCandles?: Candle[];
+    newCandlesCount?: number;
+    lastCandle?: Candle;
+    totalCandles?: number;
+  };
+  timestamp: number;
+}
+
+export type ChartUpdateListener = (event: ChartUpdateEvent) => void; 

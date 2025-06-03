@@ -11,7 +11,9 @@ import type {
   DataFetchMethod,
   OrderBookMethodSelection,
   Timeframe,
-  MarketType
+  MarketType,
+  ChartUpdateListener,
+  ChartUpdateEvent
 } from '../types/dataProviders';
 
 // Интерфейс состояния store
@@ -35,6 +37,9 @@ export interface DataProviderState {
     trades: Record<string, Record<string, Record<string, Trade[]>>>;   // [exchange][market][symbol] -> Trade[]
     orderbook: Record<string, Record<string, Record<string, OrderBook>>>; // [exchange][market][symbol] -> OrderBook
   };
+  
+  // Event system для уведомления Chart widgets
+  chartUpdateListeners: Record<string, ChartUpdateListener[]>; // [subscriptionKey] -> [listeners]
   
   // Состояние
   loading: boolean;
@@ -69,6 +74,11 @@ export interface DataProviderActions {
   // Утилиты
   getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => string;
   getActiveSubscriptionsList: () => ActiveSubscription[];
+  
+  // Event system для Chart widgets
+  addChartUpdateListener: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType, listener: ChartUpdateListener) => void;
+  removeChartUpdateListener: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType, listener: ChartUpdateListener) => void;
+  emitChartUpdateEvent: (event: ChartUpdateEvent) => void;
   
   // Внутренние функции управления потоками данных
   startDataFetching: (subscriptionKey: string) => Promise<void>;

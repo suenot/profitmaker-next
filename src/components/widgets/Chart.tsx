@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import { BarChart2, Maximize, RefreshCw, Clock, TrendingUp, TrendingDown, Settings, Play, Pause } from 'lucide-react';
 import { NightVision } from 'night-vision';
 import { useDataProviderStore } from '../../store/dataProviderStore';
-import { Timeframe, MarketType } from '../../types/dataProviders';
+import { Timeframe, MarketType, ChartUpdateEvent, Candle } from '../../types/dataProviders';
 
 // Chart configuration
 const CHART_COLORS = {
@@ -66,7 +66,9 @@ const Chart: React.FC<ChartProps> = ({
     providers,
     activeProviderId,
     dataFetchSettings,
-    getActiveSubscriptionsList
+    getActiveSubscriptionsList,
+    addChartUpdateListener,
+    removeChartUpdateListener
   } = useDataProviderStore();
 
   // Widget state
@@ -218,81 +220,120 @@ const Chart: React.FC<ChartProps> = ({
     };
   }, [chartData, chartDimensions]);
 
-  // State to track last candles count for efficient updates
-  const [lastCandlesCount, setLastCandlesCount] = useState(0);
+  // Event-driven chart updates (заменяем polling на events из store)
+  const chartUpdateListener = useCallback((event: ChartUpdateEvent) => {
+    if (!nightVisionRef.current) {
+      console.log(`📊 [Chart] Event received but chart not ready:`, event.type);
+      return;
+    }
 
-  // Update chart data when rawCandles change (efficient NightVision updates)
-  useEffect(() => {
-    if (nightVisionRef.current && chartData && rawCandles.length > 0) {
-      try {
-        // Get direct access to chart data for efficient updates
-        const chartInstance = nightVisionRef.current;
-        
-        if (lastCandlesCount === 0) {
-          // First time loading - full data update
-          chartInstance.data = chartData;
-          console.log(`📊 NightVision initial data load: ${rawCandles.length} candles`);
-          setLastCandlesCount(rawCandles.length);
-        } else if (rawCandles.length > lastCandlesCount) {
-          // New candles added - update data structure
-          if (chartInstance.hub && chartInstance.hub.mainOv && chartInstance.hub.mainOv.data) {
-            // Direct data access for performance (as per NightVision docs)
-            const mainData = chartInstance.hub.mainOv.data;
-            
-            // Add new candles to existing data
-            const newCandles = rawCandles.slice(lastCandlesCount);
-            const newOHLCVData = newCandles.map(candle => [
-              candle.timestamp,
-              candle.open,
-              candle.high,
-              candle.low,
-              candle.close,
-              candle.volume
-            ]);
-            
-            mainData.push(...newOHLCVData);
-            chartInstance.update("data"); // New candle(s) - update data structure
-            console.log(`📈 NightVision added ${newCandles.length} new candles (total: ${rawCandles.length})`);
-          } else {
-            // Fallback to full update if direct access fails
-            chartInstance.data = chartData;
-            console.log(`📈 NightVision fallback full update: ${rawCandles.length} candles`);
-          }
-          setLastCandlesCount(rawCandles.length);
-        } else if (rawCandles.length === lastCandlesCount) {
-          // Same count - last candle might be updated
-          if (chartInstance.hub && chartInstance.hub.mainOv && chartInstance.hub.mainOv.data) {
-            const mainData = chartInstance.hub.mainOv.data;
-            const lastCandle = rawCandles[rawCandles.length - 1];
-            
-            if (mainData.length > 0) {
-              // Update last candle in place
-              const lastIndex = mainData.length - 1;
-              mainData[lastIndex] = [
-                lastCandle.timestamp,
-                lastCandle.open,
-                lastCandle.high,
-                lastCandle.low,
-                lastCandle.close,
-                lastCandle.volume
-              ];
-              chartInstance.update(); // Efficient candle update (no "data" param)
-              console.log(`🔄 NightVision updated last candle efficiently`);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('❌ Failed to update chart:', error);
-        // Fallback to full update on error
-        try {
-          nightVisionRef.current.data = chartData;
-          setLastCandlesCount(rawCandles.length);
-        } catch (fallbackError) {
-          console.error('❌ Fallback chart update failed:', fallbackError);
+    const chartInstance = nightVisionRef.current;
+    
+    console.log(`📊 [Chart] Processing ${event.type} event:`, {
+      type: event.type,
+      exchange: event.exchange,
+      symbol: event.symbol,
+      timeframe: event.timeframe,
+      data: event.data
+    });
+
+    try {
+      if (event.type === 'initial_load') {
+        // Первоначальная загрузка данных
+        if (event.data?.newCandles && chartInstance.hub && chartInstance.hub.mainOv) {
+          const ohlcvData = event.data.newCandles.map((candle: Candle) => [
+            candle.timestamp,
+            candle.open,
+            candle.high,
+            candle.low,
+            candle.close,
+            candle.volume
+          ]);
+          
+          chartInstance.hub.mainOv.data.length = 0; // Clear existing
+          chartInstance.hub.mainOv.data.push(...ohlcvData);
+          chartInstance.update("data");
+          console.log(`📊 [Chart] Initial load completed: ${ohlcvData.length} candles`);
         }
       }
+      else if (event.type === 'new_candles') {
+        // Новые свечи - добавляем в конец
+        if (event.data?.newCandles && chartInstance.hub && chartInstance.hub.mainOv && chartInstance.hub.mainOv.data) {
+          const newOhlcvData = event.data.newCandles.map((candle: Candle) => [
+            candle.timestamp,
+            candle.open,
+            candle.high,
+            candle.low,
+            candle.close,
+            candle.volume
+          ]);
+          
+          const mainData = chartInstance.hub.mainOv.data;
+          mainData.push(...newOhlcvData);
+          chartInstance.update("data");
+          console.log(`📈 [Chart] Added ${newOhlcvData.length} new candles`);
+        }
+      }
+      else if (event.type === 'update_last_candle') {
+        // Обновление последней свечи - эффективное обновление
+        if (event.data?.lastCandle && chartInstance.hub && chartInstance.hub.mainOv && chartInstance.hub.mainOv.data) {
+          const mainData = chartInstance.hub.mainOv.data;
+          const lastIndex = mainData.length - 1;
+          
+          if (lastIndex >= 0) {
+            const updatedCandle = [
+              event.data.lastCandle.timestamp,
+              event.data.lastCandle.open,
+              event.data.lastCandle.high,
+              event.data.lastCandle.low,
+              event.data.lastCandle.close,
+              event.data.lastCandle.volume
+            ];
+            
+            mainData[lastIndex] = updatedCandle;
+            chartInstance.update(); // Эффективное обновление без "data" параметра
+            console.log(`🔄 [Chart] Updated last candle: close=${event.data.lastCandle.close}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ [Chart] Event processing error:', error);
     }
-  }, [chartData, rawCandles, lastCandlesCount]);
+  }, []);
+
+  // Ref для хранения предыдущих настроек event listener
+  const previousEventListenerRef = useRef<{
+    exchange: string;
+    symbol: string;
+    timeframe: Timeframe;
+    market: MarketType;
+  } | null>(null);
+
+  // Подписка на события store с правильным cleanup
+  useEffect(() => {
+    if (!nightVisionRef.current) return;
+
+    // Отписываемся от предыдущих событий если они есть
+    if (previousEventListenerRef.current) {
+      const prev = previousEventListenerRef.current;
+      console.log(`📺 [Chart] Unsubscribing from PREVIOUS events: ${prev.exchange}:${prev.symbol}:${prev.timeframe}:${prev.market}`);
+      removeChartUpdateListener(prev.exchange, prev.symbol, prev.timeframe, prev.market, chartUpdateListener);
+    }
+
+    console.log(`📺 [Chart] Subscribing to events for ${exchange}:${symbol}:${timeframe}:${market}`);
+    
+    // Добавляем listener для новых настроек
+    addChartUpdateListener(exchange, symbol, timeframe, market, chartUpdateListener);
+    
+    // Сохраняем настройки как предыдущие
+    previousEventListenerRef.current = { exchange, symbol, timeframe, market };
+
+    return () => {
+      console.log(`📺 [Chart] Cleanup: Unsubscribing from events for ${exchange}:${symbol}:${timeframe}:${market}`);
+      removeChartUpdateListener(exchange, symbol, timeframe, market, chartUpdateListener);
+      previousEventListenerRef.current = null;
+    };
+  }, [exchange, symbol, timeframe, market, chartUpdateListener, addChartUpdateListener, removeChartUpdateListener]);
 
   // Subscription management
   const handleSubscribe = async () => {
@@ -310,7 +351,12 @@ const Chart: React.FC<ChartProps> = ({
       
       if (result.success) {
         setIsSubscribed(true);
+        
+        // ВАЖНО: Сохраняем текущие настройки как предыдущие ПОСЛЕ успешной подписки
+        previousSubscriptionRef.current = { exchange, symbol, timeframe, market };
+        
         console.log(`📊 Chart subscribed to ${exchange}:${market}:${symbol}:${timeframe} (method: ${dataFetchSettings.method})`);
+        console.log(`💾 Saved as previous subscription: ${exchange}:${market}:${symbol}:${timeframe}`);
       } else {
         setError(result.error || 'Subscription failed');
       }
@@ -329,6 +375,14 @@ const Chart: React.FC<ChartProps> = ({
     console.log(`📊 Chart unsubscribed from ${exchange}:${market}:${symbol}:${timeframe}`);
   };
 
+    // Ref для хранения предыдущих настроек подписки
+  const previousSubscriptionRef = useRef<{
+    exchange: string;
+    symbol: string;
+    timeframe: Timeframe;
+    market: MarketType;
+  } | null>(null);
+
   // Auto-subscribe when widget mounts or provider becomes available
   useEffect(() => {
     if (activeProviderId && !isSubscribed) {
@@ -337,17 +391,38 @@ const Chart: React.FC<ChartProps> = ({
     }
   }, [activeProviderId]);
 
-  // Auto-subscribe when settings change
+  // Правильное управление подписками при смене настроек
   useEffect(() => {
     if (isSubscribed) {
-      // Unsubscribe from previous settings
-      handleUnsubscribe();
-      // Subscribe to new settings
-      setTimeout(() => handleSubscribe(), 100);
+      // Отписываемся от ПРЕДЫДУЩИХ настроек если они есть
+      if (previousSubscriptionRef.current) {
+        const prev = previousSubscriptionRef.current;
+        console.log(`🛑 Chart unsubscribing from PREVIOUS settings: ${prev.exchange}:${prev.market}:${prev.symbol}:${prev.timeframe}`);
+        
+        const subscriberId = `${dashboardId}-${widgetId}`;
+        unsubscribe(subscriberId, prev.exchange, prev.symbol, 'candles', prev.timeframe, prev.market);
+      }
+      
+      // Подписываемся на НОВЫЕ настройки (сохранение произойдет в handleSubscribe)
+      setTimeout(() => {
+        console.log(`🚀 Chart subscribing to NEW settings: ${exchange}:${market}:${symbol}:${timeframe}`);
+        handleSubscribe();
+      }, 100);
     }
-    // Reset candles count when instrument changes
-    setLastCandlesCount(0);
   }, [exchange, symbol, timeframe, market]);
+
+  // Cleanup при unmount компонента
+  useEffect(() => {
+    return () => {
+      if (previousSubscriptionRef.current && isSubscribed) {
+        const prev = previousSubscriptionRef.current;
+        console.log(`🧹 Chart cleanup: unsubscribing from ${prev.exchange}:${prev.market}:${prev.symbol}:${prev.timeframe}`);
+        
+        const subscriberId = `${dashboardId}-${widgetId}`;
+        unsubscribe(subscriberId, prev.exchange, prev.symbol, 'candles', prev.timeframe, prev.market);
+      }
+    };
+  }, []);
 
   // Format display values
   const formatPrice = (price: number): string => {

@@ -128,6 +128,9 @@ export const createDataActions: StateCreator<
 
   // Обновление данных в центральном store
   updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
+    let eventType: 'initial_load' | 'new_candles' | 'update_last_candle' = 'new_candles';
+    let eventData: any = {};
+
     set(state => {
       if (!state.marketData.candles[exchange]) {
         state.marketData.candles[exchange] = {};
@@ -144,6 +147,11 @@ export const createDataActions: StateCreator<
       if (existing.length === 0) {
         // Если нет данных - это первая загрузка (REST snapshot)
         state.marketData.candles[exchange][market][symbol][timeframe] = candles;
+        eventType = 'initial_load';
+        eventData = {
+          totalCandles: candles.length,
+          newCandles: candles
+        };
         console.log(`📊 [updateCandles] Initial snapshot loaded: ${candles.length} candles for ${exchange}:${market}:${symbol}:${timeframe}`);
       } else {
         // Есть данные - объединяем с существующими (WebSocket updates)
@@ -154,6 +162,11 @@ export const createDataActions: StateCreator<
           candleMap.set(candle.timestamp, candle);
         });
         
+        // Определяем тип обновления
+        const lastExistingTime = existing[existing.length - 1]?.timestamp || 0;
+        const newCandlesCount = candles.filter(c => c.timestamp > lastExistingTime).length;
+        const hasUpdatedLastCandle = candles.some(c => c.timestamp === lastExistingTime);
+        
         // Обновляем/добавляем новые свечи
         candles.forEach(candle => {
           candleMap.set(candle.timestamp, candle);
@@ -163,7 +176,23 @@ export const createDataActions: StateCreator<
         const mergedCandles = Array.from(candleMap.values()).sort((a, b) => a.timestamp - b.timestamp);
         state.marketData.candles[exchange][market][symbol][timeframe] = mergedCandles;
         
-        console.log(`🔄 [updateCandles] WebSocket update: ${candles.length} new/updated candles, total: ${mergedCandles.length} for ${exchange}:${market}:${symbol}:${timeframe}`);
+        // Определяем тип события для Chart widgets
+        if (newCandlesCount > 0) {
+          eventType = 'new_candles';
+          eventData = {
+            newCandlesCount,
+            newCandles: candles.filter(c => c.timestamp > lastExistingTime),
+            totalCandles: mergedCandles.length
+          };
+        } else if (hasUpdatedLastCandle) {
+          eventType = 'update_last_candle';
+          eventData = {
+            lastCandle: candles.find(c => c.timestamp === lastExistingTime),
+            totalCandles: mergedCandles.length
+          };
+        }
+        
+        console.log(`🔄 [updateCandles] WebSocket update: ${candles.length} new/updated candles, total: ${mergedCandles.length} for ${exchange}:${market}:${symbol}:${timeframe}, event: ${eventType}`);
       }
       
       // Обновляем timestamp последнего обновления
@@ -171,6 +200,17 @@ export const createDataActions: StateCreator<
       if (state.activeSubscriptions[subscriptionKey]) {
         state.activeSubscriptions[subscriptionKey].lastUpdate = Date.now();
       }
+    });
+
+    // Эмитим событие для Chart widgets после обновления store
+    get().emitChartUpdateEvent({
+      type: eventType,
+      exchange,
+      symbol,
+      timeframe,
+      market,
+      data: eventData,
+      timestamp: Date.now()
     });
   },
 

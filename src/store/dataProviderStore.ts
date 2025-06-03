@@ -12,6 +12,7 @@ import { createSubscriptionActions } from './actions/subscriptionActions';
 import { createDataActions } from './actions/dataActions';
 import { createFetchingActions } from './actions/fetchingActions';
 import { createCCXTActions } from './actions/ccxtActions';
+import { createEventActions } from './actions/eventActions';
 
 // Включаем поддержку Map и Set в Immer
 enableMapSet();
@@ -52,6 +53,7 @@ export const useDataProviderStore = create<DataProviderStore>()(
           trades: {},  // [exchange][market][symbol] -> Trade[]
           orderbook: {} // [exchange][market][symbol] -> OrderBook
         },
+        chartUpdateListeners: {}, // Event system для Chart widgets
         loading: false,
         error: null
       };
@@ -62,7 +64,8 @@ export const useDataProviderStore = create<DataProviderStore>()(
         ...createSubscriptionActions(set, get, store),
         ...createDataActions(set, get, store),
         ...createFetchingActions(set, get, store),
-        ...createCCXTActions(set, get, store)
+        ...createCCXTActions(set, get, store),
+        ...createEventActions(set, get, store)
       };
     })
   )
