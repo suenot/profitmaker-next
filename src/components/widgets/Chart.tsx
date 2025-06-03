@@ -101,21 +101,68 @@ const Chart: React.FC<ChartProps> = ({
   const [isChartInitialized, setIsChartInitialized] = useState(false);
   const [chartDataLoaded, setChartDataLoaded] = useState(false);
 
-  // Handle chart resize
+  // Handle chart resize with ResizeObserver
   useLayoutEffect(() => {
     const updateDimensions = () => {
       if (chartRef.current) {
         const rect = chartRef.current.getBoundingClientRect();
-        setChartDimensions({
-          width: rect.width || 600,
-          height: rect.height || 400
+        const newDimensions = {
+          width: Math.max(rect.width || 600, 300), // Минимальная ширина
+          height: Math.max(rect.height || 400, 200) // Минимальная высота
+        };
+        
+        // Обновляем только если размеры действительно изменились
+        setChartDimensions(prev => {
+          if (prev.width !== newDimensions.width || prev.height !== newDimensions.height) {
+            console.log(`📐 [Chart] Dimensions changed: ${prev.width}x${prev.height} → ${newDimensions.width}x${newDimensions.height}`);
+            return newDimensions;
+          }
+          return prev;
         });
       }
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+
+    // Используем ResizeObserver для более точного отслеживания
+    let resizeObserver: ResizeObserver | null = null;
+    
+    if (chartRef.current && 'ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver((entries) => {
+        if (entries.length > 0) {
+          const entry = entries[0];
+          const { width, height } = entry.contentRect;
+          
+          const newDimensions = {
+            width: Math.max(width || 600, 300),
+            height: Math.max(height || 400, 200)
+          };
+          
+          setChartDimensions(prev => {
+            if (prev.width !== newDimensions.width || prev.height !== newDimensions.height) {
+              console.log(`🔍 [Chart] ResizeObserver: ${prev.width}x${prev.height} → ${newDimensions.width}x${newDimensions.height}`);
+              return newDimensions;
+            }
+            return prev;
+          });
+        }
+      });
+      
+      resizeObserver.observe(chartRef.current);
+      console.log(`👁️ [Chart] ResizeObserver attached`);
+    } else {
+      // Fallback для старых браузеров
+      window.addEventListener('resize', updateDimensions);
+    }
+
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+        console.log(`👁️ [Chart] ResizeObserver disconnected`);
+      } else {
+        window.removeEventListener('resize', updateDimensions);
+      }
+    };
   }, []);
 
   // Initialize empty NightVision chart
@@ -157,7 +204,7 @@ const Chart: React.FC<ChartProps> = ({
       }
       setIsChartInitialized(false);
     };
-  }, [chartDimensions, exchange, symbol, timeframe, market]);
+  }, [exchange, symbol, timeframe, market]);
 
   // REST инициализация данных
   useEffect(() => {
@@ -246,6 +293,31 @@ const Chart: React.FC<ChartProps> = ({
 
     loadInitialData();
   }, [isChartInitialized, exchange, symbol, timeframe, market, showVolume, initializeChartData]);
+
+  // Handle chart resize without recreating
+  useEffect(() => {
+    if (!nightVisionRef.current || !isChartInitialized) return;
+
+    console.log(`📐 [Chart] Resizing chart to ${chartDimensions.width}x${chartDimensions.height}`);
+    
+    try {
+      // Обновляем размеры NightVision chart
+      nightVisionRef.current.options.width = chartDimensions.width;
+      nightVisionRef.current.options.height = chartDimensions.height;
+      
+      // Вызываем resize если доступен
+      if (typeof nightVisionRef.current.resize === 'function') {
+        nightVisionRef.current.resize(chartDimensions.width, chartDimensions.height);
+        console.log(`✅ [Chart] Used resize() method`);
+      } else {
+        // Альтернативно - обновляем через update
+        nightVisionRef.current.update();
+        console.log(`✅ [Chart] Used update() method for resize`);
+      }
+    } catch (error) {
+      console.error(`❌ [Chart] Failed to resize chart:`, error);
+    }
+  }, [chartDimensions, isChartInitialized]);
 
   // Event-driven chart updates (заменяем polling на events из store)
   const chartUpdateListener = useCallback((event: ChartUpdateEvent) => {
