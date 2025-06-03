@@ -15,6 +15,7 @@ import { DataProviderSetupWidget } from '@/components/widgets/DataProviderSetupW
 import { DataProviderDebugWidget } from '@/components/widgets/DataProviderDebugWidget';
 import AlignmentGuides from '@/components/AlignmentGuides';
 import { GuideLineType } from '@/types/alignmentGuides';
+import CollapsedWidgetsZone from '@/components/CollapsedWidgetsZone';
 
 const widgetComponents: Record<string, React.FC<any>> = {
   chart: ChartWidget,
@@ -140,6 +141,9 @@ const TradingTerminal: React.FC = () => {
           onClose={() => setContextMenuPosition(null)} 
         />
       )}
+      
+      {/* Collapsed widgets zone */}
+      <CollapsedWidgetsZone />
       
       <div className="fixed bottom-2 right-2 flex items-center text-terminal-muted text-xs bg-terminal-accent/30 px-3 py-1 rounded-md">
         <span className="mr-2">{currentTime.toLocaleTimeString('ru-RU', { hour12: false })}</span>

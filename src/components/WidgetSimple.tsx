@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { X, Maximize2, Minimize2, Settings } from 'lucide-react';
+import { X, Maximize2, Minimize2, Settings, Minus } from 'lucide-react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { cn } from '@/lib/utils';
 import GroupSelector from './ui/GroupSelector';
@@ -22,6 +22,10 @@ interface WidgetSimpleProps {
 
 const SNAP_DISTANCE = 8; // Snap distance in pixels
 const HEADER_HEIGHT = 0; // Header + tabs navigation height in pixels
+const COLLAPSED_WIDGET_HEIGHT = 40; // Height of collapsed widget header
+const COLLAPSED_WIDGET_WIDTH = 200; // Width of collapsed widget
+
+type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   id,
@@ -38,11 +42,22 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   onRemove
 }) => {
   const widgetRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState<ResizeDirection | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStartData, setResizeStartData] = useState<{
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+    mousePos: { x: number; y: number };
+  } | null>(null);
   const [preMaximizeState, setPreMaximizeState] = useState<{
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+  } | null>(null);
+  const [preCollapseState, setPreCollapseState] = useState<{
     position: { x: number; y: number };
     size: { width: number; height: number };
   } | null>(null);
@@ -60,6 +75,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   const bringWidgetToFront = useDashboardStore(s => s.bringWidgetToFront);
   const updateWidgetTitle = useDashboardStore(s => s.updateWidgetTitle);
   const updateWidget = useDashboardStore(s => s.updateWidget);
+  const toggleWidgetMinimized = useDashboardStore(s => s.toggleWidgetMinimized);
   const activeDashboardId = useDashboardStore(s => s.activeDashboardId);
   const dashboards = useDashboardStore(s => s.dashboards);
   
@@ -69,15 +85,40 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   // Get other widgets for snapping
   const activeDashboard = dashboards.find(d => d.id === activeDashboardId);
   const otherWidgets = activeDashboard?.widgets.filter(w => w.id !== id) || [];
+  const collapsedWidgets = activeDashboard?.widgets.filter(w => w.id !== id && w.isMinimized) || [];
+
+  // Check if widget is collapsed
+  const isCollapsed = activeDashboard?.widgets.find(w => w.id === id)?.isMinimized || false;
+
+  // Calculate collapsed position
+  const getCollapsedPosition = useCallback(() => {
+    const collapsedIndex = collapsedWidgets.length;
+    const viewportWidth = window.innerWidth;
+    const spacing = 10;
+    const totalWidgetsWidth = collapsedIndex * (COLLAPSED_WIDGET_WIDTH + spacing);
+    
+    let x = Math.max(spacing, (viewportWidth - totalWidgetsWidth) / 2 + collapsedIndex * (COLLAPSED_WIDGET_WIDTH + spacing));
+    let y = window.innerHeight - COLLAPSED_WIDGET_HEIGHT - spacing;
+    
+    return { x, y };
+  }, [collapsedWidgets.length]);
 
   // Update local state when props change (from store)
   React.useEffect(() => {
-    setCurrentPosition(position);
-  }, [position.x, position.y]);
+    if (!isCollapsed) {
+      setCurrentPosition(position);
+    } else {
+      setCurrentPosition(getCollapsedPosition());
+    }
+  }, [position.x, position.y, isCollapsed, getCollapsedPosition]);
 
   React.useEffect(() => {
-    setCurrentSize(size);
-  }, [size.width, size.height]);
+    if (!isCollapsed) {
+      setCurrentSize(size);
+    } else {
+      setCurrentSize({ width: COLLAPSED_WIDGET_WIDTH, height: COLLAPSED_WIDGET_HEIGHT });
+    }
+  }, [size.width, size.height, isCollapsed]);
 
   // Functions for title editing
   const handleTitleDoubleClick = (e: React.MouseEvent) => {
@@ -172,7 +213,6 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   };
 
   // Auto focus on input when editing
-  const titleInputRef = useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (isEditingTitle && titleInputRef.current) {
       titleInputRef.current.focus();
@@ -306,54 +346,67 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     setIsDragging(false);
   }, [isDragging, activeDashboardId, moveWidget, id, currentPosition]);
 
-  // Handle resize with useCallback
+  // Handle resize with useCallback - ENHANCED for all directions
   const handleResize = useCallback((e: MouseEvent) => {
-    if (isResizing && widgetRef.current) {
-      const rect = widgetRef.current.getBoundingClientRect();
-      let newWidth = Math.max(250, e.clientX - rect.left);
-      let newHeight = Math.max(150, e.clientY - rect.top);
+    if (isResizing && resizeStartData && resizeDirection) {
+      const deltaX = e.clientX - resizeStartData.mousePos.x;
+      const deltaY = e.clientY - resizeStartData.mousePos.y;
       
-      // Snapping for resize (to other widgets and viewport)
-      const rightEdge = currentPosition.x + newWidth;
-      const bottomEdge = currentPosition.y + newHeight;
+      let newPosition = { ...resizeStartData.position };
+      let newSize = { ...resizeStartData.size };
       
-      // Snap width to viewport edge
-      if (Math.abs(rightEdge - window.innerWidth) < SNAP_DISTANCE) {
-        newWidth = window.innerWidth - currentPosition.x;
+      // Calculate new position and size based on resize direction
+      switch (resizeDirection) {
+        case 'n': // North (top edge)
+          newPosition.y = Math.min(resizeStartData.position.y + deltaY, resizeStartData.position.y + resizeStartData.size.height - 150);
+          newSize.height = Math.max(150, resizeStartData.size.height - deltaY);
+          break;
+        case 's': // South (bottom edge)
+          newSize.height = Math.max(150, resizeStartData.size.height + deltaY);
+          break;
+        case 'e': // East (right edge)
+          newSize.width = Math.max(250, resizeStartData.size.width + deltaX);
+          break;
+        case 'w': // West (left edge)
+          newPosition.x = Math.min(resizeStartData.position.x + deltaX, resizeStartData.position.x + resizeStartData.size.width - 250);
+          newSize.width = Math.max(250, resizeStartData.size.width - deltaX);
+          break;
+        case 'ne': // North-East (top-right corner)
+          newPosition.y = Math.min(resizeStartData.position.y + deltaY, resizeStartData.position.y + resizeStartData.size.height - 150);
+          newSize.height = Math.max(150, resizeStartData.size.height - deltaY);
+          newSize.width = Math.max(250, resizeStartData.size.width + deltaX);
+          break;
+        case 'nw': // North-West (top-left corner)
+          newPosition.x = Math.min(resizeStartData.position.x + deltaX, resizeStartData.position.x + resizeStartData.size.width - 250);
+          newPosition.y = Math.min(resizeStartData.position.y + deltaY, resizeStartData.position.y + resizeStartData.size.height - 150);
+          newSize.width = Math.max(250, resizeStartData.size.width - deltaX);
+          newSize.height = Math.max(150, resizeStartData.size.height - deltaY);
+          break;
+        case 'se': // South-East (bottom-right corner)
+          newSize.width = Math.max(250, resizeStartData.size.width + deltaX);
+          newSize.height = Math.max(150, resizeStartData.size.height + deltaY);
+          break;
+        case 'sw': // South-West (bottom-left corner)
+          newPosition.x = Math.min(resizeStartData.position.x + deltaX, resizeStartData.position.x + resizeStartData.size.width - 250);
+          newSize.width = Math.max(250, resizeStartData.size.width - deltaX);
+          newSize.height = Math.max(150, resizeStartData.size.height + deltaY);
+          break;
       }
       
-      // Snap height to viewport edge
-      if (Math.abs(bottomEdge - window.innerHeight) < SNAP_DISTANCE) {
-        newHeight = window.innerHeight - currentPosition.y;
-      }
+      // Apply bounds checking
+      newPosition.x = Math.max(0, Math.min(newPosition.x, window.innerWidth - newSize.width));
+      newPosition.y = Math.max(HEADER_HEIGHT, Math.min(newPosition.y, window.innerHeight - newSize.height));
       
-      // Snap to other widgets edges
-      otherWidgets.forEach(widget => {
-        const wPos = widget.position;
-        
-        // Snap width to other widget's left edge
-        if (Math.abs(rightEdge - wPos.x) < SNAP_DISTANCE) {
-          newWidth = wPos.x - currentPosition.x;
-        }
-        // Snap width to other widget's right edge
-        if (Math.abs(rightEdge - (wPos.x + wPos.width)) < SNAP_DISTANCE) {
-          newWidth = (wPos.x + wPos.width) - currentPosition.x;
-        }
-        
-        // Snap height to other widget's top edge
-        if (Math.abs(bottomEdge - wPos.y) < SNAP_DISTANCE) {
-          newHeight = wPos.y - currentPosition.y;
-        }
-        // Snap height to other widget's bottom edge
-        if (Math.abs(bottomEdge - (wPos.y + wPos.height)) < SNAP_DISTANCE) {
-          newHeight = (wPos.y + wPos.height) - currentPosition.y;
-        }
-      });
+      // Apply snapping
+      const snapped = applySnapping(newPosition.x, newPosition.y, newSize.width, newSize.height);
+      newPosition.x = snapped.x;
+      newPosition.y = snapped.y;
       
       // Update local state immediately for smooth visual feedback
-      setCurrentSize({ width: newWidth, height: newHeight });
+      setCurrentPosition(newPosition);
+      setCurrentSize(newSize);
     }
-  }, [isResizing, currentPosition.x, currentPosition.y, otherWidgets]);
+  }, [isResizing, resizeStartData, resizeDirection, applySnapping]);
 
   // Handle resize end with useCallback
   const handleResizeEnd = useCallback(() => {
@@ -361,13 +414,17 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
       console.log('WidgetSimple: Resize end', {
         widgetId: id,
         dashboardId: activeDashboardId,
+        newPosition: currentPosition,
         newSize: currentSize
       });
-      // Save final size to store
+      // Save final position and size to store
+      moveWidget(activeDashboardId, id, currentPosition.x, currentPosition.y);
       resizeWidget(activeDashboardId, id, currentSize.width, currentSize.height);
     }
     setIsResizing(false);
-  }, [isResizing, activeDashboardId, resizeWidget, id, currentSize]);
+    setResizeDirection(null);
+    setResizeStartData(null);
+  }, [isResizing, activeDashboardId, moveWidget, resizeWidget, id, currentPosition, currentSize]);
 
   // Handle drag start - FIXED LOGIC
   const handleDragStart = (e: React.MouseEvent) => {
@@ -391,8 +448,8 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     });
   };
 
-  // Handle resize start
-  const handleResizeStart = (e: React.MouseEvent) => {
+  // Handle resize start - ENHANCED for multiple directions
+  const handleResizeStart = (e: React.MouseEvent, direction: ResizeDirection) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -402,7 +459,20 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     }
     
     setIsResizing(true);
-    console.log('WidgetSimple: Resize start', { widgetId: id, dashboardId: activeDashboardId });
+    setResizeDirection(direction);
+    setResizeStartData({
+      position: currentPosition,
+      size: currentSize,
+      mousePos: { x: e.clientX, y: e.clientY }
+    });
+    
+    console.log('WidgetSimple: Resize start', { 
+      widgetId: id, 
+      dashboardId: activeDashboardId,
+      direction,
+      startPosition: currentPosition,
+      startSize: currentSize
+    });
   };
 
   // Mouse event listeners for dragging
@@ -429,20 +499,50 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     }
   }, [isResizing, handleResize, handleResizeEnd]);
 
+  // Handle collapse toggle
+  const handleCollapseToggle = useCallback(() => {
+    if (!activeDashboardId) return;
+    
+    if (isCollapsed) {
+      // Restore from collapsed state
+      if (preCollapseState) {
+        setCurrentPosition(preCollapseState.position);
+        setCurrentSize(preCollapseState.size);
+        moveWidget(activeDashboardId, id, preCollapseState.position.x, preCollapseState.position.y);
+        resizeWidget(activeDashboardId, id, preCollapseState.size.width, preCollapseState.size.height);
+      }
+      setPreCollapseState(null);
+    } else {
+      // Save current state and collapse
+      setPreCollapseState({
+        position: currentPosition,
+        size: currentSize
+      });
+      const collapsedPos = getCollapsedPosition();
+      setCurrentPosition(collapsedPos);
+      setCurrentSize({ width: COLLAPSED_WIDGET_WIDTH, height: COLLAPSED_WIDGET_HEIGHT });
+      moveWidget(activeDashboardId, id, collapsedPos.x, collapsedPos.y);
+      resizeWidget(activeDashboardId, id, COLLAPSED_WIDGET_WIDTH, COLLAPSED_WIDGET_HEIGHT);
+    }
+    
+    toggleWidgetMinimized(activeDashboardId, id);
+  }, [isCollapsed, preCollapseState, currentPosition, currentSize, activeDashboardId, moveWidget, resizeWidget, id, toggleWidgetMinimized, getCollapsedPosition]);
+
   return (
     <div
       ref={widgetRef}
       className={cn(
         "widget-container animate-fade-in border border-terminal-border",
         isActive && "ring-1 ring-blue-500",
-        isMaximized && "border-0"
+        isMaximized && "border-0",
+        isCollapsed && "!h-10 overflow-hidden"
       )}
       style={{
         left: isMaximized ? 0 : `${currentPosition.x}px`,
         top: isMaximized ? 0 : `${currentPosition.y}px`,
         width: isMaximized ? '100vw' : `${currentSize.width}px`,
         height: isMaximized ? '100vh' : `${currentSize.height}px`,
-        zIndex: isMaximized ? 10001 : zIndex,
+        zIndex: isMaximized ? 10001 : (isCollapsed ? 10000 : zIndex),
         position: isMaximized ? 'fixed' : 'absolute',
       }}
       onClick={handleWidgetClick}
@@ -450,16 +550,18 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
       <div 
         className={cn(
           "widget-header h-10 px-3 py-2 bg-terminal-accent/60 flex items-center justify-between",
-          !isMaximized && "cursor-move"
+          !isMaximized && !isCollapsed && "cursor-move"
         )}
-        onMouseDown={!isMaximized ? handleDragStart : undefined}
+        onMouseDown={(!isMaximized && !isCollapsed) ? handleDragStart : undefined}
       >
         <div className="flex items-center flex-1 min-w-0 space-x-2">
-          <GroupSelector
-            selectedGroupId={groupId}
-            onGroupSelect={handleGroupChange}
-            className="flex-shrink-0"
-          />
+          {!isCollapsed && (
+            <GroupSelector
+              selectedGroupId={groupId}
+              onGroupSelect={handleGroupChange}
+              className="flex-shrink-0"
+            />
+          )}
           <div className="flex-1 min-w-0">
             {isEditingTitle ? (
               <input
@@ -484,22 +586,33 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
           </div>
         </div>
         <div className="flex items-center space-x-1">
+          {!isCollapsed && (
+            <button 
+              className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
+              onClick={() => {}}
+            >
+              <Settings size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
+            </button>
+          )}
           <button 
             className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
-            onClick={() => {}}
+            onClick={handleCollapseToggle}
+            title={isCollapsed ? "Expand widget" : "Collapse widget"}
           >
-            <Settings size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
+            <Minus size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
           </button>
-          <button 
-            className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
-            onClick={handleMaximizeToggle}
-          >
-            {isMaximized ? (
-              <Minimize2 size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
-            ) : (
-              <Maximize2 size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
-            )}
-          </button>
+          {!isCollapsed && (
+            <button 
+              className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
+              onClick={handleMaximizeToggle}
+            >
+              {isMaximized ? (
+                <Minimize2 size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
+              ) : (
+                <Maximize2 size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
+              )}
+            </button>
+          )}
           <button 
             className="p-1 rounded-sm hover:bg-terminal-widget/50 text-terminal-muted hover:text-terminal-negative transition-colors"
             onClick={onRemove}
@@ -509,22 +622,51 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
         </div>
       </div>
       
-      <div className="p-3 h-[calc(100%-40px)] overflow-auto bg-terminal-bg">
-        {children}
-      </div>
+      {!isCollapsed && (
+        <div className="p-3 h-[calc(100%-40px)] overflow-auto bg-terminal-bg">
+          {children}
+        </div>
+      )}
       
-      {/* Resize handle */}
-      {!isMaximized && (
-        <div 
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize opacity-0 hover:opacity-50 transition-opacity"
-          style={{
-            background: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
-            backgroundSize: '4px 4px',
-            backgroundPosition: 'bottom right',
-            color: 'hsl(var(--terminal-muted))'
-          }}
-          onMouseDown={handleResizeStart}
-        />
+      {/* Enhanced Resize handles - 8 directions */}
+      {!isMaximized && !isCollapsed && (
+        <>
+          {/* Corner handles */}
+          <div 
+            className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/30"
+            onMouseDown={(e) => handleResizeStart(e, 'nw')}
+          />
+          <div 
+            className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/30"
+            onMouseDown={(e) => handleResizeStart(e, 'ne')}
+          />
+          <div 
+            className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/30"
+            onMouseDown={(e) => handleResizeStart(e, 'sw')}
+          />
+          <div 
+            className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/30"
+            onMouseDown={(e) => handleResizeStart(e, 'se')}
+          />
+          
+          {/* Edge handles */}
+          <div 
+            className="absolute top-0 left-3 right-3 h-1 cursor-n-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/20"
+            onMouseDown={(e) => handleResizeStart(e, 'n')}
+          />
+          <div 
+            className="absolute bottom-0 left-3 right-3 h-1 cursor-s-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/20"
+            onMouseDown={(e) => handleResizeStart(e, 's')}
+          />
+          <div 
+            className="absolute top-3 bottom-3 left-0 w-1 cursor-w-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/20"
+            onMouseDown={(e) => handleResizeStart(e, 'w')}
+          />
+          <div 
+            className="absolute top-3 bottom-3 right-0 w-1 cursor-e-resize opacity-0 hover:opacity-50 transition-opacity bg-terminal-muted/20"
+            onMouseDown={(e) => handleResizeStart(e, 'e')}
+          />
+        </>
       )}
     </div>
   );
