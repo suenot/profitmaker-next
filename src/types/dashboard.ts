@@ -26,6 +26,8 @@ export const WidgetSchema = z.object({
   groupId: z.string().optional(), // Widget group ID
   isVisible: z.boolean().default(true),
   isMinimized: z.boolean().default(false),
+  // Store previous state before collapsing for restoration
+  preCollapsePosition: WidgetPositionSchema.optional(),
 });
 export type Widget = z.infer<typeof WidgetSchema>;
 

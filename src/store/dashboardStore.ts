@@ -331,6 +331,35 @@ export const useDashboardStore = create<DashboardStore>()(
           const widget = dashboard.widgets.find(w => w.id === widgetId);
           if (!widget) return;
           
+          if (widget.isMinimized) {
+            // Restore from minimized state
+            if (widget.preCollapsePosition) {
+              widget.position = { ...widget.preCollapsePosition };
+              widget.preCollapsePosition = undefined;
+            }
+          } else {
+            // Save current position before minimizing
+            widget.preCollapsePosition = { ...widget.position };
+            
+            // Calculate collapsed position
+            const collapsedWidgets = dashboard.widgets.filter(w => w.id !== widgetId && w.isMinimized);
+            const collapsedIndex = collapsedWidgets.length;
+            const viewportWidth = window.innerWidth;
+            const spacing = 10;
+            const COLLAPSED_WIDGET_WIDTH = 200;
+            const COLLAPSED_WIDGET_HEIGHT = 40;
+            const totalWidgetsWidth = collapsedIndex * (COLLAPSED_WIDGET_WIDTH + spacing);
+            
+            let x = Math.max(spacing, (viewportWidth - totalWidgetsWidth) / 2 + collapsedIndex * (COLLAPSED_WIDGET_WIDTH + spacing));
+            let y = window.innerHeight - COLLAPSED_WIDGET_HEIGHT - spacing;
+            
+            // Set collapsed position
+            widget.position.x = x;
+            widget.position.y = y;
+            widget.position.width = COLLAPSED_WIDGET_WIDTH;
+            widget.position.height = COLLAPSED_WIDGET_HEIGHT;
+          }
+          
           widget.isMinimized = !widget.isMinimized;
           dashboard.updatedAt = getCurrentTimestamp();
         });

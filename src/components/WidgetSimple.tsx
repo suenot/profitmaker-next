@@ -57,10 +57,7 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     position: { x: number; y: number };
     size: { width: number; height: number };
   } | null>(null);
-  const [preCollapseState, setPreCollapseState] = useState<{
-    position: { x: number; y: number };
-    size: { width: number; height: number };
-  } | null>(null);
+
   
   // State for title editing
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -90,35 +87,16 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   // Check if widget is collapsed
   const isCollapsed = activeDashboard?.widgets.find(w => w.id === id)?.isMinimized || false;
 
-  // Calculate collapsed position
-  const getCollapsedPosition = useCallback(() => {
-    const collapsedIndex = collapsedWidgets.length;
-    const viewportWidth = window.innerWidth;
-    const spacing = 10;
-    const totalWidgetsWidth = collapsedIndex * (COLLAPSED_WIDGET_WIDTH + spacing);
-    
-    let x = Math.max(spacing, (viewportWidth - totalWidgetsWidth) / 2 + collapsedIndex * (COLLAPSED_WIDGET_WIDTH + spacing));
-    let y = window.innerHeight - COLLAPSED_WIDGET_HEIGHT - spacing;
-    
-    return { x, y };
-  }, [collapsedWidgets.length]);
+
 
   // Update local state when props change (from store)
   React.useEffect(() => {
-    if (!isCollapsed) {
-      setCurrentPosition(position);
-    } else {
-      setCurrentPosition(getCollapsedPosition());
-    }
-  }, [position.x, position.y, isCollapsed, getCollapsedPosition]);
+    setCurrentPosition(position);
+  }, [position.x, position.y]);
 
   React.useEffect(() => {
-    if (!isCollapsed) {
-      setCurrentSize(size);
-    } else {
-      setCurrentSize({ width: COLLAPSED_WIDGET_WIDTH, height: COLLAPSED_WIDGET_HEIGHT });
-    }
-  }, [size.width, size.height, isCollapsed]);
+    setCurrentSize(size);
+  }, [size.width, size.height]);
 
   // Functions for title editing
   const handleTitleDoubleClick = (e: React.MouseEvent) => {
@@ -503,30 +481,9 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   const handleCollapseToggle = useCallback(() => {
     if (!activeDashboardId) return;
     
-    if (isCollapsed) {
-      // Restore from collapsed state
-      if (preCollapseState) {
-        setCurrentPosition(preCollapseState.position);
-        setCurrentSize(preCollapseState.size);
-        moveWidget(activeDashboardId, id, preCollapseState.position.x, preCollapseState.position.y);
-        resizeWidget(activeDashboardId, id, preCollapseState.size.width, preCollapseState.size.height);
-      }
-      setPreCollapseState(null);
-    } else {
-      // Save current state and collapse
-      setPreCollapseState({
-        position: currentPosition,
-        size: currentSize
-      });
-      const collapsedPos = getCollapsedPosition();
-      setCurrentPosition(collapsedPos);
-      setCurrentSize({ width: COLLAPSED_WIDGET_WIDTH, height: COLLAPSED_WIDGET_HEIGHT });
-      moveWidget(activeDashboardId, id, collapsedPos.x, collapsedPos.y);
-      resizeWidget(activeDashboardId, id, COLLAPSED_WIDGET_WIDTH, COLLAPSED_WIDGET_HEIGHT);
-    }
-    
+    // Let the store handle all the logic for saving/restoring position
     toggleWidgetMinimized(activeDashboardId, id);
-  }, [isCollapsed, preCollapseState, currentPosition, currentSize, activeDashboardId, moveWidget, resizeWidget, id, toggleWidgetMinimized, getCollapsedPosition]);
+  }, [activeDashboardId, id, toggleWidgetMinimized]);
 
   return (
     <div
