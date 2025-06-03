@@ -1,19 +1,35 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import { BarChart2, Maximize, RefreshCw, Clock, Settings, Play, Pause } from 'lucide-react';
 import { NightVision } from 'night-vision';
+import { useTheme } from '../../hooks/useTheme';
 import { useDataProviderStore } from '../../store/dataProviderStore';
 import { Timeframe, MarketType, ChartUpdateEvent, Candle } from '../../types/dataProviders';
 
-// Chart configuration
-const CHART_COLORS = {
-  back: '#000000',
-  grid: '#1a1a1a',
-  candleUp: '#26a69a',
-  candleDw: '#ef5350',
-  wickUp: '#26a69a',
-  wickDw: '#ef5350',
-  volUp: '#26a69a',
-  volDw: '#ef5350',
+// Theme-aware chart colors
+const getChartColors = (theme: 'dark' | 'light') => {
+  if (theme === 'light') {
+    return {
+      back: '#ffffff',        // Белый фон для светлой темы
+      grid: '#e5e7eb',        // Светло-серая сетка  
+      candleUp: '#16c784',    // Ярко-зеленый для роста
+      candleDw: '#ea3943',    // Ярко-красный для падения
+      wickUp: '#16c784',      // Ярко-зеленый фитиль
+      wickDw: '#ea3943',      // Ярко-красный фитиль
+      volUp: '#16c784',       // Зеленый объем
+      volDw: '#ea3943',       // Красный объем
+    };
+  } else {
+    return {
+      back: '#000000',        // Черный фон для темной темы
+      grid: '#1a1a1a',        // Темная сетка
+      candleUp: '#26a69a',    // Зеленые свечи
+      candleDw: '#ef5350',    // Красные свечи
+      wickUp: '#26a69a',      // Зеленые фитили
+      wickDw: '#ef5350',      // Красные фитили
+      volUp: '#26a69a',       // Зеленый объем
+      volDw: '#ef5350',       // Красный объем
+    };
+  }
 };
 
 const TIMEFRAMES: { id: Timeframe; label: string }[] = [
@@ -57,6 +73,10 @@ const Chart: React.FC<ChartProps> = ({
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const nightVisionRef = useRef<any>(null);
+  
+  // Theme integration
+  const { theme } = useTheme();
+  const chartColors = useMemo(() => getChartColors(theme), [theme]);
   
   // Store integration
   const { 
@@ -182,8 +202,8 @@ const Chart: React.FC<ChartProps> = ({
         width: chartDimensions.width,
         height: chartDimensions.height,
         colors: {
-          back: CHART_COLORS.back,
-          grid: CHART_COLORS.grid
+          back: chartColors.back,
+          grid: chartColors.grid
         },
         data: { panes: [] }, // Empty data initially
         autoResize: true
@@ -204,7 +224,7 @@ const Chart: React.FC<ChartProps> = ({
       }
       setIsChartInitialized(false);
     };
-  }, [exchange, symbol, timeframe, market]);
+  }, [exchange, symbol, timeframe, market, chartColors]);
 
   // REST инициализация данных
   useEffect(() => {
@@ -241,10 +261,10 @@ const Chart: React.FC<ChartProps> = ({
                   data: ohlcvData,
                   main: true,
                   props: {
-                    colorCandleUp: CHART_COLORS.candleUp,
-                    colorCandleDw: CHART_COLORS.candleDw,
-                    colorWickUp: CHART_COLORS.wickUp,
-                    colorWickDw: CHART_COLORS.wickDw,
+                    colorCandleUp: chartColors.candleUp,
+                    colorCandleDw: chartColors.candleDw,
+                    colorWickUp: chartColors.wickUp,
+                    colorWickDw: chartColors.wickDw,
                   }
                 }
               ]
@@ -266,10 +286,10 @@ const Chart: React.FC<ChartProps> = ({
                   data: volumeData,
                   main: false,
                   props: {
-                    colorCandleUp: CHART_COLORS.volUp,
-                    colorCandleDw: CHART_COLORS.volDw,
-                    colorWickUp: CHART_COLORS.volUp,
-                    colorWickDw: CHART_COLORS.volDw,
+                    colorCandleUp: chartColors.volUp,
+                    colorCandleDw: chartColors.volDw,
+                    colorWickUp: chartColors.volUp,
+                    colorWickDw: chartColors.volDw,
                   }
                 }
               ]
@@ -292,7 +312,7 @@ const Chart: React.FC<ChartProps> = ({
     };
 
     loadInitialData();
-  }, [isChartInitialized, exchange, symbol, timeframe, market, showVolume, initializeChartData]);
+  }, [isChartInitialized, exchange, symbol, timeframe, market, showVolume, initializeChartData, chartColors]);
 
   // Handle chart resize without recreating
   useEffect(() => {
