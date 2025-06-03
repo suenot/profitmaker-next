@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-import { useDataProviderStoreV2 } from '../../store/dataProviderStoreV2';
+import { useDataProviderStore } from '../../store/dataProviderStore';
 import { ConnectionStatus } from '../../types/dataProviders';
 import { 
   Wifi, 
@@ -77,7 +77,7 @@ export const DataProviderDebugWidget: React.FC = () => {
     removeProvider,
     setActiveProvider,
     cleanup
-  } = useDataProviderStoreV2();
+  } = useDataProviderStore();
 
   const activeSubscriptions = getActiveSubscriptionsList();
   const providerList = Object.values(providers);

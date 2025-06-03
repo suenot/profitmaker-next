@@ -7,7 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
-import { useDataProviderStoreV2 } from '../../store/dataProviderStoreV2';
+import { useDataProviderStore } from '../../store/dataProviderStore';
 import { DataFetchMethod, DataType } from '../../types/dataProviders';
 import { Settings, Wifi, WifiOff, Clock, Activity, BarChart, Database } from 'lucide-react';
 
@@ -17,7 +17,7 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
     setDataFetchMethod, 
     setRestInterval,
     getActiveSubscriptionsList
-  } = useDataProviderStoreV2();
+  } = useDataProviderStore();
 
   const [tradesInterval, setTradesInterval] = useState(dataFetchSettings.restIntervals.trades.toString());
   const [candlesInterval, setCandlesInterval] = useState(dataFetchSettings.restIntervals.candles.toString());

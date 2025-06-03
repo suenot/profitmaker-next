@@ -7,7 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
-import { useDataProviderStoreV2 } from '../../store/dataProviderStoreV2';
+import { useDataProviderStore } from '../../store/dataProviderStore';
 import { Trade } from '../../types/dataProviders';
 import { Activity, Filter, ArrowUp, ArrowDown, DollarSign, Hash, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -32,7 +32,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
     activeProviderId,
     dataFetchSettings,
     getActiveSubscriptionsList
-  } = useDataProviderStoreV2();
+  } = useDataProviderStore();
 
   // Состояние настроек
   const [exchange, setExchange] = useState(initialExchange);

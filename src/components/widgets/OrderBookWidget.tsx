@@ -6,7 +6,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Separator } from '../ui/separator';
-import { useDataProviderStoreV2 } from '../../store/dataProviderStoreV2';
+import { useDataProviderStore } from '../../store/dataProviderStore';
 import { OrderBook, OrderBookEntry } from '../../types/dataProviders';
 import { BookOpen, TrendingUp, TrendingDown, DollarSign, BarChart } from 'lucide-react';
 
@@ -31,7 +31,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
     activeProviderId,
     dataFetchSettings,
     getActiveSubscriptionsList
-  } = useDataProviderStoreV2();
+  } = useDataProviderStore();
 
   // Состояние настроек
   const [exchange, setExchange] = useState(initialExchange);

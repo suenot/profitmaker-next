@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
-import { useDataProviderStoreV2 } from '../../store/dataProviderStoreV2';
+import { useDataProviderStore } from '../../store/dataProviderStore';
 import { Badge } from '../ui/badge';
 import { Activity, Users, Wifi, Database, Play, Square, Eye } from 'lucide-react';
 
@@ -23,7 +23,7 @@ const DataProviderDemoWidgetInner: React.FC = () => {
     getTrades,
     getActiveSubscriptionsList,
     dataFetchSettings
-  } = useDataProviderStoreV2();
+  } = useDataProviderStore();
 
   const [exchange, setExchange] = useState('binance');
   const [symbol, setSymbol] = useState('BTC/USDT');

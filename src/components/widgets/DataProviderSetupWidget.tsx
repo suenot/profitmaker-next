@@ -7,7 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
-import { useDataProviderStoreV2 } from '../../store/dataProviderStoreV2';
+import { useDataProviderStore } from '../../store/dataProviderStore';
 import { 
   DataProviderType, 
   CCXTBrowserProvider, 
@@ -173,7 +173,7 @@ interface CCXTServerFormData {
 }
 
 const DataProviderSetupWidgetInner: React.FC = () => {
-  const { addProvider } = useDataProviderStoreV2();
+  const { addProvider } = useDataProviderStore();
   
   const [providerType, setProviderType] = useState<DataProviderType>('ccxt-browser');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
