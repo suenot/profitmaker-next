@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { DataProviderStore } from '../types';
 import type { DataType, DataFetchMethod, Candle, Trade, OrderBook, ActiveSubscription, Timeframe, MarketType } from '../../types/dataProviders';
+import { getCCXT } from '../utils/ccxtUtils';
 
 export interface DataActions {
   // Управление настройками получения данных
@@ -309,8 +310,7 @@ export const createDataActions: StateCreator<
     console.log(`🚀 [initializeChartData] Loading initial data for ${exchange}:${market}:${symbol}:${timeframe}`);
     
     try {
-      // Импортируем CCXT утилиты
-      const { getCCXT } = await import('../utils/ccxtUtils');
+      // Используем CCXT утилиты
       const ccxt = getCCXT();
       
       if (!ccxt) {
