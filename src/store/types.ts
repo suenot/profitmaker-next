@@ -9,7 +9,9 @@ import type {
   OrderBook,
   ProviderOperationResult,
   DataFetchMethod,
-  OrderBookMethodSelection
+  OrderBookMethodSelection,
+  Timeframe,
+  MarketType
 } from '../types/dataProviders';
 
 // Интерфейс состояния store
@@ -29,9 +31,9 @@ export interface DataProviderState {
   
   // Централизованное хранилище данных
   marketData: {
-    candles: Record<string, Record<string, Candle[]>>; // [exchange][symbol] -> Candle[]
-    trades: Record<string, Record<string, Trade[]>>;   // [exchange][symbol] -> Trade[]
-    orderbook: Record<string, Record<string, OrderBook>>; // [exchange][symbol] -> OrderBook
+    candles: Record<string, Record<string, Record<string, Record<string, Candle[]>>>>; // [exchange][market][symbol][timeframe] -> Candle[]
+    trades: Record<string, Record<string, Record<string, Trade[]>>>;   // [exchange][market][symbol] -> Trade[]
+    orderbook: Record<string, Record<string, Record<string, OrderBook>>>; // [exchange][market][symbol] -> OrderBook
   };
   
   // Состояние
@@ -51,28 +53,28 @@ export interface DataProviderActions {
   setRestInterval: (dataType: DataType, interval: number) => void;
   
   // Управление дедуплицированными подписками
-  subscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => Promise<ProviderOperationResult>;
-  unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => void;
+  subscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => Promise<ProviderOperationResult>;
+  unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => void;
   
   // Получение данных из store
-  getCandles: (exchange: string, symbol: string) => Candle[];
-  getTrades: (exchange: string, symbol: string) => Trade[];
-  getOrderBook: (exchange: string, symbol: string) => OrderBook | null;
+  getCandles: (exchange: string, symbol: string, timeframe?: Timeframe, market?: MarketType) => Candle[];
+  getTrades: (exchange: string, symbol: string, market?: MarketType) => Trade[];
+  getOrderBook: (exchange: string, symbol: string, market?: MarketType) => OrderBook | null;
   
   // Обновление данных в центральном store
-  updateCandles: (exchange: string, symbol: string, candles: Candle[]) => void;
-  updateTrades: (exchange: string, symbol: string, trades: Trade[]) => void;
-  updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook) => void;
+  updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe?: Timeframe, market?: MarketType) => void;
+  updateTrades: (exchange: string, symbol: string, trades: Trade[], market?: MarketType) => void;
+  updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook, market?: MarketType) => void;
   
   // Утилиты
-  getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType) => string;
+  getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => string;
   getActiveSubscriptionsList: () => ActiveSubscription[];
   
   // Внутренние функции управления потоками данных
   startDataFetching: (subscriptionKey: string) => Promise<void>;
   stopDataFetching: (subscriptionKey: string) => void;
-  startWebSocketFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => Promise<void>;
-  startRestFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => Promise<void>;
+  startWebSocketFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
+  startRestFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
   
   // Интеллектуальный выбор CCXT методов
   selectOptimalOrderBookMethod: (exchange: string, exchangeInstance: any) => OrderBookMethodSelection;

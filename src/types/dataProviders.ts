@@ -30,6 +30,12 @@ export interface OrderBook {
 // Типы подписок на данные
 export type DataType = 'candles' | 'trades' | 'orderbook';
 
+// Поддерживаемые таймфреймы для candles
+export type Timeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1M';
+
+// Типы рынков
+export type MarketType = 'spot' | 'futures';
+
 export interface DataSubscription {
   id: string;
   symbol: string; // Например: 'BTC/USDT'
@@ -37,6 +43,8 @@ export interface DataSubscription {
   exchange: string;
   dashboardId: string;
   widgetId: string;
+  timeframe?: Timeframe; // Опционально для candles
+  market?: MarketType; // Тип рынка (spot/futures)
 }
 
 // Ключ для уникальной идентификации соединения
@@ -44,6 +52,8 @@ export interface ConnectionKey {
   exchange: string;
   symbol: string;
   dataType: DataType;
+  timeframe?: Timeframe; // Опционально для candles
+  market?: MarketType; // Тип рынка (spot/futures)
 }
 
 // Статус соединения
@@ -172,6 +182,8 @@ export interface SubscriptionKey {
   exchange: string;
   symbol: string;
   dataType: DataType;
+  timeframe?: Timeframe; // Опционально для candles
+  market?: MarketType; // Тип рынка (spot/futures)
 }
 
 export interface ActiveSubscription {

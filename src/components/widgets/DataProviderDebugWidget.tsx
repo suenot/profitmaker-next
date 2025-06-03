@@ -233,10 +233,10 @@ export const DataProviderDebugWidget: React.FC = () => {
                   <div className={`w-2 h-2 rounded-full ${subscription.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                   <div>
                     <p className="font-medium text-sm">
-                      {subscription.key.exchange} • {subscription.key.symbol}
+                      {subscription.key.exchange} • {subscription.key.market || 'spot'} • {subscription.key.symbol}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {subscription.key.dataType} • Обновлено: {formatTimestamp(subscription.lastUpdate)}
+                      {subscription.key.dataType}{subscription.key.timeframe ? ` • ${subscription.key.timeframe}` : ''} • Обновлено: {formatTimestamp(subscription.lastUpdate)}
                     </p>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-sm">
-                        {subscription.key.exchange} • {subscription.key.symbol}
+                        {subscription.key.exchange} • {subscription.key.market || 'spot'} • {subscription.key.symbol}
                       </p>
                       {subscription.isFallback && (
                         <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
@@ -293,7 +293,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {subscription.key.dataType} • Интервал: {dataFetchSettings.restIntervals[subscription.key.dataType]}ms
+                      {subscription.key.dataType}{subscription.key.timeframe ? ` • ${subscription.key.timeframe}` : ''} • Интервал: {dataFetchSettings.restIntervals[subscription.key.dataType]}ms
                     </p>
                     {subscription.isFallback && (
                       <p className="text-xs text-orange-600">

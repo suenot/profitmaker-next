@@ -1,10 +1,10 @@
 import type { StateCreator } from 'zustand';
 import type { DataProviderStore } from '../types';
-import type { DataType, ProviderOperationResult } from '../../types/dataProviders';
+import type { DataType, ProviderOperationResult, Timeframe, MarketType } from '../../types/dataProviders';
 
 export interface SubscriptionActions {
-  subscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => Promise<ProviderOperationResult>;
-  unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => void;
+  subscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => Promise<ProviderOperationResult>;
+  unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => void;
 }
 
 export const createSubscriptionActions: StateCreator<
@@ -14,8 +14,8 @@ export const createSubscriptionActions: StateCreator<
   SubscriptionActions
 > = (set, get) => ({
   // Управление дедуплицированными подписками
-  subscribe: async (subscriberId: string, exchange: string, symbol: string, dataType: DataType): Promise<ProviderOperationResult> => {
-    const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType);
+  subscribe: async (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market: MarketType = 'spot'): Promise<ProviderOperationResult> => {
+    const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
     const currentMethod = get().dataFetchSettings.method;
     
     try {
@@ -38,7 +38,7 @@ export const createSubscriptionActions: StateCreator<
         } else {
           // Создаем новую подписку с текущим методом
           state.activeSubscriptions[subscriptionKey] = {
-            key: { exchange, symbol, dataType },
+            key: { exchange, symbol, dataType, timeframe, market },
             subscriberCount: 1,
             method: currentMethod,
             isFallback: false, // Изначально не fallback
@@ -69,8 +69,8 @@ export const createSubscriptionActions: StateCreator<
     }
   },
 
-  unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType) => {
-    const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType);
+  unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market: MarketType = 'spot') => {
+    const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
     
     set(state => {
       if (state.activeSubscriptions[subscriptionKey]) {

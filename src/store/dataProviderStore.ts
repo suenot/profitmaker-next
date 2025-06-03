@@ -48,9 +48,9 @@ export const useDataProviderStore = create<DataProviderStore>()(
         activeSubscriptions: {},
         restCycles: {},
         marketData: {
-          candles: {},
-          trades: {},
-          orderbook: {}
+          candles: {}, // [exchange][market][symbol][timeframe] -> Candle[]
+          trades: {},  // [exchange][market][symbol] -> Trade[]
+          orderbook: {} // [exchange][market][symbol] -> OrderBook
         },
         loading: false,
         error: null

@@ -48,6 +48,22 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
   const rawOrderBook = getOrderBook(exchange, symbol);
   const activeSubscriptions = getActiveSubscriptionsList();
   
+  // Детальное логирование данных ордербука
+  React.useEffect(() => {
+    console.log(`📊 [OrderBook-${widgetId}] Raw data received:`, {
+      exchange,
+      symbol,
+      rawOrderBook,
+      hasData: !!rawOrderBook,
+      dataKeys: rawOrderBook ? Object.keys(rawOrderBook) : null,
+      bidsLength: rawOrderBook?.bids?.length || 0,
+      asksLength: rawOrderBook?.asks?.length || 0,
+      timestamp: rawOrderBook?.timestamp,
+      firstBid: rawOrderBook?.bids?.[0],
+      firstAsk: rawOrderBook?.asks?.[0]
+    });
+  }, [rawOrderBook, exchange, symbol, widgetId]);
+  
   // Проверяем есть ли активная подписка для текущих exchange/symbol
   const currentSubscriptionKey = `${exchange}:${symbol}:orderbook`;
   const currentSubscription = activeSubscriptions.find(sub => 
@@ -58,23 +74,50 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
 
   // Обработка и форматирование данных orderbook
   const processedOrderBook = useMemo(() => {
-    if (!rawOrderBook) return null;
+    console.log(`🔄 [OrderBook-${widgetId}] Processing orderbook data:`, {
+      hasRawData: !!rawOrderBook,
+      rawOrderBook: rawOrderBook
+    });
+    
+    if (!rawOrderBook) {
+      console.log(`❌ [OrderBook-${widgetId}] No raw orderbook data`);
+      return null;
+    }
 
     try {
       // Проверяем, что данные в правильном формате
       if (!rawOrderBook.bids || !rawOrderBook.asks || 
           !Array.isArray(rawOrderBook.bids) || !Array.isArray(rawOrderBook.asks)) {
-        console.warn('❌ Invalid orderbook data format:', rawOrderBook);
+        console.warn(`❌ [OrderBook-${widgetId}] Invalid orderbook data format:`, {
+          rawOrderBook,
+          hasBids: !!rawOrderBook.bids,
+          hasAsks: !!rawOrderBook.asks,
+          bidsIsArray: Array.isArray(rawOrderBook.bids),
+          asksIsArray: Array.isArray(rawOrderBook.asks),
+          bidsType: typeof rawOrderBook.bids,
+          asksType: typeof rawOrderBook.asks
+        });
         return null;
       }
 
       // Логируем формат первой записи для отладки
       if (rawOrderBook.bids.length > 0) {
         const firstBid = rawOrderBook.bids[0];
-        console.log(`📊 OrderBook format sample - bid:`, {
+        console.log(`📊 [OrderBook-${widgetId}] Format sample - bid:`, {
           isArray: Array.isArray(firstBid),
           type: typeof firstBid,
-          value: firstBid
+          value: firstBid,
+          keys: firstBid && typeof firstBid === 'object' ? Object.keys(firstBid) : null
+        });
+      }
+      
+      if (rawOrderBook.asks.length > 0) {
+        const firstAsk = rawOrderBook.asks[0];
+        console.log(`📊 [OrderBook-${widgetId}] Format sample - ask:`, {
+          isArray: Array.isArray(firstAsk),
+          type: typeof firstAsk,
+          value: firstAsk,
+          keys: firstAsk && typeof firstAsk === 'object' ? Object.keys(firstAsk) : null
         });
       }
 
@@ -83,7 +126,13 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
         if (Array.isArray(entry)) {
           const [price, amount] = entry;
           if (typeof price !== 'number' || typeof amount !== 'number') {
-            console.warn('❌ Invalid orderbook array entry:', entry);
+            console.warn(`❌ [OrderBook-${widgetId}] Invalid orderbook array entry:`, {
+              entry,
+              price,
+              amount,
+              priceType: typeof price,
+              amountType: typeof amount
+            });
             return null;
           }
           return {
@@ -95,7 +144,13 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
         
         // Обрабатываем формат объекта {price, amount}
         if (!entry || typeof entry.price !== 'number' || typeof entry.amount !== 'number') {
-          console.warn('❌ Invalid orderbook object entry:', entry);
+          console.warn(`❌ [OrderBook-${widgetId}] Invalid orderbook object entry:`, {
+            entry,
+            hasPrice: 'price' in entry,
+            hasAmount: 'amount' in entry,
+            priceType: typeof entry.price,
+            amountType: typeof entry.amount
+          });
           return null;
         }
         return {
@@ -108,6 +163,16 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
       // Берем только нужную глубину и фильтруем null значения
       const bids = (rawOrderBook.bids as (OrderBookEntry | [number, number])[]).slice(0, displayDepth).map(formatEntry).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
       const asks = (rawOrderBook.asks as (OrderBookEntry | [number, number])[]).slice(0, displayDepth).map(formatEntry).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+      
+      console.log(`📊 [OrderBook-${widgetId}] Processed entries:`, {
+        originalBidsLength: rawOrderBook.bids.length,
+        originalAsksLength: rawOrderBook.asks.length,
+        processedBidsLength: bids.length,
+        processedAsksLength: asks.length,
+        displayDepth,
+        sampleBid: bids[0],
+        sampleAsk: asks[0]
+      });
 
     // Добавляем кумулятивные объемы если нужно
     if (showCumulative) {
@@ -125,7 +190,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
       });
     }
 
-      return {
+      const result = {
         bids,
         asks,
         timestamp: rawOrderBook.timestamp,
@@ -134,11 +199,21 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
           ? ((asks[0].price - bids[0].price) / bids[0].price) * 100 
           : 0
       };
+      
+      console.log(`✅ [OrderBook-${widgetId}] Processing completed successfully:`, {
+        result,
+        hasBids: result.bids.length > 0,
+        hasAsks: result.asks.length > 0,
+        spread: result.spread,
+        spreadPercent: result.spreadPercent
+      });
+      
+      return result;
     } catch (error) {
-      console.error('❌ Error processing orderbook data:', error);
+      console.error(`❌ [OrderBook-${widgetId}] Error processing orderbook data:`, error);
       return null;
     }
-  }, [rawOrderBook, displayDepth, showCumulative]);
+  }, [rawOrderBook, displayDepth, showCumulative, widgetId]);
 
   // Статистика
   const stats = useMemo(() => {
@@ -446,10 +521,27 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
           
           {!processedOrderBook ? (
             <div className="text-center text-gray-400 py-4">
-              {isSubscribed ? 'Ожидание данных...' : 'Подпишитесь для получения данных orderbook'}
+              {(() => {
+                console.log(`🎨 [OrderBook-${widgetId}] Render: No processed data`, {
+                  isSubscribed,
+                  hasRawData: !!rawOrderBook,
+                  processedOrderBook
+                });
+                return isSubscribed ? 'Ожидание данных...' : 'Подпишитесь для получения данных orderbook';
+              })()}
             </div>
           ) : (
             <div className="space-y-1">
+              {(() => {
+                console.log(`🎨 [OrderBook-${widgetId}] Render: Displaying orderbook data`, {
+                  bidsCount: processedOrderBook.bids.length,
+                  asksCount: processedOrderBook.asks.length,
+                  spread: processedOrderBook.spread,
+                  timestamp: processedOrderBook.timestamp
+                });
+                return null;
+              })()}
+              
               {/* Заголовки */}
               <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 px-2">
                 <div>Цена</div>

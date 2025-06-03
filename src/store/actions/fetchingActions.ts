@@ -1,13 +1,13 @@
 import type { StateCreator } from 'zustand';
 import type { DataProviderStore } from '../types';
-import type { DataProvider, DataType, CCXTBrowserProvider } from '../../types/dataProviders';
+import type { DataProvider, DataType, CCXTBrowserProvider, Timeframe, MarketType } from '../../types/dataProviders';
 import { getCCXT, getCCXTPro } from '../utils/ccxtUtils';
 
 export interface FetchingActions {
   startDataFetching: (subscriptionKey: string) => Promise<void>;
   stopDataFetching: (subscriptionKey: string) => void;
-  startWebSocketFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => Promise<void>;
-  startRestFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => Promise<void>;
+  startWebSocketFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
+  startRestFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
 }
 
 export const createFetchingActions: StateCreator<
@@ -23,7 +23,7 @@ export const createFetchingActions: StateCreator<
       return;
     }
 
-    const { exchange, symbol, dataType } = subscription.key;
+    const { exchange, symbol, dataType, timeframe, market } = subscription.key;
     const provider = get().providers[get().activeProviderId || ''];
     
     if (!provider) {
@@ -39,9 +39,9 @@ export const createFetchingActions: StateCreator<
 
     try {
       if (subscription.method === 'websocket') {
-        await get().startWebSocketFetching(exchange, symbol, dataType, provider);
+        await get().startWebSocketFetching(exchange, symbol, dataType, provider, timeframe, market);
       } else {
-        await get().startRestFetching(exchange, symbol, dataType, provider);
+        await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
       }
     } catch (error) {
       console.error(`❌ Failed to start data fetching for ${subscriptionKey}:`, error);
@@ -79,7 +79,7 @@ export const createFetchingActions: StateCreator<
   },
 
   // Запуск WebSocket получения данных через CCXT Pro
-  startWebSocketFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => {
+  startWebSocketFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
     if (provider.type !== 'ccxt-browser') {
       console.warn(`⚠️ WebSocket не поддерживается для провайдера типа ${provider.type}`);
       return;
@@ -87,22 +87,22 @@ export const createFetchingActions: StateCreator<
 
     const ccxtProvider = provider as CCXTBrowserProvider;
     const ccxtPro = getCCXTPro();
-    if (!ccxtPro) {
-      console.warn(`⚠️ CCXT Pro недоступен, переключаемся на REST`);
-      await get().startRestFetching(exchange, symbol, dataType, provider);
-      return;
-    }
+          if (!ccxtPro) {
+        console.warn(`⚠️ CCXT Pro недоступен, переключаемся на REST`);
+        await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
+        return;
+      }
 
     try {
       const ExchangeClass = ccxtPro[exchange];
       if (!ExchangeClass) {
         console.warn(`⚠️ Exchange ${exchange} not found in CCXT Pro, falling back to REST`);
-        await get().startRestFetching(exchange, symbol, dataType, provider);
+        await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
         return;
       }
 
       const exchangeInstance = new ExchangeClass(ccxtProvider.config);
-      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType);
+      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
 
       // CCXT Pro поддерживает WebSocket по умолчанию для всех основных бирж
       console.log(`📡 Starting CCXT Pro WebSocket stream: ${exchange} ${symbol} ${dataType}`);
@@ -158,8 +158,37 @@ export const createFetchingActions: StateCreator<
             state.activeSubscriptions[subscriptionKey].isFallback = true; // ВАЖНО: Помечаем как fallback
           }
         });
-        await get().startRestFetching(exchange, symbol, dataType, provider);
+        await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
         return;
+      }
+
+      // Сначала загружаем исторические данные через REST для candles
+      if (dataType === 'candles') {
+        try {
+          console.log(`📊 Loading historical candles for ${exchange} ${symbol} ${timeframe} before WebSocket`);
+          const ccxt = getCCXT();
+          if (ccxt) {
+            const RestExchangeClass = ccxt[exchange];
+            if (RestExchangeClass) {
+              const restInstance = new RestExchangeClass(ccxtProvider.config);
+              const historicalCandles = await restInstance.fetchOHLCV(symbol, timeframe, undefined, 100);
+              if (historicalCandles && historicalCandles.length > 0) {
+                const formattedCandles = historicalCandles.map((c: any[]) => ({
+                  timestamp: c[0],
+                  open: c[1],
+                  high: c[2],
+                  low: c[3],
+                  close: c[4],
+                  volume: c[5]
+                }));
+                get().updateCandles(exchange, symbol, formattedCandles, timeframe, market);
+                console.log(`✅ Loaded ${formattedCandles.length} historical candles`);
+              }
+            }
+          }
+        } catch (error) {
+          console.warn(`⚠️ Failed to load historical candles:`, error);
+        }
       }
 
       // Запускаем CCXT Pro WebSocket поток с бесконечным циклом
@@ -176,7 +205,7 @@ export const createFetchingActions: StateCreator<
 
             switch (dataType) {
               case 'candles':
-                const candles = await exchangeInstance.watchOHLCV(symbol, '1m');
+                const candles = await exchangeInstance.watchOHLCV(symbol, timeframe);
                 if (candles && candles.length > 0) {
                   const formattedCandles = candles.map((c: any[]) => ({
                     timestamp: c[0],
@@ -186,13 +215,13 @@ export const createFetchingActions: StateCreator<
                     close: c[4],
                     volume: c[5]
                   }));
-                  get().updateCandles(exchange, symbol, formattedCandles);
+                  get().updateCandles(exchange, symbol, formattedCandles, timeframe, market);
                 }
                 break;
               case 'trades':
                 const trades = await exchangeInstance.watchTrades(symbol);
                 if (trades && trades.length > 0) {
-                  get().updateTrades(exchange, symbol, trades);
+                  get().updateTrades(exchange, symbol, trades, market);
                 }
                 break;
               case 'orderbook':
@@ -223,7 +252,7 @@ export const createFetchingActions: StateCreator<
                     asks: orderbook.asks?.slice(0, 3),
                     timestamp: orderbook.timestamp
                   });
-                  get().updateOrderBook(exchange, symbol, orderbook);
+                  get().updateOrderBook(exchange, symbol, orderbook, market);
                 }
                 break;
             }
@@ -238,7 +267,7 @@ export const createFetchingActions: StateCreator<
                 state.activeSubscriptions[subscriptionKey].isFallback = true;
               }
             });
-            await get().startRestFetching(exchange, symbol, dataType, provider);
+            await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
             break;
           }
         }
@@ -256,7 +285,7 @@ export const createFetchingActions: StateCreator<
   },
 
   // Запуск REST получения данных
-  startRestFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider) => {
+  startRestFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
     if (provider.type !== 'ccxt-browser') {
       console.warn(`⚠️ REST не поддерживается для провайдера типа ${provider.type}`);
       return;
@@ -273,7 +302,7 @@ export const createFetchingActions: StateCreator<
       }
 
       const exchangeInstance = new ExchangeClass(ccxtProvider.config);
-      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType);
+      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
       const interval = get().dataFetchSettings.restIntervals[dataType];
 
       console.log(`🔄 Starting REST polling: ${exchange} ${symbol} ${dataType} every ${interval}ms`);
@@ -285,7 +314,7 @@ export const createFetchingActions: StateCreator<
 
           switch (dataType) {
             case 'candles':
-              const candles = await exchangeInstance.fetchOHLCV(symbol, '1m', undefined, 100);
+              const candles = await exchangeInstance.fetchOHLCV(symbol, timeframe, undefined, 100);
               if (candles && candles.length > 0) {
                 const formattedCandles = candles.map((c: any[]) => ({
                   timestamp: c[0],
@@ -295,13 +324,13 @@ export const createFetchingActions: StateCreator<
                   close: c[4],
                   volume: c[5]
                 }));
-                get().updateCandles(exchange, symbol, formattedCandles);
+                get().updateCandles(exchange, symbol, formattedCandles, timeframe, market);
               }
               break;
             case 'trades':
               const trades = await exchangeInstance.fetchTrades(symbol, undefined, 100);
               if (trades && trades.length > 0) {
-                get().updateTrades(exchange, symbol, trades);
+                get().updateTrades(exchange, symbol, trades, market);
               }
               break;
             case 'orderbook':
@@ -312,7 +341,7 @@ export const createFetchingActions: StateCreator<
                   asks: orderbook.asks?.slice(0, 3),
                   timestamp: orderbook.timestamp
                 });
-                get().updateOrderBook(exchange, symbol, orderbook);
+                get().updateOrderBook(exchange, symbol, orderbook, market);
               }
               break;
           }

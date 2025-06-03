@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { DataProviderStore } from '../types';
-import type { DataType, DataFetchMethod, Candle, Trade, OrderBook, ActiveSubscription } from '../../types/dataProviders';
+import type { DataType, DataFetchMethod, Candle, Trade, OrderBook, ActiveSubscription, Timeframe, MarketType } from '../../types/dataProviders';
 
 export interface DataActions {
   // Управление настройками получения данных
@@ -8,17 +8,17 @@ export interface DataActions {
   setRestInterval: (dataType: DataType, interval: number) => void;
   
   // Получение данных из store
-  getCandles: (exchange: string, symbol: string) => Candle[];
-  getTrades: (exchange: string, symbol: string) => Trade[];
-  getOrderBook: (exchange: string, symbol: string) => OrderBook | null;
+  getCandles: (exchange: string, symbol: string, timeframe?: Timeframe, market?: MarketType) => Candle[];
+  getTrades: (exchange: string, symbol: string, market?: MarketType) => Trade[];
+  getOrderBook: (exchange: string, symbol: string, market?: MarketType) => OrderBook | null;
   
   // Обновление данных в центральном store
-  updateCandles: (exchange: string, symbol: string, candles: Candle[]) => void;
-  updateTrades: (exchange: string, symbol: string, trades: Trade[]) => void;
-  updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook) => void;
+  updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe?: Timeframe, market?: MarketType) => void;
+  updateTrades: (exchange: string, symbol: string, trades: Trade[], market?: MarketType) => void;
+  updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook, market?: MarketType) => void;
   
   // Утилиты
-  getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType) => string;
+  getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => string;
   getActiveSubscriptionsList: () => ActiveSubscription[];
 }
 
@@ -97,65 +97,135 @@ export const createDataActions: StateCreator<
   },
 
   // Получение данных из store
-  getCandles: (exchange: string, symbol: string): Candle[] => {
+  getCandles: (exchange: string, symbol: string, timeframe: Timeframe = '1m', market: MarketType = 'spot'): Candle[] => {
     const state = get();
-    return state.marketData.candles[exchange]?.[symbol] || [];
+    return state.marketData.candles[exchange]?.[market]?.[symbol]?.[timeframe] || [];
   },
 
-  getTrades: (exchange: string, symbol: string): Trade[] => {
+  getTrades: (exchange: string, symbol: string, market: MarketType = 'spot'): Trade[] => {
     const state = get();
-    return state.marketData.trades[exchange]?.[symbol] || [];
+    return state.marketData.trades[exchange]?.[market]?.[symbol] || [];
   },
 
-  getOrderBook: (exchange: string, symbol: string): OrderBook | null => {
+  getOrderBook: (exchange: string, symbol: string, market: MarketType = 'spot'): OrderBook | null => {
     const state = get();
-    return state.marketData.orderbook[exchange]?.[symbol] || null;
+    const result = state.marketData.orderbook[exchange]?.[market]?.[symbol] || null;
+    
+    console.log(`🔍 [getOrderBook] Requesting data for ${exchange}:${market}:${symbol}:`, {
+      exchange,
+      market,
+      symbol,
+      hasExchange: !!state.marketData.orderbook[exchange],
+      hasMarket: !!state.marketData.orderbook[exchange]?.[market],
+      hasSymbol: !!state.marketData.orderbook[exchange]?.[market]?.[symbol],
+      result: result,
+      allExchanges: Object.keys(state.marketData.orderbook),
+      fullOrderbookData: state.marketData.orderbook
+    });
+    
+    return result;
   },
 
   // Обновление данных в центральном store
-  updateCandles: (exchange: string, symbol: string, candles: Candle[]) => {
+  updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
     set(state => {
       if (!state.marketData.candles[exchange]) {
         state.marketData.candles[exchange] = {};
       }
-      state.marketData.candles[exchange][symbol] = candles;
+      if (!state.marketData.candles[exchange][market]) {
+        state.marketData.candles[exchange][market] = {};
+      }
+      if (!state.marketData.candles[exchange][market][symbol]) {
+        state.marketData.candles[exchange][market][symbol] = {};
+      }
+      
+      const existing = state.marketData.candles[exchange][market][symbol][timeframe] || [];
+      
+      if (existing.length === 0) {
+        // Если нет данных - это первая загрузка (REST snapshot)
+        state.marketData.candles[exchange][market][symbol][timeframe] = candles;
+        console.log(`📊 [updateCandles] Initial snapshot loaded: ${candles.length} candles for ${exchange}:${market}:${symbol}:${timeframe}`);
+      } else {
+        // Есть данные - объединяем с существующими (WebSocket updates)
+        const candleMap = new Map<number, Candle>();
+        
+        // Добавляем существующие свечи
+        existing.forEach(candle => {
+          candleMap.set(candle.timestamp, candle);
+        });
+        
+        // Обновляем/добавляем новые свечи
+        candles.forEach(candle => {
+          candleMap.set(candle.timestamp, candle);
+        });
+        
+        // Сортируем по времени и сохраняем
+        const mergedCandles = Array.from(candleMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+        state.marketData.candles[exchange][market][symbol][timeframe] = mergedCandles;
+        
+        console.log(`🔄 [updateCandles] WebSocket update: ${candles.length} new/updated candles, total: ${mergedCandles.length} for ${exchange}:${market}:${symbol}:${timeframe}`);
+      }
       
       // Обновляем timestamp последнего обновления
-      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'candles');
+      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'candles', timeframe, market);
       if (state.activeSubscriptions[subscriptionKey]) {
         state.activeSubscriptions[subscriptionKey].lastUpdate = Date.now();
       }
     });
   },
 
-  updateTrades: (exchange: string, symbol: string, trades: Trade[]) => {
+  updateTrades: (exchange: string, symbol: string, trades: Trade[], market: MarketType = 'spot') => {
     set(state => {
       if (!state.marketData.trades[exchange]) {
         state.marketData.trades[exchange] = {};
       }
+      if (!state.marketData.trades[exchange][market]) {
+        state.marketData.trades[exchange][market] = {};
+      }
       
       // Для trades добавляем новые сделки к существующим (максимум 1000)
-      const existing = state.marketData.trades[exchange][symbol] || [];
+      const existing = state.marketData.trades[exchange][market][symbol] || [];
       const combined = [...existing, ...trades];
-      state.marketData.trades[exchange][symbol] = combined.slice(-1000); // Оставляем последние 1000
+      state.marketData.trades[exchange][market][symbol] = combined.slice(-1000); // Оставляем последние 1000
       
       // Обновляем timestamp последнего обновления
-      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'trades');
+      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'trades', undefined, market);
       if (state.activeSubscriptions[subscriptionKey]) {
         state.activeSubscriptions[subscriptionKey].lastUpdate = Date.now();
       }
     });
   },
 
-  updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook) => {
+  updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook, market: MarketType = 'spot') => {
+    console.log(`💾 [updateOrderBook] Saving data for ${exchange}:${market}:${symbol}:`, {
+      exchange,
+      market,
+      symbol,
+      orderbook,
+      hasBids: orderbook?.bids?.length || 0,
+      hasAsks: orderbook?.asks?.length || 0,
+      timestamp: orderbook?.timestamp
+    });
+    
     set(state => {
       if (!state.marketData.orderbook[exchange]) {
         state.marketData.orderbook[exchange] = {};
       }
-      state.marketData.orderbook[exchange][symbol] = orderbook;
+      if (!state.marketData.orderbook[exchange][market]) {
+        state.marketData.orderbook[exchange][market] = {};
+      }
+      state.marketData.orderbook[exchange][market][symbol] = orderbook;
+      
+      console.log(`✅ [updateOrderBook] Data saved to state:`, {
+        exchange,
+        market,
+        symbol,
+        savedSuccessfully: !!state.marketData.orderbook[exchange][market][symbol],
+        allExchanges: Object.keys(state.marketData.orderbook)
+      });
       
       // Обновляем timestamp последнего обновления
-      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'orderbook');
+      const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'orderbook', undefined, market);
       if (state.activeSubscriptions[subscriptionKey]) {
         state.activeSubscriptions[subscriptionKey].lastUpdate = Date.now();
       }
@@ -163,8 +233,12 @@ export const createDataActions: StateCreator<
   },
 
   // Утилиты
-  getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType): string => {
-    return `${exchange}:${symbol}:${dataType}`;
+  getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market: MarketType = 'spot'): string => {
+    let key = `${exchange}:${market}:${symbol}:${dataType}`;
+    if (dataType === 'candles' && timeframe) {
+      key += `:${timeframe}`;
+    }
+    return key;
   },
 
   getActiveSubscriptionsList: (): ActiveSubscription[] => {
