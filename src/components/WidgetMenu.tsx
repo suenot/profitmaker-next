@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug } from 'lucide-react';
+import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug, Bell } from 'lucide-react';
 
-type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug';
+type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug' | 'notificationTest';
 
 interface WidgetMenuProps {
   position: { x: number; y: number };
@@ -59,7 +59,8 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       dataProviderSettings: { width: 500, height: 450 },
       dataProviderDemo: { width: 700, height: 400 },
       dataProviderSetup: { width: 500, height: 400 },
-      dataProviderDebug: { width: 700, height: 500 }
+      dataProviderDebug: { width: 700, height: 500 },
+      notificationTest: { width: 400, height: 500 }
     };
     
     const size = defaultSizes[type];
@@ -85,7 +86,8 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       dataProviderSettings: 'Data Provider Settings',
       dataProviderDemo: 'Data Provider Demo',
       dataProviderSetup: 'Data Provider Setup',
-      dataProviderDebug: 'Data Provider Debug'
+      dataProviderDebug: 'Data Provider Debug',
+      notificationTest: 'Notification Test'
     };
     
     addWidget(activeDashboardId, {
@@ -113,6 +115,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     { type: 'dataProviderDemo' as WidgetType, label: 'Data Provider Demo (Deduplication)', icon: <Bug size={16} /> },
     { type: 'dataProviderSetup' as WidgetType, label: 'Data Provider Setup', icon: <Settings size={16} /> },
     { type: 'dataProviderDebug' as WidgetType, label: 'Data Provider Debug', icon: <Bug size={16} /> },
+    { type: 'notificationTest' as WidgetType, label: 'Notification System Test', icon: <Bell size={16} /> },
     { type: 'custom' as WidgetType, label: 'Custom Widget', icon: <BarChart3 size={16} /> },
   ];
 

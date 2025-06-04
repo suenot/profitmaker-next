@@ -291,38 +291,28 @@ export const createDataActions: StateCreator<
 
   // REST data initialization for Chart widgets
   initializeChartData: async (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType): Promise<Candle[]> => {
-    const state = get();
-    const activeProviderId = state.activeProviderId;
+    // NEW: Get optimal provider for this exchange
+    const provider = get().getProviderForExchange(exchange);
     
-    if (!activeProviderId) {
-      throw new Error('No active data provider');
-    }
-    
-    const provider = state.providers[activeProviderId];
     if (!provider) {
-      throw new Error(`Provider ${activeProviderId} not found`);
+      throw new Error(`No suitable provider found for exchange ${exchange}`);
     }
     
-    if (provider.type !== 'ccxt-browser') {
+    if (provider.type !== 'ccxt-browser' && provider.type !== 'ccxt-server') {
       throw new Error(`REST initialization not supported for provider type: ${provider.type}`);
     }
     
-    console.log(`🚀 [initializeChartData] Loading initial data for ${exchange}:${market}:${symbol}:${timeframe}`);
+    console.log(`🚀 [initializeChartData] Loading initial data for ${exchange}:${market}:${symbol}:${timeframe} using provider ${provider.id}`);
     
     try {
-      // Use CCXT utilities
+      // Use CCXT utilities with new helper function
       const ccxt = getCCXT();
       
       if (!ccxt) {
         throw new Error('CCXT not available');
       }
       
-      const ExchangeClass = ccxt[exchange];
-      if (!ExchangeClass) {
-        throw new Error(`Exchange ${exchange} not found in CCXT`);
-      }
-      
-      const exchangeInstance = new ExchangeClass(provider.config);
+      const exchangeInstance = createExchangeInstance(exchange, provider, ccxt);
       
       // Load historical data (last 100 candles)
       const ohlcvData = await exchangeInstance.fetchOHLCV(symbol, timeframe, undefined, 100);

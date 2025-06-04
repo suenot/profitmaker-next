@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useDataProviderStore } from '../../store/dataProviderStore';
-import { ConnectionStatus } from '../../types/dataProviders';
+import { ConnectionStatus, DataProvider } from '../../types/dataProviders';
 import { 
   Wifi, 
   WifiOff, 
@@ -17,7 +20,15 @@ import {
   RotateCcw,
   Database,
   PlayCircle,
-  Settings
+  Settings,
+  Edit,
+  X,
+  Save,
+  Power,
+  PowerOff,
+  Hash,
+  ArrowRight,
+  AlertTriangle
 } from 'lucide-react';
 
 const getStatusIcon = (status: ConnectionStatus) => {
@@ -76,11 +87,25 @@ export const DataProviderDebugWidget: React.FC = () => {
     getActiveSubscriptionsList,
     removeProvider,
     setActiveProvider,
+    enableProvider,
+    disableProvider,
+    toggleProvider,
+    isProviderEnabled,
+    getEnabledProviders,
+    updateProvider,
     cleanup
   } = useDataProviderStore();
 
+  const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<{
+    name: string;
+    exchanges: string[];
+    priority: number;
+  }>({ name: '', exchanges: [], priority: 1 });
+
   const activeSubscriptions = getActiveSubscriptionsList();
   const providerList = Object.values(providers);
+  const enabledProviders = getEnabledProviders();
   
   // Separate subscriptions by methods
   const webSocketSubscriptions = activeSubscriptions.filter(sub => sub.method === 'websocket');
@@ -94,8 +119,79 @@ export const DataProviderDebugWidget: React.FC = () => {
     setActiveProvider(providerId);
   };
 
+  const handleToggleProvider = (providerId: string) => {
+    toggleProvider(providerId);
+  };
+
   const handleCleanup = () => {
     cleanup();
+  };
+
+  const startEdit = (provider: DataProvider) => {
+    setEditingProviderId(provider.id);
+    setEditFormData({
+      name: provider.name,
+      exchanges: provider.exchanges,
+      priority: provider.priority
+    });
+  };
+
+  const saveEdit = () => {
+    if (!editingProviderId) return;
+    
+    updateProvider(editingProviderId, {
+      name: editFormData.name,
+      exchanges: editFormData.exchanges,
+      priority: editFormData.priority
+    });
+    
+    setEditingProviderId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingProviderId(null);
+  };
+
+  const renderExchangeSelection = () => {
+    const availableExchanges = ['*', 'binance', 'bybit', 'okx', 'kucoin', 'coinbase', 'huobi', 'kraken', 'bitfinex', 'gateio', 'mexc', 'bitget'];
+    
+    return (
+      <div className="space-y-2">
+        <Label className="text-xs">Exchanges</Label>
+        <div className="flex flex-wrap gap-1">
+          {availableExchanges.map(exchange => (
+            <Button
+              key={exchange}
+              size="sm"
+              variant={editFormData.exchanges.includes(exchange) ? "default" : "outline"}
+              className="h-6 px-2 text-xs"
+              onClick={() => {
+                if (exchange === '*') {
+                  // If selecting "all", clear other selections and add only "*"
+                  setEditFormData(prev => ({
+                    ...prev,
+                    exchanges: ['*']
+                  }));
+                } else {
+                  // If selecting specific exchange, remove "*" and toggle this exchange
+                  setEditFormData(prev => {
+                    let newExchanges = prev.exchanges.filter(e => e !== '*');
+                    if (newExchanges.includes(exchange)) {
+                      newExchanges = newExchanges.filter(e => e !== exchange);
+                    } else {
+                      newExchanges = [...newExchanges, exchange];
+                    }
+                    return { ...prev, exchanges: newExchanges };
+                  });
+                }
+              }}
+            >
+              {exchange === '*' ? '🌍 All' : exchange}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -107,6 +203,10 @@ export const DataProviderDebugWidget: React.FC = () => {
           <Badge variant="outline" className="flex items-center gap-1">
             <Activity className="h-3 w-3" />
             {activeSubscriptions.filter(s => s.isActive).length} active
+          </Badge>
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Power className="h-3 w-3" />
+            {enabledProviders.length} enabled
           </Badge>
           <Button size="sm" variant="outline" onClick={handleCleanup}>
             <Trash2 className="h-3 w-3 mr-1" />
@@ -132,26 +232,41 @@ export const DataProviderDebugWidget: React.FC = () => {
               </Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Active provider:</span>
-              <span className="font-mono">{activeProviderId || 'Not selected'}</span>
+              <span className="text-gray-600">Legacy active provider:</span>
+              <span className="font-mono text-xs">{activeProviderId || 'Not selected'}</span>
             </div>
           </div>
           
+          {enabledProviders.length > 0 && (
+            <div className="border-t pt-3">
+              <div className="text-xs text-gray-600 mb-2">Enabled providers by priority:</div>
+              <div className="flex flex-wrap gap-1">
+                {enabledProviders
+                  .sort((a, b) => a.priority - b.priority)
+                  .map(provider => (
+                    <Badge key={provider.id} variant="secondary" className="text-xs">
+                      #{provider.priority} {provider.name}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+          )}
+          
           {dataFetchSettings.method === 'rest' && (
             <div className="border-t pt-3">
-              <div className="text-xs text-gray-600 mb-2">REST request intervals:</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">REST request intervals:</div>
               <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="bg-blue-50 p-2 rounded">
-                  <div className="font-medium">Trades</div>
-                  <div className="font-mono">{dataFetchSettings.restIntervals.trades}ms</div>
+                <div className="bg-blue-50 dark:bg-blue-950/50 p-2 rounded border border-blue-200 dark:border-blue-800">
+                  <div className="font-medium text-blue-900 dark:text-blue-100">Trades</div>
+                  <div className="font-mono text-blue-800 dark:text-blue-200">{dataFetchSettings.restIntervals.trades}ms</div>
                 </div>
-                <div className="bg-green-50 p-2 rounded">
-                  <div className="font-medium">Candles</div>
-                  <div className="font-mono">{dataFetchSettings.restIntervals.candles}ms</div>
+                <div className="bg-green-50 dark:bg-green-950/50 p-2 rounded border border-green-200 dark:border-green-800">
+                  <div className="font-medium text-green-900 dark:text-green-100">Candles</div>
+                  <div className="font-mono text-green-800 dark:text-green-200">{dataFetchSettings.restIntervals.candles}ms</div>
                 </div>
-                <div className="bg-purple-50 p-2 rounded">
-                  <div className="font-medium">OrderBook</div>
-                  <div className="font-mono">{dataFetchSettings.restIntervals.orderbook}ms</div>
+                <div className="bg-purple-50 dark:bg-purple-950/50 p-2 rounded border border-purple-200 dark:border-purple-800">
+                  <div className="font-medium text-purple-900 dark:text-purple-100">OrderBook</div>
+                  <div className="font-mono text-purple-800 dark:text-purple-200">{dataFetchSettings.restIntervals.orderbook}ms</div>
                 </div>
               </div>
             </div>
@@ -173,42 +288,135 @@ export const DataProviderDebugWidget: React.FC = () => {
               No configured data providers
             </p>
           ) : (
-            providerList.map((provider) => (
-              <div key={provider.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(provider.status)}
-                    <div>
-                      <p className="font-medium text-sm">{provider.name}</p>
-                      <p className="text-xs text-muted-foreground">{provider.type}</p>
+            providerList
+              .sort((a, b) => a.priority - b.priority)
+              .map((provider) => (
+                <div key={provider.id} className={`p-3 border rounded-lg ${
+                  editingProviderId === provider.id ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800' : ''
+                }`}>
+                  {editingProviderId === provider.id ? (
+                    // Edit mode
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Name</Label>
+                          <Input
+                            value={editFormData.name}
+                            onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Priority</Label>
+                          <Input
+                            type="number"
+                            value={editFormData.priority}
+                            onChange={(e) => setEditFormData(prev => ({ ...prev, priority: parseInt(e.target.value) || 1 }))}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </div>
+                      
+                      {renderExchangeSelection()}
+                      
+                      <div className="flex items-center gap-2 pt-2">
+                        <Button size="sm" onClick={saveEdit}>
+                          <Save className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={cancelEdit}>
+                          <X className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  {provider.id === activeProviderId && (
-                    <Badge variant="secondary" className="text-xs">Active</Badge>
+                  ) : (
+                    // Display mode
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(provider.status)}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm">{provider.name}</p>
+                              <Badge variant="outline" className="text-xs">
+                                <Hash className="h-3 w-3 mr-1" />
+                                {provider.priority}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span>{provider.type}</span>
+                              <ArrowRight className="h-3 w-3" />
+                              <span>
+                                {provider.exchanges.includes('*') 
+                                  ? '🌍 All exchanges'
+                                  : provider.exchanges.join(', ')
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          {provider.id === activeProviderId && (
+                            <Badge variant="secondary" className="text-xs">Legacy Active</Badge>
+                          )}
+                          {provider.status === 'connected' && (
+                            <Badge variant="default" className="text-xs">Enabled</Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(provider.status)}
+                        
+                        <Button
+                          size="sm"
+                          variant={provider.status === 'connected' ? "destructive" : "default"}
+                          onClick={() => handleToggleProvider(provider.id)}
+                        >
+                          {provider.status === 'connected' ? (
+                            <>
+                              <PowerOff className="h-3 w-3 mr-1" />
+                              Disable
+                            </>
+                          ) : (
+                            <>
+                              <Power className="h-3 w-3 mr-1" />
+                              Enable
+                            </>
+                          )}
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => startEdit(provider)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRemoveProvider(provider.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(provider.status)}
-                  {provider.id !== activeProviderId && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleSetActiveProvider(provider.id)}
-                    >
-                      <PlayCircle className="h-3 w-3 mr-1" />
-                      Activate
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleRemoveProvider(provider.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))
+              ))
+          )}
+          
+          {enabledProviders.length === 0 && providerList.length > 0 && (
+            <div className="p-3 border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/50 rounded-lg flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <span className="text-sm text-orange-700 dark:text-orange-300">
+                No providers are enabled. Enable at least one provider to receive data.
+              </span>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -276,8 +484,8 @@ export const DataProviderDebugWidget: React.FC = () => {
             restSubscriptions.map((subscription, index) => (
               <div key={index} className={`flex items-center justify-between p-3 rounded-lg border ${
                 subscription.isFallback 
-                  ? 'bg-orange-50 border-orange-200' 
-                  : 'bg-white border-gray-200'
+                  ? 'bg-orange-50 dark:bg-orange-950/50 border-orange-200 dark:border-orange-800' 
+                  : 'bg-background border-border'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${subscription.isActive ? 'bg-orange-500' : 'bg-gray-400'}`}></div>
@@ -287,7 +495,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                         {subscription.key.exchange} • {subscription.key.market || 'spot'} • {subscription.key.symbol}
                       </p>
                       {subscription.isFallback && (
-                        <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
+                        <Badge variant="outline" className="text-xs bg-orange-100 dark:bg-orange-950/70 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700">
                           🔄 Fallback
                         </Badge>
                       )}
@@ -353,6 +561,10 @@ export const DataProviderDebugWidget: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Providers:</span>
                 <span className="font-mono">{providerList.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Enabled:</span>
+                <span className="font-mono text-green-600">{enabledProviders.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Subscribers:</span>

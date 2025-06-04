@@ -1,7 +1,9 @@
 import type { StateCreator } from 'zustand';
 import type { DataProviderStore } from '../types';
-import type { DataProvider, DataType, CCXTBrowserProvider, Timeframe, MarketType } from '../../types/dataProviders';
+import type { DataProvider, DataType, CCXTBrowserProvider, CCXTServerProvider, Timeframe, MarketType } from '../../types/dataProviders';
 import { getCCXT, getCCXTPro } from '../utils/ccxtUtils';
+import { useUserStore } from '../userStore';
+import { getAccountForExchange, convertAccountForProvider } from '../utils/providerUtils';
 
 export interface FetchingActions {
   startDataFetching: (subscriptionKey: string) => Promise<void>;
@@ -9,6 +11,55 @@ export interface FetchingActions {
   startWebSocketFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
   startRestFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
 }
+
+// Helper function to create CCXT exchange instance with user credentials
+const createExchangeInstance = (exchange: string, provider: DataProvider, ccxtLib: any): any => {
+  if (!ccxtLib) {
+    throw new Error('CCXT library not available');
+  }
+  
+  const ExchangeClass = ccxtLib[exchange];
+  if (!ExchangeClass) {
+    throw new Error(`Exchange ${exchange} not found in CCXT`);
+  }
+  
+  // Get user credentials for this exchange
+  const userStore = useUserStore.getState();
+  const activeUser = userStore.users.find(u => u.id === userStore.activeUserId);
+  
+  let config: any = {};
+  
+  if (provider.type === 'ccxt-browser') {
+    const browserConfig = provider.config as any;
+    config = {
+      sandbox: browserConfig.sandbox || false,
+      options: browserConfig.options || {}
+    };
+    
+    // Add user credentials if available
+    if (activeUser) {
+      const account = getAccountForExchange(activeUser, exchange);
+      if (account && account.key && account.privateKey) {
+        const providerAccount = convertAccountForProvider(account);
+        config.apiKey = providerAccount.apiKey;
+        config.secret = providerAccount.secret;
+        if (providerAccount.password) config.password = providerAccount.password;
+        if (providerAccount.uid) config.uid = providerAccount.uid;
+      }
+    }
+  } else if (provider.type === 'ccxt-server') {
+    const serverConfig = provider.config as any;
+    config = {
+      serverUrl: serverConfig.serverUrl,
+      timeout: serverConfig.timeout || 30000,
+      sandbox: serverConfig.sandbox || false
+    };
+    
+    // For server providers, credentials are managed on server side
+  }
+  
+  return new ExchangeClass(config);
+};
 
 export const createFetchingActions: StateCreator<
   DataProviderStore,
@@ -24,10 +75,29 @@ export const createFetchingActions: StateCreator<
     }
 
     const { exchange, symbol, dataType, timeframe, market } = subscription.key;
-    const provider = get().providers[get().activeProviderId || ''];
+    
+    // NEW: Get provider for specific exchange (not just active provider)
+    let provider: DataProvider | null = null;
+    
+    if (subscription.providerId) {
+      // Use specific provider if set
+      provider = get().providers[subscription.providerId];
+    } else {
+      // Auto-select optimal provider for this exchange
+      provider = get().getProviderForExchange(exchange);
+      
+      // Save selected provider to subscription
+      if (provider) {
+        set(state => {
+          if (state.activeSubscriptions[subscriptionKey]) {
+            state.activeSubscriptions[subscriptionKey].providerId = provider!.id;
+          }
+        });
+      }
+    }
     
     if (!provider) {
-      console.error(`❌ No active provider for subscription ${subscriptionKey}`);
+      console.error(`❌ No suitable provider found for exchange ${exchange} (subscription ${subscriptionKey})`);
       return;
     }
 
@@ -80,28 +150,20 @@ export const createFetchingActions: StateCreator<
 
   // Start WebSocket data fetching via CCXT Pro
   startWebSocketFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
-    if (provider.type !== 'ccxt-browser') {
+    if (provider.type !== 'ccxt-browser' && provider.type !== 'ccxt-server') {
       console.warn(`⚠️ WebSocket not supported for provider type ${provider.type}`);
       return;
     }
 
-    const ccxtProvider = provider as CCXTBrowserProvider;
     const ccxtPro = getCCXTPro();
-          if (!ccxtPro) {
-        console.warn(`⚠️ CCXT Pro unavailable, switching to REST`);
-        await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
-        return;
-      }
+    if (!ccxtPro) {
+      console.warn(`⚠️ CCXT Pro unavailable, switching to REST`);
+      await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
+      return;
+    }
 
     try {
-      const ExchangeClass = ccxtPro[exchange];
-      if (!ExchangeClass) {
-        console.warn(`⚠️ Exchange ${exchange} not found in CCXT Pro, falling back to REST`);
-        await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
-        return;
-      }
-
-      const exchangeInstance = new ExchangeClass(ccxtProvider.config);
+      const exchangeInstance = createExchangeInstance(exchange, provider, ccxtPro);
       const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
 
       // CCXT Pro supports WebSocket by default for all major exchanges
@@ -168,22 +230,19 @@ export const createFetchingActions: StateCreator<
           console.log(`📊 Loading historical candles for ${exchange} ${symbol} ${timeframe} before WebSocket`);
           const ccxt = getCCXT();
           if (ccxt) {
-            const RestExchangeClass = ccxt[exchange];
-            if (RestExchangeClass) {
-              const restInstance = new RestExchangeClass(ccxtProvider.config);
-              const historicalCandles = await restInstance.fetchOHLCV(symbol, timeframe, undefined, 100);
-              if (historicalCandles && historicalCandles.length > 0) {
-                const formattedCandles = historicalCandles.map((c: any[]) => ({
-                  timestamp: c[0],
-                  open: c[1],
-                  high: c[2],
-                  low: c[3],
-                  close: c[4],
-                  volume: c[5]
-                }));
-                get().updateCandles(exchange, symbol, formattedCandles, timeframe, market);
-                console.log(`✅ Loaded ${formattedCandles.length} historical candles`);
-              }
+            const restInstance = createExchangeInstance(exchange, provider, ccxt);
+            const historicalCandles = await restInstance.fetchOHLCV(symbol, timeframe, undefined, 100);
+            if (historicalCandles && historicalCandles.length > 0) {
+              const formattedCandles = historicalCandles.map((c: any[]) => ({
+                timestamp: c[0],
+                open: c[1],
+                high: c[2],
+                low: c[3],
+                close: c[4],
+                volume: c[5]
+              }));
+              get().updateCandles(exchange, symbol, formattedCandles, timeframe, market);
+              console.log(`✅ Loaded ${formattedCandles.length} historical candles`);
             }
           }
         } catch (error) {
@@ -286,22 +345,16 @@ export const createFetchingActions: StateCreator<
 
   // Start REST data fetching
   startRestFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
-    if (provider.type !== 'ccxt-browser') {
+    if (provider.type !== 'ccxt-browser' && provider.type !== 'ccxt-server') {
       console.warn(`⚠️ REST not supported for provider type ${provider.type}`);
       return;
     }
 
-    const ccxtProvider = provider as CCXTBrowserProvider;
     const ccxt = getCCXT();
     if (!ccxt) return;
 
     try {
-      const ExchangeClass = ccxt[exchange];
-      if (!ExchangeClass) {
-        throw new Error(`Exchange ${exchange} not found in CCXT`);
-      }
-
-      const exchangeInstance = new ExchangeClass(ccxtProvider.config);
+      const exchangeInstance = createExchangeInstance(exchange, provider, ccxt);
       const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
       const interval = get().dataFetchSettings.restIntervals[dataType];
 

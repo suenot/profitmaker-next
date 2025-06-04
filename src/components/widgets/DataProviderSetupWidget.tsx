@@ -1,279 +1,294 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
+import { Textarea } from '../ui/textarea';
+import { Badge } from '../ui/badge';
 import { useDataProviderStore } from '../../store/dataProviderStore';
-import { useExchangesList } from '../../hooks/useExchangesList';
-import { 
-  DataProviderType, 
-  CCXTBrowserProvider, 
-  CCXTServerProvider,
-  CCXTBrowserConfig,
-  CCXTServerConfig
-} from '../../types/dataProviders';
-import { Plus, Settings, TestTube, Loader2 } from 'lucide-react';
+import { useNotificationStore } from '../../store/notificationStore';
+import { DataProviderType, DataProvider } from '../../types/dataProviders';
+import { Plus, Settings, X, Edit, Save, Trash2 } from 'lucide-react';
 
-// CCXT loaded via CDN script tag - available as window.ccxt
-declare global {
-  interface Window {
-    ccxt: any;
-  }
-}
-
-interface CCXTBrowserFormData {
+interface NewProviderFormData {
+  type: 'ccxt-browser' | 'ccxt-server';
   name: string;
-  exchangeId: string;
-  sandbox: boolean;
-  apiKey: string;
-  secret: string;
-  password: string;
-  uid: string;
+  exchanges: string[];
+  priority?: number;
+  serverUrl?: string;
+  timeout?: number;
 }
 
-interface CCXTServerFormData {
-  name: string;
-  exchangeId: string;
-  serverUrl: string;
-  privateKey: string;
-  timeout: number;
-}
+const COMMON_EXCHANGES = [
+  'binance', 'bybit', 'okx', 'kucoin', 'coinbase', 
+  'huobi', 'kraken', 'bitfinex', 'gateio', 'mexc', 'bitget'
+];
 
 const DataProviderSetupWidgetInner: React.FC = () => {
-  const { addProvider } = useDataProviderStore();
-  const { exchanges: supportedExchanges, loading: loadingExchanges } = useExchangesList();
+  const { createProvider, updateProvider, removeProvider, providers } = useDataProviderStore();
+  const { showSuccess, showError } = useNotificationStore();
   
-  const [providerType, setProviderType] = useState<DataProviderType>('ccxt-browser');
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-
-  // Form for CCXT Browser
-  const [ccxtBrowserForm, setCcxtBrowserForm] = useState<CCXTBrowserFormData>({
+  const [formData, setFormData] = useState<NewProviderFormData>({
+    type: 'ccxt-browser',
     name: '',
-    exchangeId: '',
-    sandbox: false,
-    apiKey: '',
-    secret: '',
-    password: '',
-    uid: ''
-  });
-
-  // Form for CCXT Server
-  const [ccxtServerForm, setCcxtServerForm] = useState<CCXTServerFormData>({
-    name: '',
-    exchangeId: '',
-    serverUrl: '',
-    privateKey: '',
+    exchanges: [],
     timeout: 30000
   });
-
-  const handleCcxtBrowserFormChange = (field: keyof CCXTBrowserFormData, value: any) => {
-    setCcxtBrowserForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleCcxtServerFormChange = (field: keyof CCXTServerFormData, value: any) => {
-    setCcxtServerForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const validateCcxtBrowserForm = (): boolean => {
-    return ccxtBrowserForm.name.trim() !== '' && ccxtBrowserForm.exchangeId !== '';
-  };
-
-  const validateCcxtServerForm = (): boolean => {
-    return (
-      ccxtServerForm.name.trim() !== '' && 
-      ccxtServerForm.exchangeId !== '' &&
-      ccxtServerForm.serverUrl.trim() !== '' &&
-      ccxtServerForm.privateKey.trim() !== ''
-    );
-  };
-
-  const testConnection = async () => {
-    setIsTestingConnection(true);
-    setTestResult(null);
-
-    try {
-      const tempProvider = createTempProvider();
-      if (!tempProvider) {
-        setTestResult({ success: false, message: '🛡️ Error creating test provider' });
-        return;
-      }
-
-      // Direct testing via CCXT
-      if (tempProvider.type === 'ccxt-browser') {
-        const ccxt = window.ccxt;
-        if (!ccxt) {
-          setTestResult({ success: false, message: '❌ CCXT not loaded! Check CDN connection' });
-          return;
-        }
-
-        const config = tempProvider.config as CCXTBrowserConfig;
-        const ExchangeClass = ccxt[config.exchangeId];
-        
-        if (!ExchangeClass) {
-          setTestResult({ success: false, message: `❌ Exchange ${config.exchangeId} not found in CCXT` });
-          return;
-        }
-
-        const exchange = new ExchangeClass({
-          ...config,
-          enableRateLimit: true,
-          timeout: 10000
-        });
-
-        // Test loading markets
-        const markets = await exchange.loadMarkets();
-        const marketCount = Object.keys(markets).length;
-        
-        setTestResult({
-          success: true,
-          message: `✅ Connection successful! Exchange ${exchange.name}, found ${marketCount} trading pairs`
-        });
-      } else if (tempProvider.type === 'ccxt-server') {
-        // For CCXT Server we can add simple URL check
-        const config = tempProvider.config as CCXTServerConfig;
-        try {
-          const response = await fetch(config.serverUrl + '/health', { 
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${config.privateKey}` },
-            signal: AbortSignal.timeout(5000)
-          });
-          
-          if (response.ok) {
-            setTestResult({
-              success: true,
-              message: `✅ Server available! URL: ${config.serverUrl}`
-            });
-          } else {
-            setTestResult({
-              success: false,
-              message: `❌ Server unavailable. Status: ${response.status}`
-            });
-          }
-        } catch (fetchError) {
-          setTestResult({
-            success: false,
-            message: `❌ Server connection error: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`
-          });
-        }
-      }
-    } catch (error) {
-      console.error('🛡️ Caught testing error:', error);
-      setTestResult({ 
-        success: false, 
-        message: `🛡️ Safe error handling: ${error instanceof Error ? error.message : 'Unknown error'}` 
-      });
-    } finally {
-      setIsTestingConnection(false);
-    }
-  };
-
-  const createTempProvider = () => {
-    const id = `temp-${Date.now()}`;
-    
-    if (providerType === 'ccxt-browser') {
-      if (!validateCcxtBrowserForm()) return null;
-      
-      const config: CCXTBrowserConfig = {
-        exchangeId: ccxtBrowserForm.exchangeId,
-        sandbox: ccxtBrowserForm.sandbox,
-        ...(ccxtBrowserForm.apiKey && { apiKey: ccxtBrowserForm.apiKey }),
-        ...(ccxtBrowserForm.secret && { secret: ccxtBrowserForm.secret }),
-        ...(ccxtBrowserForm.password && { password: ccxtBrowserForm.password }),
-        ...(ccxtBrowserForm.uid && { uid: ccxtBrowserForm.uid })
-      };
-
-      return {
-        id,
-        name: ccxtBrowserForm.name,
-        type: 'ccxt-browser' as const,
-        status: 'disconnected' as const,
-        config
-      };
-    }
-
-    if (providerType === 'ccxt-server') {
-      if (!validateCcxtServerForm()) return null;
-      
-      const config: CCXTServerConfig = {
-        exchangeId: ccxtServerForm.exchangeId,
-        serverUrl: ccxtServerForm.serverUrl,
-        privateKey: ccxtServerForm.privateKey,
-        timeout: ccxtServerForm.timeout
-      };
-
-      return {
-        id,
-        name: ccxtServerForm.name,
-        type: 'ccxt-server' as const,
-        status: 'disconnected' as const,
-        config
-      };
-    }
-
-    return null;
-  };
-
-  const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
+  
+  const [customExchange, setCustomExchange] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Editing state
+  const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<NewProviderFormData | null>(null);
 
-  const handleSubmit = async () => {
-    const provider = createTempProvider();
-    if (!provider) return;
+  const handleFormChange = (field: keyof NewProviderFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditFormChange = (field: keyof NewProviderFormData, value: any) => {
+    setEditFormData(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  const addExchange = (exchange: string, isEdit = false) => {
+    const targetForm = isEdit ? editFormData : formData;
+    const setter = isEdit ? setEditFormData : setFormData;
+    
+    if (exchange && targetForm && !targetForm.exchanges.includes(exchange)) {
+      setter(prev => prev ? ({
+        ...prev,
+        exchanges: [...prev.exchanges, exchange]
+      }) : null);
+    }
+  };
+
+  const removeExchange = (exchange: string, isEdit = false) => {
+    const setter = isEdit ? setEditFormData : setFormData;
+    setter(prev => prev ? ({
+      ...prev,
+      exchanges: prev.exchanges.filter(ex => ex !== exchange)
+    }) : null);
+  };
+
+  const addAllExchanges = (isEdit = false) => {
+    const setter = isEdit ? setEditFormData : setFormData;
+    setter(prev => prev ? ({
+      ...prev,
+      exchanges: ['*']
+    }) : null);
+  };
+
+  const addCustomExchange = (isEdit = false) => {
+    if (customExchange.trim()) {
+      addExchange(customExchange.trim().toLowerCase(), isEdit);
+      setCustomExchange('');
+    }
+  };
+
+  const validateForm = (data: NewProviderFormData): boolean => {
+    if (!data.name.trim()) return false;
+    if (data.exchanges.length === 0) return false;
+    if (data.type === 'ccxt-server' && !data.serverUrl?.trim()) return false;
+    return true;
+  };
+
+  const startEdit = (provider: DataProvider) => {
+    setEditingProviderId(provider.id);
+    setEditFormData({
+      type: provider.type as 'ccxt-browser' | 'ccxt-server',
+      name: provider.name,
+      exchanges: [...provider.exchanges],
+      priority: provider.priority,
+      serverUrl: provider.type === 'ccxt-server' ? provider.config.serverUrl : undefined,
+      timeout: provider.type === 'ccxt-server' ? provider.config.timeout : 30000
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingProviderId(null);
+    setEditFormData(null);
+  };
+
+  const saveEdit = async () => {
+    if (!editFormData || !editingProviderId || !validateForm(editFormData)) return;
 
     setIsSubmitting(true);
-    setSubmitResult(null);
 
     try {
-      // Create real ID
-      provider.id = `${provider.type}-${Date.now()}`;
-      
-      addProvider(provider);
-      
-      setSubmitResult({
-        success: true,
-        message: `Provider "${provider.name}" successfully added!`
-      });
-      
-      // Clear form
-      if (providerType === 'ccxt-browser') {
-        setCcxtBrowserForm({
-          name: '',
-          exchangeId: '',
-          sandbox: false,
-          apiKey: '',
-          secret: '',
-          password: '',
-          uid: ''
-        });
-      } else if (providerType === 'ccxt-server') {
-        setCcxtServerForm({
-          name: '',
-          exchangeId: '',
-          serverUrl: '',
-          privateKey: '',
-          timeout: 30000
-        });
+      const updates: any = {
+        name: editFormData.name,
+        exchanges: editFormData.exchanges,
+        priority: editFormData.priority
+      };
+
+      if (editFormData.type === 'ccxt-server') {
+        updates.config = {
+          serverUrl: editFormData.serverUrl,
+          timeout: editFormData.timeout || 30000
+        };
       }
+
+      updateProvider(editingProviderId, updates);
       
-      setTestResult(null);
+      // Показываем уведомление через notification store
+      showSuccess(
+        `Provider "${editFormData.name}" successfully updated!`,
+        'Provider configuration has been updated'
+      );
+      
+      setEditingProviderId(null);
+      setEditFormData(null);
+      
     } catch (error) {
-      setSubmitResult({
-        success: false,
-        message: error instanceof Error ? error.message : 'Unknown error adding provider'
-      });
+      // Показываем ошибку через notification store
+      showError(
+        'Error updating provider',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isFormValid = providerType === 'ccxt-browser' 
-    ? validateCcxtBrowserForm() 
-    : validateCcxtServerForm();
+  const handleDelete = (providerId: string, providerName: string) => {
+    if (confirm(`Are you sure you want to delete provider "${providerName}"?`)) {
+      removeProvider(providerId);
+      // Показываем уведомление через notification store
+      showSuccess(
+        `Provider "${providerName}" deleted successfully!`,
+        'Provider has been removed from the system'
+      );
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm(formData)) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const config: any = {};
+      
+      if (formData.type === 'ccxt-browser') {
+        config.options = {};
+      } else if (formData.type === 'ccxt-server') {
+        config.serverUrl = formData.serverUrl;
+        config.timeout = formData.timeout || 30000;
+      }
+
+      const newProvider = createProvider(
+        formData.type,
+        formData.name,
+        formData.exchanges,
+        config
+      );
+
+      // Update priority if manually set
+      if (formData.priority !== undefined) {
+        updateProvider(newProvider.id, { priority: formData.priority });
+      }
+      
+      // Показываем уведомление через notification store
+      showSuccess(
+        `Provider "${newProvider.name}" successfully created!`,
+        'New data provider has been added to the system'
+      );
+      
+      // Clear form
+      setFormData({
+        type: 'ccxt-browser',
+        name: '',
+        exchanges: [],
+        timeout: 30000
+      });
+      
+    } catch (error) {
+      // Показываем ошибку через notification store
+      showError(
+        'Error creating provider',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isFormValid = validateForm(formData);
+  const isEditFormValid = editFormData ? validateForm(editFormData) : false;
+
+  const renderExchangeSelection = (data: NewProviderFormData, onChange: typeof handleFormChange, isEdit = false) => (
+    <div className="space-y-2">
+      <Label>Supported Exchanges</Label>
+      
+      {/* Universal Provider Button */}
+      <div className="flex gap-2 mb-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => addAllExchanges(isEdit)}
+          disabled={data.exchanges.includes('*')}
+        >
+          ⭐ All Exchanges (Universal)
+        </Button>
+      </div>
+
+      {/* Common Exchanges */}
+      <div className="grid grid-cols-3 gap-2">
+        {COMMON_EXCHANGES.map(exchange => (
+          <Button
+            key={exchange}
+            type="button"
+            size="sm"
+            variant={data.exchanges.includes(exchange) ? "default" : "outline"}
+            onClick={() => data.exchanges.includes(exchange) 
+              ? removeExchange(exchange, isEdit) 
+              : addExchange(exchange, isEdit)
+            }
+            disabled={data.exchanges.includes('*')}
+            className="text-xs"
+          >
+            {exchange}
+          </Button>
+        ))}
+      </div>
+
+      {/* Custom Exchange */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="Custom exchange"
+          value={customExchange}
+          onChange={(e) => setCustomExchange(e.target.value)}
+          disabled={data.exchanges.includes('*')}
+          onKeyPress={(e) => e.key === 'Enter' && addCustomExchange(isEdit)}
+        />
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => addCustomExchange(isEdit)}
+          disabled={!customExchange.trim() || data.exchanges.includes('*')}
+        >
+          Add
+        </Button>
+      </div>
+
+      {/* Selected Exchanges */}
+      <div className="flex flex-wrap gap-1">
+        {data.exchanges.map(exchange => (
+          <Badge key={exchange} variant="secondary" className="text-xs">
+            {exchange === '*' ? '⭐ All Exchanges' : exchange}
+            <X 
+              className="h-3 w-3 ml-1 cursor-pointer" 
+              onClick={() => removeExchange(exchange, isEdit)}
+            />
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 p-4">
@@ -285,179 +300,67 @@ const DataProviderSetupWidgetInner: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Add Data Provider</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            🔑 API keys are automatically taken from your active user accounts
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Provider type selection */}
           <div className="space-y-2">
             <Label>Provider Type</Label>
-            <Select value={providerType} onValueChange={(value: DataProviderType) => setProviderType(value)}>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value: 'ccxt-browser' | 'ccxt-server') => handleFormChange('type', value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ccxt-browser">CCXT Browser</SelectItem>
                 <SelectItem value="ccxt-server">CCXT Server</SelectItem>
-                <SelectItem value="custom" disabled>Custom (coming soon)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Form for CCXT Browser */}
-          {providerType === 'ccxt-browser' && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="browser-name">Provider Name</Label>
-                <Input
-                  id="browser-name"
-                  value={ccxtBrowserForm.name}
-                  onChange={(e) => handleCcxtBrowserFormChange('name', e.target.value)}
-                  placeholder="e.g.: Binance Spot"
-                />
-              </div>
+          {/* Provider Name */}
+          <div className="space-y-2">
+            <Label htmlFor="provider-name">Provider Name</Label>
+            <Input
+              id="provider-name"
+              value={formData.name}
+              onChange={(e) => handleFormChange('name', e.target.value)}
+              placeholder="e.g., Main Trading Provider"
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="browser-exchange">Exchange</Label>
-                <Select 
-                  value={ccxtBrowserForm.exchangeId} 
-                  onValueChange={(value) => handleCcxtBrowserFormChange('exchangeId', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select exchange" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingExchanges ? (
-                      <SelectItem value="loading" disabled>
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Loading exchanges...
-                        </div>
-                      </SelectItem>
-                    ) : (
-                      supportedExchanges.map(exchange => (
-                        <SelectItem key={exchange.id} value={exchange.id}>
-                          {exchange.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Exchanges Selection */}
+          {renderExchangeSelection(formData, handleFormChange)}
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="browser-sandbox"
-                  checked={ccxtBrowserForm.sandbox}
-                  onCheckedChange={(checked) => handleCcxtBrowserFormChange('sandbox', checked)}
-                />
-                <Label htmlFor="browser-sandbox">Test Mode (Sandbox)</Label>
-              </div>
+          {/* Manual Priority */}
+          <div className="space-y-2">
+            <Label htmlFor="priority">Priority (optional)</Label>
+            <Input
+              id="priority"
+              type="number"
+              value={formData.priority || ''}
+              onChange={(e) => handleFormChange('priority', e.target.value ? parseInt(e.target.value) : undefined)}
+              placeholder="Auto-assigned if empty"
+              min={1}
+              max={1000}
+            />
+            <p className="text-xs text-muted-foreground">Lower number = higher priority</p>
+          </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="browser-apiKey">API Key (optional)</Label>
-                  <Input
-                    id="browser-apiKey"
-                    type="password"
-                    value={ccxtBrowserForm.apiKey}
-                    onChange={(e) => handleCcxtBrowserFormChange('apiKey', e.target.value)}
-                    placeholder="For private data"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="browser-secret">Secret (optional)</Label>
-                  <Input
-                    id="browser-secret"
-                    type="password"
-                    value={ccxtBrowserForm.secret}
-                    onChange={(e) => handleCcxtBrowserFormChange('secret', e.target.value)}
-                    placeholder="For private data"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="browser-password">Passphrase (optional)</Label>
-                  <Input
-                    id="browser-password"
-                    type="password"
-                    value={ccxtBrowserForm.password}
-                    onChange={(e) => handleCcxtBrowserFormChange('password', e.target.value)}
-                    placeholder="For some exchanges"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="browser-uid">UID (optional)</Label>
-                  <Input
-                    id="browser-uid"
-                    value={ccxtBrowserForm.uid}
-                    onChange={(e) => handleCcxtBrowserFormChange('uid', e.target.value)}
-                    placeholder="For some exchanges"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Form for CCXT Server */}
-          {providerType === 'ccxt-server' && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="server-name">Provider Name</Label>
-                <Input
-                  id="server-name"
-                  value={ccxtServerForm.name}
-                  onChange={(e) => handleCcxtServerFormChange('name', e.target.value)}
-                  placeholder="e.g.: CCXT Server Binance"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="server-exchange">Exchange</Label>
-                <Select 
-                  value={ccxtServerForm.exchangeId} 
-                  onValueChange={(value) => handleCcxtServerFormChange('exchangeId', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select exchange" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingExchanges ? (
-                      <SelectItem value="loading" disabled>
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Loading exchanges...
-                        </div>
-                      </SelectItem>
-                    ) : (
-                      supportedExchanges.map(exchange => (
-                        <SelectItem key={exchange.id} value={exchange.id}>
-                          {exchange.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
+          {/* CCXT Server specific fields */}
+          {formData.type === 'ccxt-server' && (
+            <div className="space-y-4 border-t pt-4">
               <div className="space-y-2">
                 <Label htmlFor="server-url">Server URL</Label>
                 <Input
                   id="server-url"
-                  value={ccxtServerForm.serverUrl}
-                  onChange={(e) => handleCcxtServerFormChange('serverUrl', e.target.value)}
-                  placeholder="https://your-server.com/api"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="private-key">Private Key</Label>
-                <Textarea
-                  id="private-key"
-                  value={ccxtServerForm.privateKey}
-                  onChange={(e) => handleCcxtServerFormChange('privateKey', e.target.value)}
-                  placeholder="Private key for authentication"
-                  rows={4}
+                  value={formData.serverUrl || ''}
+                  onChange={(e) => handleFormChange('serverUrl', e.target.value)}
+                  placeholder="https://your-ccxt-server.com/api"
                 />
               </div>
 
@@ -466,8 +369,8 @@ const DataProviderSetupWidgetInner: React.FC = () => {
                 <Input
                   id="timeout"
                   type="number"
-                  value={ccxtServerForm.timeout}
-                  onChange={(e) => handleCcxtServerFormChange('timeout', parseInt(e.target.value) || 30000)}
+                  value={formData.timeout || 30000}
+                  onChange={(e) => handleFormChange('timeout', parseInt(e.target.value) || 30000)}
                   min={1000}
                   max={60000}
                 />
@@ -475,48 +378,144 @@ const DataProviderSetupWidgetInner: React.FC = () => {
             </div>
           )}
 
-          {/* Test result */}
-          {testResult && (
-            <div className={`p-3 rounded-lg ${
-              testResult.success 
-                ? 'bg-green-50 border border-green-200 text-green-800' 
-                : 'bg-red-50 border border-red-200 text-red-800'
-            }`}>
-              <p className="text-sm">{testResult.message}</p>
-            </div>
-          )}
 
-          {/* Submit result */}
-          {submitResult && (
-            <div className={`p-3 rounded-lg ${
-              submitResult.success 
-                ? 'bg-green-50 border border-green-200 text-green-800' 
-                : 'bg-red-50 border border-red-200 text-red-800'
-            }`}>
-              <p className="text-sm">{submitResult.message}</p>
-            </div>
-          )}
 
-          {/* Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={testConnection}
-              variant="outline"
-              disabled={!isFormValid || isTestingConnection}
-              className="flex items-center gap-2"
-            >
-              <TestTube className="h-4 w-4" />
-              {isTestingConnection ? 'Testing...' : 'Test Connection'}
-            </Button>
-            
-            <Button
-              onClick={handleSubmit}
-              disabled={!isFormValid || isSubmitting}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {isSubmitting ? 'Adding...' : 'Add Provider'}
-            </Button>
+          {/* Submit Button */}
+          <Button
+            onClick={handleSubmit}
+            disabled={!isFormValid || isSubmitting}
+            className="w-full flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {isSubmitting ? 'Creating Provider...' : 'Create Provider'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Existing Providers */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Existing Providers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Object.values(providers).map(provider => (
+              <div key={provider.id}>
+                {editingProviderId === provider.id && editFormData ? (
+                  // Edit Mode
+                  <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50 dark:bg-blue-950/50">
+                    <div className="space-y-4">
+                      {/* Edit Name */}
+                      <div className="space-y-2">
+                        <Label>Provider Name</Label>
+                        <Input
+                          value={editFormData.name}
+                          onChange={(e) => handleEditFormChange('name', e.target.value)}
+                          placeholder="Provider name"
+                        />
+                      </div>
+
+                      {/* Edit Exchanges */}
+                      {renderExchangeSelection(editFormData, handleEditFormChange, true)}
+
+                      {/* Edit Priority */}
+                      <div className="space-y-2">
+                        <Label>Priority</Label>
+                        <Input
+                          type="number"
+                          value={editFormData.priority || ''}
+                          onChange={(e) => handleEditFormChange('priority', e.target.value ? parseInt(e.target.value) : undefined)}
+                          placeholder="Priority number"
+                          min={1}
+                          max={1000}
+                        />
+                      </div>
+
+                      {/* CCXT Server fields for editing */}
+                      {editFormData.type === 'ccxt-server' && (
+                        <div className="space-y-4 border-t pt-4">
+                          <div className="space-y-2">
+                            <Label>Server URL</Label>
+                            <Input
+                              value={editFormData.serverUrl || ''}
+                              onChange={(e) => handleEditFormChange('serverUrl', e.target.value)}
+                              placeholder="https://your-ccxt-server.com/api"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Timeout (ms)</Label>
+                            <Input
+                              type="number"
+                              value={editFormData.timeout || 30000}
+                              onChange={(e) => handleEditFormChange('timeout', parseInt(e.target.value) || 30000)}
+                              min={1000}
+                              max={60000}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Edit Actions */}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={saveEdit}
+                          disabled={!isEditFormValid || isSubmitting}
+                          className="flex items-center gap-1"
+                        >
+                          <Save className="h-3 w-3" />
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={cancelEdit}
+                        >
+                          <X className="h-3 w-3" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // View Mode
+                  <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-muted/20 rounded-lg border border-border">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm">{provider.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {provider.type} • {provider.exchanges.join(', ')} • Priority: {provider.priority}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={provider.status === 'connected' ? 'default' : 'secondary'}>
+                        {provider.status}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEdit(provider)}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(provider.id, provider.name)}
+                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            {Object.keys(providers).length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No providers created yet
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

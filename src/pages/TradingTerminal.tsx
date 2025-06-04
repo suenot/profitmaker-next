@@ -13,6 +13,7 @@ import { DataProviderSettingsWidget } from '@/components/widgets/DataProviderSet
 import { DataProviderDemoWidget } from '@/components/widgets/DataProviderDemoWidget';
 import { DataProviderSetupWidget } from '@/components/widgets/DataProviderSetupWidget';
 import { DataProviderDebugWidget } from '@/components/widgets/DataProviderDebugWidget';
+import NotificationTestWidget from '@/components/NotificationTestWidget';
 import AlignmentGuides from '@/components/AlignmentGuides';
 import { GuideLineType } from '@/types/alignmentGuides';
 import CollapsedWidgetsZone from '@/components/CollapsedWidgetsZone';
@@ -29,6 +30,7 @@ const widgetComponents: Record<string, React.FC<any>> = {
   dataProviderDemo: DataProviderDemoWidget,
   dataProviderSetup: DataProviderSetupWidget,
   dataProviderDebug: DataProviderDebugWidget,
+  notificationTest: NotificationTestWidget,
 };
 
 const TradingTerminal: React.FC = () => {

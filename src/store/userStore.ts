@@ -9,6 +9,8 @@ export const ExchangeAccountSchema = z.object({
   exchange: z.string(), // e.g., 'binance', 'bybit' (required)
   key: z.string().optional(), // API key (optional)
   privateKey: z.string().optional(), // Secret key (optional)
+  password: z.string().optional(), // Password/passphrase (optional)
+  uid: z.string().optional(), // UID (optional)
   email: z.string(), // required
   avatarUrl: z.string().url().optional(),
   notes: z.string().optional(), // optional

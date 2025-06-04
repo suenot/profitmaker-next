@@ -73,28 +73,24 @@ export interface BaseDataProvider {
   name: string;
   type: DataProviderType;
   status: ConnectionStatus;
+  exchanges: string[]; // ['binance', 'bybit'] или ['*'] для всех бирж
+  priority: number; // Приоритет провайдера (меньше = выше приоритет)
 }
 
 // Data provider types
 export type DataProviderType = 'ccxt-browser' | 'ccxt-server' | 'custom';
 
-// Configuration for CCXT Browser
+// Configuration for CCXT Browser - УПРОЩЕННАЯ ВЕРСИЯ
 export interface CCXTBrowserConfig {
-  exchangeId: string; // binance, bybit, etc.
   sandbox?: boolean;
-  apiKey?: string;
-  secret?: string;
-  password?: string;
-  uid?: string;
   options?: Record<string, any>;
 }
 
-// Configuration for CCXT Server
+// Configuration for CCXT Server - УПРОЩЕННАЯ ВЕРСИЯ  
 export interface CCXTServerConfig {
   serverUrl: string;
-  privateKey: string;
-  exchangeId: string;
   timeout?: number;
+  sandbox?: boolean;
 }
 
 // Custom configuration for other providers
@@ -122,6 +118,23 @@ export interface CustomProvider extends BaseDataProvider {
 
 // Combined provider type
 export type DataProvider = CCXTBrowserProvider | CCXTServerProvider | CustomProvider;
+
+// Utility types for provider-exchange mapping
+export interface ProviderExchangeMapping {
+  exchange: string;
+  provider: DataProvider;
+  account?: ExchangeAccountForProvider; // Account data from userStore
+}
+
+// Account data extracted from userStore for provider usage
+export interface ExchangeAccountForProvider {
+  exchange: string;
+  apiKey?: string;
+  secret?: string;
+  password?: string;
+  uid?: string;
+  email: string;
+}
 
 // Interface for WebSocket connection
 export interface WebSocketConnection {
@@ -156,7 +169,7 @@ export interface CreateSubscriptionParams {
   exchange: string;
   dashboardId: string;
   widgetId: string;
-  providerId: string;
+  providerId?: string; // Теперь опциональный - может автоматически выбираться
 }
 
 // Provider operation result
@@ -196,9 +209,10 @@ export interface ActiveSubscription {
   intervalId?: number; // для REST интервалов
   wsConnection?: WebSocket; // для WebSocket соединений
   ccxtMethod?: string; // какой именно CCXT метод используется (watchOrderBook, watchBidsAsks, etc.)
+  providerId?: string; // ID провайдера обслуживающего эту подписку
 }
 
-// Новые типы для интеллектуального выбора CCXT методов
+// CCXT specific types
 export type CCXTOrderBookMethod = 
   | 'watchOrderBookForSymbols'  // Приоритет 1: diff обновления
   | 'watchOrderBook'            // Приоритет 2: полные снепшоты
@@ -227,7 +241,7 @@ export interface RestCycleManager {
   subscriberIds: Set<string>;
 }
 
-// Event system для уведомления Chart widgets
+// Event system for Chart widgets  
 export type ChartUpdateEventType = 'initial_load' | 'new_candles' | 'update_last_candle' | 'full_refresh';
 
 export interface ChartUpdateEvent {

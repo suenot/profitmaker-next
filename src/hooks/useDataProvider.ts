@@ -9,6 +9,24 @@ import {
   DataState
 } from '../types/dataProviders';
 
+// NEW: Hook for provider-exchange mappings
+export const useProviderMappings = (exchanges: string[]) => {
+  const { getProviderExchangeMappings } = useDataProviderStore();
+  
+  return useMemo(() => {
+    return getProviderExchangeMappings(exchanges);
+  }, [exchanges, getProviderExchangeMappings]);
+};
+
+// NEW: Hook for getting provider for specific exchange
+export const useProviderForExchange = (exchange: string) => {
+  const { getProviderForExchange } = useDataProviderStore();
+  
+  return useMemo(() => {
+    return getProviderForExchange(exchange);
+  }, [exchange, getProviderForExchange]);
+};
+
 // Hook for using candle data
 export const useCandles = (
   symbol: string,

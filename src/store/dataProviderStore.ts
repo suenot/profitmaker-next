@@ -20,14 +20,15 @@ enableMapSet();
 export const useDataProviderStore = create<DataProviderStore>()(
   subscribeWithSelector(
     immer((set, get, store) => {
-      // Create default provider
+      // Create default universal provider
       const defaultProvider: CCXTBrowserProvider = {
-        id: 'binance-default',
+        id: 'universal-browser',
         type: 'ccxt-browser',
-        name: 'Binance (Default)',
+        name: 'Universal Browser Provider',
         status: 'connected',
+        exchanges: ['*'], // Поддерживает все биржи
+        priority: 100, // Низкий приоритет (используется как fallback)
         config: {
-          exchangeId: 'binance',
           sandbox: false
         }
       };
@@ -37,7 +38,7 @@ export const useDataProviderStore = create<DataProviderStore>()(
         providers: {
           [defaultProvider.id]: defaultProvider
         },
-        activeProviderId: defaultProvider.id,
+        activeProviderId: defaultProvider.id, // Deprecated, kept for compatibility
         dataFetchSettings: {
           method: 'websocket',
           restIntervals: {

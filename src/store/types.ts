@@ -13,14 +13,16 @@ import type {
   Timeframe,
   MarketType,
   ChartUpdateListener,
-  ChartUpdateEvent
+  ChartUpdateEvent,
+  ProviderExchangeMapping
 } from '../types/dataProviders';
+import type { User } from './userStore';
 
 // Store state interface
 export interface DataProviderState {
   // Data providers
   providers: Record<string, DataProvider>;
-  activeProviderId: string | null;
+  activeProviderId: string | null; // Deprecated, kept for compatibility
   
   // Data fetch settings
   dataFetchSettings: DataFetchSettings;
@@ -52,6 +54,20 @@ export interface DataProviderActions {
   addProvider: (provider: DataProvider) => void;
   removeProvider: (providerId: string) => void;
   setActiveProvider: (providerId: string) => void;
+  
+  // NEW: Multiple provider management
+  enableProvider: (providerId: string) => void;
+  disableProvider: (providerId: string) => void;
+  toggleProvider: (providerId: string) => void;
+  isProviderEnabled: (providerId: string) => boolean;
+  getEnabledProviders: () => DataProvider[];
+  
+  // NEW: Advanced provider management with user integration
+  createProvider: (type: 'ccxt-browser' | 'ccxt-server', name: string, exchanges: string[], config?: any) => DataProvider;
+  updateProvider: (providerId: string, updates: { name?: string; exchanges?: string[]; priority?: number; config?: any }) => void;
+  getProviderForExchange: (exchange: string) => DataProvider | null;
+  getProviderExchangeMappings: (exchanges: string[]) => ProviderExchangeMapping[];
+  updateProviderPriority: (providerId: string, priority: number) => void;
   
   // Data fetch settings management
   setDataFetchMethod: (method: DataFetchMethod) => Promise<void>;

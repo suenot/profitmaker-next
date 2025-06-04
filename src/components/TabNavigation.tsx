@@ -3,11 +3,15 @@ import { Plus, Bell, Sun, Moon, User, X } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { useUserStore } from '@/store/userStore';
 import { useDashboardStore } from '@/store/dashboardStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import { Badge } from './ui/badge';
 import UserDrawer from './UserDrawer';
+import NotificationHistory from './NotificationHistory';
 
 const TabNavigation: React.FC = () => {
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
+  const [isNotificationHistoryOpen, setIsNotificationHistoryOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [isThemeSheetOpen, setIsThemeSheetOpen] = useState(false);
   
@@ -63,12 +67,21 @@ const TabNavigation: React.FC = () => {
   const users = useUserStore(s => s.users);
   const activeUser = users.find(u => u.id === activeUserId);
 
+  // Get notification store
+  const { unreadCount, setHistoryOpen } = useNotificationStore();
+
   const handleThemeClick = (e: React.MouseEvent) => {
     if (e.altKey) {
       setIsThemeSheetOpen(true);
     } else {
       toggleTheme();
     }
+  };
+
+  // Handler for notification bell click
+  const handleNotificationClick = () => {
+    setIsNotificationHistoryOpen(true);
+    setHistoryOpen(true);
   };
 
   // Handlers for dashboard tabs
@@ -179,8 +192,20 @@ const TabNavigation: React.FC = () => {
         </div>
         {/* Block with three icons */}
         <div className="flex items-center space-x-3">
-          <button className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors">
+          <button 
+            className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors relative"
+            onClick={handleNotificationClick}
+            title="Уведомления"
+          >
             <Bell size={18} className="text-terminal-muted" />
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center rounded-full"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
           </button>
           <button 
             className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors"
@@ -209,6 +234,13 @@ const TabNavigation: React.FC = () => {
         </div>
       </div>
       <UserDrawer open={isUserDrawerOpen} onOpenChange={setIsUserDrawerOpen} />
+      <NotificationHistory 
+        open={isNotificationHistoryOpen} 
+        onOpenChange={(open) => {
+          setIsNotificationHistoryOpen(open);
+          setHistoryOpen(open);
+        }} 
+      />
     </div>
   );
 };
