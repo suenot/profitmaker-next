@@ -33,22 +33,22 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
     getActiveSubscriptionsList
   } = useDataProviderStore();
 
-  // Состояние настроек
+  // Settings state
   const [exchange, setExchange] = useState(initialExchange);
   const [symbol, setSymbol] = useState(initialSymbol);
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Настройки отображения
+  // Display settings
   const [displayDepth, setDisplayDepth] = useState(10);
   const [showCumulative, setShowCumulative] = useState(true);
   const [priceDecimals, setPriceDecimals] = useState(2);
   const [amountDecimals, setAmountDecimals] = useState(4);
 
-  // Получаем данные из store (автоматически обновляются)
+  // Get data from store (automatically updated)
   const rawOrderBook = getOrderBook(exchange, symbol);
   const activeSubscriptions = getActiveSubscriptionsList();
   
-  // Детальное логирование данных ордербука
+  // Detailed logging of orderbook data
   React.useEffect(() => {
     console.log(`📊 [OrderBook-${widgetId}] Raw data received:`, {
       exchange,
@@ -64,7 +64,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
     });
   }, [rawOrderBook, exchange, symbol, widgetId]);
   
-  // Проверяем есть ли активная подписка для текущих exchange/symbol
+  // Check if there's an active subscription for current exchange/symbol
   const currentSubscriptionKey = `${exchange}:${symbol}:orderbook`;
   const currentSubscription = activeSubscriptions.find(sub => 
     sub.key.exchange === exchange && 
@@ -72,7 +72,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
     sub.key.dataType === 'orderbook'
   );
 
-  // Обработка и форматирование данных orderbook
+  // Processing and formatting orderbook data
   const processedOrderBook = useMemo(() => {
     console.log(`🔄 [OrderBook-${widgetId}] Processing orderbook data:`, {
       hasRawData: !!rawOrderBook,
@@ -85,7 +85,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
     }
 
     try {
-      // Проверяем, что данные в правильном формате
+      // Check that data is in correct format
       if (!rawOrderBook.bids || !rawOrderBook.asks || 
           !Array.isArray(rawOrderBook.bids) || !Array.isArray(rawOrderBook.asks)) {
         console.warn(`❌ [OrderBook-${widgetId}] Invalid orderbook data format:`, {
@@ -100,7 +100,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
         return null;
       }
 
-      // Логируем формат первой записи для отладки
+      // Log format of first entry for debugging
       if (rawOrderBook.bids.length > 0) {
         const firstBid = rawOrderBook.bids[0];
         console.log(`📊 [OrderBook-${widgetId}] Format sample - bid:`, {
@@ -122,7 +122,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
       }
 
       const formatEntry = (entry: OrderBookEntry | [number, number]) => {
-        // Обрабатываем формат массива [price, amount] от CCXT Pro
+        // Handle array format [price, amount] from CCXT Pro
         if (Array.isArray(entry)) {
           const [price, amount] = entry;
           if (typeof price !== 'number' || typeof amount !== 'number') {
@@ -142,7 +142,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
           };
         }
         
-        // Обрабатываем формат объекта {price, amount}
+        // Handle object format {price, amount}
         if (!entry || typeof entry.price !== 'number' || typeof entry.amount !== 'number') {
           console.warn(`❌ [OrderBook-${widgetId}] Invalid orderbook object entry:`, {
             entry,
@@ -160,7 +160,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
         };
       };
 
-      // Берем только нужную глубину и фильтруем null значения
+      // Take only needed depth and filter null values
       const bids = (rawOrderBook.bids as (OrderBookEntry | [number, number])[]).slice(0, displayDepth).map(formatEntry).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
       const asks = (rawOrderBook.asks as (OrderBookEntry | [number, number])[]).slice(0, displayDepth).map(formatEntry).filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
       
@@ -174,7 +174,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
         sampleAsk: asks[0]
       });
 
-    // Добавляем кумулятивные объемы если нужно
+    // Add cumulative volumes if needed
     if (showCumulative) {
       let bidsCumulative = 0;
       let asksCumulative = 0;
@@ -215,7 +215,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
     }
   }, [rawOrderBook, displayDepth, showCumulative, widgetId]);
 
-  // Статистика
+  // Statistics
   const stats = useMemo(() => {
     if (!processedOrderBook) {
       return { 
@@ -245,40 +245,40 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
     };
   }, [processedOrderBook]);
 
-  // Автоматическая подписка на данные (store сам управляет методом получения)
+  // Automatic data subscription (store manages the fetch method itself)
   useEffect(() => {
     if (isSubscribed && activeProviderId) {
       const subscriberId = `${dashboardId}-${widgetId}`;
       
-      // Просто подписываемся - store сам решит использовать REST или WebSocket
+      // Just subscribe - store will decide whether to use REST or WebSocket
       subscribe(subscriberId, exchange, symbol, 'orderbook');
-      console.log(`📊 OrderBook виджет подписался на данные: ${exchange} ${symbol} (метод: ${dataFetchSettings.method})`);
+      console.log(`📊 OrderBook widget subscribed to data: ${exchange} ${symbol} (method: ${dataFetchSettings.method})`);
 
       return () => {
         unsubscribe(subscriberId, exchange, symbol, 'orderbook');
-        console.log(`📊 OrderBook виджет отписался от данных: ${exchange} ${symbol}`);
+        console.log(`📊 OrderBook widget unsubscribed from data: ${exchange} ${symbol}`);
       };
     }
   }, [isSubscribed, exchange, symbol, activeProviderId, subscribe, unsubscribe, dashboardId, widgetId, dataFetchSettings.method]);
 
   const handleSubscribe = async () => {
     if (!activeProviderId) {
-      console.error('❌ Нет активного провайдера');
+      console.error('❌ No active provider');
       return;
     }
 
     try {
       setIsSubscribed(true);
-      console.log(`🚀 Запуск подписки на orderbook: ${exchange} ${symbol}`);
+      console.log(`🚀 Starting orderbook subscription: ${exchange} ${symbol}`);
     } catch (error) {
-      console.error('❌ Ошибка подписки на orderbook:', error);
+      console.error('❌ Error subscribing to orderbook:', error);
       setIsSubscribed(false);
     }
   };
 
   const handleUnsubscribe = () => {
     setIsSubscribed(false);
-    console.log(`🛑 Остановка подписки на orderbook: ${exchange} ${symbol}`);
+    console.log(`🛑 Stopping orderbook subscription: ${exchange} ${symbol}`);
   };
 
   const formatPrice = (price: number): string => {
@@ -304,15 +304,15 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
-          Книга заказов {isSubscribed && <span className="text-green-500 text-sm">(🔴 LIVE)</span>}
+          Order Book {isSubscribed && <span className="text-green-500 text-sm">(🔴 LIVE)</span>}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Настройки подключения */}
+        {/* Connection settings */}
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-sm">Биржа</Label>
+              <Label className="text-sm">Exchange</Label>
               <Input
                 value={exchange}
                 onChange={(e) => setExchange(e.target.value)}
@@ -321,7 +321,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
               />
             </div>
             <div>
-              <Label className="text-sm">Торговая пара</Label>
+              <Label className="text-sm">Trading pair</Label>
               <Input
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -334,11 +334,11 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
           <div className="flex items-center gap-2">
             {!isSubscribed ? (
               <Button onClick={handleSubscribe} className="flex-1" disabled={!activeProviderId}>
-                {activeProviderId ? 'Подписаться на orderbook' : 'Нет активного провайдера'}
+                {activeProviderId ? 'Subscribe to orderbook' : 'No active provider'}
               </Button>
             ) : (
               <Button onClick={handleUnsubscribe} variant="destructive" className="flex-1">
-                Отписаться
+                Unsubscribe
               </Button>
             )}
           </div>
@@ -351,12 +351,12 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
             }`}>
               <div className="flex items-center justify-between">
                 <span>
-                  📡 Метод получения: <strong>
+                  📡 Fetch method: <strong>
                     {currentSubscription.method === 'websocket' 
-                      ? 'WebSocket (реальное время)' 
+                      ? 'WebSocket (real-time)' 
                       : currentSubscription.isFallback 
-                        ? '🔄 REST (fallback от WebSocket)'
-                        : 'REST (интервальный)'
+                        ? '🔄 REST (fallback from WebSocket)'
+                        : 'REST (interval)'
                     }
                   </strong>
                 </span>
@@ -365,25 +365,25 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
               
               {currentSubscription.isFallback && (
                 <div className="text-orange-600 bg-orange-100 p-1 rounded text-xs">
-                  ⚠️ WebSocket недоступен для этой биржи/пары, используется REST как резервный метод
+                  ⚠️ WebSocket unavailable for this exchange/pair, using REST as fallback method
                 </div>
               )}
               
               {currentSubscription.method === 'rest' && (
-                <div>⏱️ Интервал обновления: <strong>{dataFetchSettings.restIntervals.orderbook}ms</strong></div>
+                <div>⏱️ Update interval: <strong>{dataFetchSettings.restIntervals.orderbook}ms</strong></div>
               )}
-              <div>👥 Подписчиков на эти данные: <strong>{currentSubscription.subscriberCount}</strong></div>
+              <div>👥 Subscribers to this data: <strong>{currentSubscription.subscriberCount}</strong></div>
               {currentSubscription.lastUpdate > 0 && (
-                <div>🕐 Последнее обновление: <strong>{formatTime(currentSubscription.lastUpdate)}</strong></div>
+                <div>🕐 Last update: <strong>{formatTime(currentSubscription.lastUpdate)}</strong></div>
               )}
 
-              {/* Отображаем используемый CCXT метод */}
+              {/* Display used CCXT method */}
               {currentSubscription.ccxtMethod && (
                 <div className="text-xs bg-blue-100 p-1 rounded">
-                  🔧 CCXT метод: <strong>{currentSubscription.ccxtMethod}</strong>
-                  {currentSubscription.ccxtMethod === 'watchOrderBookForSymbols' && ' (⚡ diff обновления)'}
-                  {currentSubscription.ccxtMethod === 'watchOrderBook' && ' (📋 полные снепшоты)'}
-                  {currentSubscription.ccxtMethod === 'fetchOrderBook' && ' (🔄 REST запросы)'}
+                  🔧 CCXT method: <strong>{currentSubscription.ccxtMethod}</strong>
+                  {currentSubscription.ccxtMethod === 'watchOrderBookForSymbols' && ' (⚡ diff updates)'}
+                  {currentSubscription.ccxtMethod === 'watchOrderBook' && ' (📋 full snapshots)'}
+                  {currentSubscription.ccxtMethod === 'fetchOrderBook' && ' (🔄 REST requests)'}
                 </div>
               )}
             </div>
@@ -391,34 +391,34 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
           
           {isSubscribed && !currentSubscription && (
             <div className="text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
-              ⚠️ Подписка создается... Ожидайте подключения.
+              ⚠️ Subscription is being created... Please wait for connection.
             </div>
           )}
         </div>
 
         <Separator />
 
-        {/* Настройки отображения */}
+        {/* Display settings */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Настройки отображения</Label>
+          <Label className="text-sm font-medium">Display settings</Label>
           
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Глубина</Label>
+              <Label className="text-xs">Depth</Label>
               <Select value={displayDepth.toString()} onValueChange={(value) => setDisplayDepth(parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="5">5 уровней</SelectItem>
-                  <SelectItem value="10">10 уровней</SelectItem>
-                  <SelectItem value="20">20 уровней</SelectItem>
-                  <SelectItem value="50">50 уровней</SelectItem>
+                  <SelectItem value="5">5 levels</SelectItem>
+                  <SelectItem value="10">10 levels</SelectItem>
+                  <SelectItem value="20">20 levels</SelectItem>
+                  <SelectItem value="50">50 levels</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Знаков цены</Label>
+              <Label className="text-xs">Price decimals</Label>
               <Select value={priceDecimals.toString()} onValueChange={(value) => setPriceDecimals(parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -436,7 +436,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Знаков объема</Label>
+              <Label className="text-xs">Volume decimals</Label>
               <Select value={amountDecimals.toString()} onValueChange={(value) => setAmountDecimals(parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -458,21 +458,21 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
                 onChange={(e) => setShowCumulative(e.target.checked)}
                 className="rounded"
               />
-              <Label htmlFor="show-cumulative" className="text-xs">Накопительный объем</Label>
+              <Label htmlFor="show-cumulative" className="text-xs">Cumulative volume</Label>
             </div>
           </div>
         </div>
 
         <Separator />
 
-        {/* Статистика */}
+        {/* Statistics */}
         {processedOrderBook && (
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Статистика</Label>
+            <Label className="text-sm font-medium">Statistics</Label>
             
-            {/* Спред */}
+            {/* Spread */}
             <div className="bg-gray-50 p-2 rounded">
-              <div className="text-xs text-gray-600 mb-1">Спред</div>
+              <div className="text-xs text-gray-600 mb-1">Spread</div>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-sm">{formatPrice(processedOrderBook.spread)}</span>
                 <span className="text-xs text-gray-500">
@@ -485,17 +485,17 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
               <div className="bg-green-50 p-2 rounded">
                 <div className="flex items-center gap-1 text-green-700">
                   <TrendingUp className="h-3 w-3" />
-                  <span>Заявки на покупку</span>
+                  <span>Buy orders</span>
                 </div>
-                <div className="font-mono">{stats.bidCount} уровней</div>
+                <div className="font-mono">{stats.bidCount} levels</div>
                 <div className="font-mono text-green-600">{formatVolume(stats.bidVolume)}</div>
               </div>
               <div className="bg-red-50 p-2 rounded">
                 <div className="flex items-center gap-1 text-red-700">
                   <TrendingDown className="h-3 w-3" />
-                  <span>Заявки на продажу</span>
+                  <span>Sell orders</span>
                 </div>
-                <div className="font-mono">{stats.askCount} уровней</div>
+                <div className="font-mono">{stats.askCount} levels</div>
                 <div className="font-mono text-red-600">{formatVolume(stats.askVolume)}</div>
               </div>
             </div>
@@ -503,7 +503,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
             <div className="bg-blue-50 p-2 rounded">
               <div className="flex items-center gap-1 text-blue-700 text-xs mb-1">
                 <BarChart className="h-3 w-3" />
-                <span>Лучшие цены</span>
+                <span>Best prices</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-green-600">Bid: {formatPrice(stats.bestBid)}</span>
@@ -517,7 +517,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
 
         {/* OrderBook */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Книга заказов</Label>
+          <Label className="text-sm font-medium">Order Book</Label>
           
           {!processedOrderBook ? (
             <div className="text-center text-gray-400 py-4">
@@ -527,7 +527,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
                   hasRawData: !!rawOrderBook,
                   processedOrderBook
                 });
-                return isSubscribed ? 'Ожидание данных...' : 'Подпишитесь для получения данных orderbook';
+                return isSubscribed ? 'Waiting for data...' : 'Subscribe to receive orderbook data';
               })()}
             </div>
           ) : (
@@ -542,14 +542,14 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
                 return null;
               })()}
               
-              {/* Заголовки */}
+              {/* Headers */}
               <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 px-2">
-                <div>Цена</div>
-                <div className="text-right">Объем</div>
-                <div className="text-right">{showCumulative ? 'Накопл.' : 'Сумма'}</div>
+                <div>Price</div>
+                <div className="text-right">Volume</div>
+                <div className="text-right">{showCumulative ? 'Cumul.' : 'Total'}</div>
               </div>
 
-              {/* Asks (продажи) - сверху */}
+              {/* Asks (sells) - top */}
               <div className="max-h-32 overflow-y-auto">
                 {processedOrderBook.asks.slice().reverse().map((ask, index) => (
                   <div key={`ask-${index}`} className="grid grid-cols-3 gap-2 text-xs p-1 bg-red-50 border-l-2 border-red-500">
@@ -562,13 +562,13 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
                 ))}
               </div>
 
-              {/* Спред */}
+              {/* Spread */}
               <div className="bg-gray-100 p-2 text-center">
-                <div className="text-xs text-gray-600">Спред: {formatPrice(processedOrderBook.spread)}</div>
+                <div className="text-xs text-gray-600">Spread: {formatPrice(processedOrderBook.spread)}</div>
                 <div className="text-xs text-gray-500">({processedOrderBook.spreadPercent.toFixed(4)}%)</div>
               </div>
 
-              {/* Bids (покупки) - снизу */}
+              {/* Bids (buys) - bottom */}
               <div className="max-h-32 overflow-y-auto">
                 {processedOrderBook.bids.map((bid, index) => (
                   <div key={`bid-${index}`} className="grid grid-cols-3 gap-2 text-xs p-1 bg-green-50 border-l-2 border-green-500">
@@ -586,7 +586,7 @@ const OrderBookWidgetV2Inner: React.FC<OrderBookWidgetV2Props> = ({
 
         {!isSubscribed && (
           <div className="text-xs text-gray-400 text-center pt-2 border-t">
-            💡 Виджет автоматически дедуплицирует подписки - если несколько виджетов запрашивают те же данные, создается только одно соединение.
+            💡 Widget automatically deduplicates subscriptions - if multiple widgets request the same data, only one connection is created.
           </div>
         )}
       </CardContent>

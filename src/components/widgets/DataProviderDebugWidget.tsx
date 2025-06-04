@@ -52,7 +52,7 @@ const getStatusBadge = (status: ConnectionStatus) => {
 };
 
 const formatTimestamp = (timestamp: number) => {
-  if (timestamp === 0) return 'Никогда';
+  if (timestamp === 0) return 'Never';
   return new Date(timestamp).toLocaleTimeString();
 };
 
@@ -63,9 +63,9 @@ const formatDuration = (timestamp: number) => {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   
-  if (hours > 0) return `${hours}ч ${minutes % 60}м`;
-  if (minutes > 0) return `${minutes}м ${seconds % 60}с`;
-  return `${seconds}с`;
+  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+  return `${seconds}s`;
 };
 
 export const DataProviderDebugWidget: React.FC = () => {
@@ -82,7 +82,7 @@ export const DataProviderDebugWidget: React.FC = () => {
   const activeSubscriptions = getActiveSubscriptionsList();
   const providerList = Object.values(providers);
   
-  // Разделяем подписки по методам
+  // Separate subscriptions by methods
   const webSocketSubscriptions = activeSubscriptions.filter(sub => sub.method === 'websocket');
   const restSubscriptions = activeSubscriptions.filter(sub => sub.method === 'rest');
 
@@ -100,46 +100,46 @@ export const DataProviderDebugWidget: React.FC = () => {
 
   return (
     <div className="space-y-4 p-4">
-      {/* Заголовок */}
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Отладка поставщиков данных</h2>
+        <h2 className="text-lg font-semibold">Data Providers Debug</h2>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="flex items-center gap-1">
             <Activity className="h-3 w-3" />
-            {activeSubscriptions.filter(s => s.isActive).length} активных
+            {activeSubscriptions.filter(s => s.isActive).length} active
           </Badge>
           <Button size="sm" variant="outline" onClick={handleCleanup}>
             <Trash2 className="h-3 w-3 mr-1" />
-            Очистить все
+            Clear all
           </Button>
         </div>
       </div>
 
-      {/* Общие настройки */}
+      {/* General settings */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
             <Settings className="h-4 w-4" />
-            Текущие настройки
+            Current settings
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Метод получения:</span>
+              <span className="text-gray-600">Fetch method:</span>
               <Badge variant={dataFetchSettings.method === 'websocket' ? 'default' : 'secondary'}>
                 {dataFetchSettings.method === 'websocket' ? '📡 WebSocket' : '🔄 REST'}
               </Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Активный провайдер:</span>
-              <span className="font-mono">{activeProviderId || 'Не выбран'}</span>
+              <span className="text-gray-600">Active provider:</span>
+              <span className="font-mono">{activeProviderId || 'Not selected'}</span>
             </div>
           </div>
           
           {dataFetchSettings.method === 'rest' && (
             <div className="border-t pt-3">
-              <div className="text-xs text-gray-600 mb-2">Интервалы REST запросов:</div>
+              <div className="text-xs text-gray-600 mb-2">REST request intervals:</div>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div className="bg-blue-50 p-2 rounded">
                   <div className="font-medium">Trades</div>
@@ -159,18 +159,18 @@ export const DataProviderDebugWidget: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Поставщики данных */}
+      {/* Data providers */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
             <Database className="h-4 w-4" />
-            Поставщики данных ({providerList.length})
+            Data providers ({providerList.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {providerList.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Нет настроенных поставщиков данных
+              No configured data providers
             </p>
           ) : (
             providerList.map((provider) => (
@@ -184,7 +184,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                     </div>
                   </div>
                   {provider.id === activeProviderId && (
-                    <Badge variant="secondary" className="text-xs">Активный</Badge>
+                    <Badge variant="secondary" className="text-xs">Active</Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -196,7 +196,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                       onClick={() => handleSetActiveProvider(provider.id)}
                     >
                       <PlayCircle className="h-3 w-3 mr-1" />
-                      Активировать
+                      Activate
                     </Button>
                   )}
                   <Button
@@ -213,18 +213,18 @@ export const DataProviderDebugWidget: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* WebSocket подписки */}
+      {/* WebSocket subscriptions */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
             <Wifi className="h-4 w-4" />
-            WebSocket подписки ({webSocketSubscriptions.length})
+            WebSocket subscriptions ({webSocketSubscriptions.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {webSocketSubscriptions.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Нет активных WebSocket подписок
+              No active WebSocket subscriptions
             </p>
           ) : (
             webSocketSubscriptions.map((subscription, index) => (
@@ -236,7 +236,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                       {subscription.key.exchange} • {subscription.key.market || 'spot'} • {subscription.key.symbol}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {subscription.key.dataType}{subscription.key.timeframe ? ` • ${subscription.key.timeframe}` : ''} • Обновлено: {formatTimestamp(subscription.lastUpdate)}
+                      {subscription.key.dataType}{subscription.key.timeframe ? ` • ${subscription.key.timeframe}` : ''} • Updated: {formatTimestamp(subscription.lastUpdate)}
                     </p>
                   </div>
                 </div>
@@ -250,7 +250,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                     {formatDuration(subscription.lastUpdate)}
                   </div>
                   <Badge variant={subscription.isActive ? 'default' : 'outline'}>
-                    {subscription.isActive ? '🟢 Активен' : '🔴 Неактивен'}
+                    {subscription.isActive ? '🟢 Active' : '🔴 Inactive'}
                   </Badge>
                 </div>
               </div>
@@ -259,18 +259,18 @@ export const DataProviderDebugWidget: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* REST циклы */}
+      {/* REST polling cycles */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
             <RotateCcw className="h-4 w-4" />
-            REST циклы опроса ({restSubscriptions.length})
+            REST polling cycles ({restSubscriptions.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {restSubscriptions.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Нет активных REST циклов
+              No active REST cycles
             </p>
           ) : (
             restSubscriptions.map((subscription, index) => (
@@ -293,15 +293,15 @@ export const DataProviderDebugWidget: React.FC = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {subscription.key.dataType}{subscription.key.timeframe ? ` • ${subscription.key.timeframe}` : ''} • Интервал: {dataFetchSettings.restIntervals[subscription.key.dataType]}ms
+                      {subscription.key.dataType}{subscription.key.timeframe ? ` • ${subscription.key.timeframe}` : ''} • Interval: {dataFetchSettings.restIntervals[subscription.key.dataType]}ms
                     </p>
                     {subscription.isFallback && (
                       <p className="text-xs text-orange-600">
-                        WebSocket недоступен, используется REST
+                        WebSocket unavailable, using REST
                       </p>
                     )}
                     <p className="text-xs text-gray-500">
-                      Последний запрос: {formatTimestamp(subscription.lastUpdate)}
+                      Last request: {formatTimestamp(subscription.lastUpdate)}
                     </p>
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export const DataProviderDebugWidget: React.FC = () => {
                     {formatDuration(subscription.lastUpdate)}
                   </div>
                   <Badge variant={subscription.isActive ? 'secondary' : 'outline'}>
-                    {subscription.isActive ? '🔄 Опрашивается' : '⏸️ Остановлен'}
+                    {subscription.isActive ? '🔄 Polling' : '⏸️ Stopped'}
                   </Badge>
                 </div>
               </div>
@@ -324,20 +324,20 @@ export const DataProviderDebugWidget: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Статистика */}
+      {/* Statistics */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Общая статистика</CardTitle>
+          <CardTitle className="text-sm">General statistics</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">Всего подписок:</span>
+                <span className="text-gray-600">Total subscriptions:</span>
                 <span className="font-mono">{activeSubscriptions.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Активных:</span>
+                <span className="text-gray-600">Active:</span>
                 <span className="font-mono text-green-600">{activeSubscriptions.filter(s => s.isActive).length}</span>
               </div>
               <div className="flex justify-between">
@@ -347,15 +347,15 @@ export const DataProviderDebugWidget: React.FC = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">REST циклы:</span>
+                <span className="text-gray-600">REST cycles:</span>
                 <span className="font-mono text-orange-600">{restSubscriptions.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Провайдеров:</span>
+                <span className="text-gray-600">Providers:</span>
                 <span className="font-mono">{providerList.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Подписчиков:</span>
+                <span className="text-gray-600">Subscribers:</span>
                 <span className="font-mono">{activeSubscriptions.reduce((sum, s) => sum + s.subscriberCount, 0)}</span>
               </div>
             </div>

@@ -34,12 +34,12 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
     getActiveSubscriptionsList
   } = useDataProviderStore();
 
-  // Состояние настроек
+  // Settings state
   const [exchange, setExchange] = useState(initialExchange);
   const [symbol, setSymbol] = useState(initialSymbol);
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Состояние фильтров
+  // Filters state
   const [filters, setFilters] = useState({
     side: 'all', // 'all', 'buy', 'sell'
     minPrice: '',
@@ -49,18 +49,18 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
     showLastN: '100'
   });
 
-  // Состояние сортировки
+  // Sorting state
   const [sortBy, setSortBy] = useState<'timestamp' | 'price' | 'amount'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Состояние отображения
+  // Display state
   const [autoScroll, setAutoScroll] = useState(true);
 
-  // Получаем данные из store (автоматически обновляются)
+  // Get data from store (automatically updated)
   const rawTrades = getTrades(exchange, symbol);
   const activeSubscriptions = getActiveSubscriptionsList();
   
-  // Проверяем есть ли активная подписка для текущих exchange/symbol
+  // Check if there's an active subscription for current exchange/symbol
   const currentSubscriptionKey = `${exchange}:${symbol}:trades`;
   const currentSubscription = activeSubscriptions.find(sub => 
     sub.key.exchange === exchange && 
@@ -68,16 +68,16 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
     sub.key.dataType === 'trades'
   );
 
-  // Применяем фильтры и сортировку
+  // Apply filters and sorting
   const processedTrades = useMemo(() => {
     let filtered = [...rawTrades];
 
-    // Фильтр по стороне сделки
+    // Filter by trade side
     if (filters.side !== 'all') {
       filtered = filtered.filter(trade => trade.side === filters.side);
     }
 
-    // Фильтр по цене
+    // Filter by price
     if (filters.minPrice) {
       const minPrice = parseFloat(filters.minPrice);
       if (!isNaN(minPrice)) {
@@ -91,7 +91,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
       }
     }
 
-    // Фильтр по объему
+    // Filter by volume
     if (filters.minAmount) {
       const minAmount = parseFloat(filters.minAmount);
       if (!isNaN(minAmount)) {
@@ -105,7 +105,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
       }
     }
 
-    // Сортировка
+    // Sorting
     filtered.sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
@@ -122,7 +122,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-    // Ограничиваем количество отображаемых сделок
+    // Limit the number of displayed trades
     const limit = parseInt(filters.showLastN);
     if (!isNaN(limit) && limit > 0) {
       filtered = filtered.slice(0, limit);
@@ -131,7 +131,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
     return filtered;
   }, [rawTrades, filters, sortBy, sortOrder]);
 
-  // Статистика по отфильтрованным данным
+  // Statistics for filtered data
   const stats = useMemo(() => {
     if (processedTrades.length === 0) {
       return { totalAmount: 0, totalVolume: 0, avgPrice: 0, buyCount: 0, sellCount: 0 };
@@ -146,40 +146,40 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
     return { totalAmount, totalVolume, avgPrice, buyCount, sellCount };
   }, [processedTrades]);
 
-  // Автоматическая подписка на данные (store сам управляет методом получения)
+  // Automatic data subscription (store manages the fetch method itself)
   useEffect(() => {
     if (isSubscribed && activeProviderId) {
       const subscriberId = `${dashboardId}-${widgetId}`;
       
-      // Просто подписываемся - store сам решит использовать REST или WebSocket
+      // Just subscribe - store will decide whether to use REST or WebSocket
       subscribe(subscriberId, exchange, symbol, 'trades');
-      console.log(`📊 Виджет подписался на данные: ${exchange} ${symbol} (метод: ${dataFetchSettings.method})`);
+      console.log(`📊 Widget subscribed to data: ${exchange} ${symbol} (method: ${dataFetchSettings.method})`);
 
       return () => {
         unsubscribe(subscriberId, exchange, symbol, 'trades');
-        console.log(`📊 Виджет отписался от данных: ${exchange} ${symbol}`);
+        console.log(`📊 Widget unsubscribed from data: ${exchange} ${symbol}`);
       };
     }
   }, [isSubscribed, exchange, symbol, activeProviderId, subscribe, unsubscribe, dashboardId, widgetId, dataFetchSettings.method]);
 
   const handleSubscribe = async () => {
     if (!activeProviderId) {
-      console.error('❌ Нет активного провайдера');
+      console.error('❌ No active provider');
       return;
     }
 
     try {
       setIsSubscribed(true);
-      console.log(`🚀 Запуск подписки на trades: ${exchange} ${symbol}`);
+      console.log(`🚀 Starting trades subscription: ${exchange} ${symbol}`);
     } catch (error) {
-      console.error('❌ Ошибка подписки на trades:', error);
+      console.error('❌ Error subscribing to trades:', error);
       setIsSubscribed(false);
     }
   };
 
   const handleUnsubscribe = () => {
     setIsSubscribed(false);
-    console.log(`🛑 Остановка подписки на trades: ${exchange} ${symbol}`);
+    console.log(`🛑 Stopping trades subscription: ${exchange} ${symbol}`);
   };
 
   const formatPrice = (price: number): string => {
@@ -205,15 +205,15 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5" />
-          Лента сделок {isSubscribed && <span className="text-green-500 text-sm">(🔴 LIVE)</span>}
+          Trades Feed {isSubscribed && <span className="text-green-500 text-sm">(🔴 LIVE)</span>}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Настройки подключения */}
+        {/* Connection settings */}
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-sm">Биржа</Label>
+              <Label className="text-sm">Exchange</Label>
               <Input
                 value={exchange}
                 onChange={(e) => setExchange(e.target.value)}
@@ -222,7 +222,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
               />
             </div>
             <div>
-              <Label className="text-sm">Торговая пара</Label>
+              <Label className="text-sm">Trading pair</Label>
               <Input
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -235,11 +235,11 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
           <div className="flex items-center gap-2">
             {!isSubscribed ? (
               <Button onClick={handleSubscribe} className="flex-1" disabled={!activeProviderId}>
-                {activeProviderId ? 'Подписаться на сделки' : 'Нет активного провайдера'}
+                {activeProviderId ? 'Subscribe to trades' : 'No active provider'}
               </Button>
             ) : (
               <Button onClick={handleUnsubscribe} variant="destructive" className="flex-1">
-                Отписаться
+                Unsubscribe
               </Button>
             )}
           </div>
@@ -252,12 +252,12 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
             }`}>
               <div className="flex items-center justify-between">
                 <span>
-                  📡 Метод получения: <strong>
+                  📡 Fetch method: <strong>
                     {currentSubscription.method === 'websocket' 
-                      ? 'WebSocket (реальное время)' 
+                      ? 'WebSocket (real-time)' 
                       : currentSubscription.isFallback 
-                        ? '🔄 REST (fallback от WebSocket)'
-                        : 'REST (интервальный)'
+                        ? '🔄 REST (fallback from WebSocket)'
+                        : 'REST (interval)'
                     }
                   </strong>
                 </span>
@@ -266,52 +266,52 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
               
               {currentSubscription.isFallback && (
                 <div className="text-orange-600 bg-orange-100 p-1 rounded text-xs">
-                  ⚠️ WebSocket недоступен для этой биржи/пары, используется REST как резервный метод
+                  ⚠️ WebSocket unavailable for this exchange/pair, using REST as fallback method
                 </div>
               )}
               
               {currentSubscription.method === 'rest' && (
-                <div>⏱️ Интервал обновления: <strong>{dataFetchSettings.restIntervals.trades}ms</strong></div>
+                <div>⏱️ Update interval: <strong>{dataFetchSettings.restIntervals.trades}ms</strong></div>
               )}
-              <div>👥 Подписчиков на эти данные: <strong>{currentSubscription.subscriberCount}</strong></div>
+              <div>👥 Subscribers to this data: <strong>{currentSubscription.subscriberCount}</strong></div>
               {currentSubscription.lastUpdate > 0 && (
-                <div>🕐 Последнее обновление: <strong>{new Date(currentSubscription.lastUpdate).toLocaleTimeString()}</strong></div>
+                <div>🕐 Last update: <strong>{new Date(currentSubscription.lastUpdate).toLocaleTimeString()}</strong></div>
               )}
             </div>
           )}
           
           {isSubscribed && !currentSubscription && (
             <div className="text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
-              ⚠️ Подписка создается... Ожидайте подключения.
+              ⚠️ Subscription is being created... Please wait for connection.
             </div>
           )}
         </div>
 
         <Separator />
 
-        {/* Фильтры */}
+        {/* Filters */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
-            <Label className="text-sm font-medium">Фильтры</Label>
+            <Label className="text-sm font-medium">Filters</Label>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Сторона</Label>
+              <Label className="text-xs">Side</Label>
               <Select value={filters.side} onValueChange={(value) => setFilters(prev => ({ ...prev, side: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Все</SelectItem>
-                  <SelectItem value="buy">Покупка</SelectItem>
-                  <SelectItem value="sell">Продажа</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="buy">Buy</SelectItem>
+                  <SelectItem value="sell">Sell</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Показать последние</Label>
+              <Label className="text-xs">Show last</Label>
               <Input
                 type="number"
                 value={filters.showLastN}
@@ -323,7 +323,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Мин. цена</Label>
+              <Label className="text-xs">Min. price</Label>
               <Input
                 type="number"
                 value={filters.minPrice}
@@ -332,19 +332,19 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
               />
             </div>
             <div>
-              <Label className="text-xs">Макс. цена</Label>
+              <Label className="text-xs">Max. price</Label>
               <Input
                 type="number"
                 value={filters.maxPrice}
                 onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: e.target.value }))}
-                placeholder="Без ограничений"
+                placeholder="No limit"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Мин. объем</Label>
+              <Label className="text-xs">Min. volume</Label>
               <Input
                 type="number"
                 value={filters.minAmount}
@@ -353,12 +353,12 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
               />
             </div>
             <div>
-              <Label className="text-xs">Макс. объем</Label>
+              <Label className="text-xs">Max. volume</Label>
               <Input
                 type="number"
                 value={filters.maxAmount}
                 onChange={(e) => setFilters(prev => ({ ...prev, maxAmount: e.target.value }))}
-                placeholder="Без ограничений"
+                placeholder="No limit"
               />
             </div>
           </div>
@@ -366,18 +366,18 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
 
         <Separator />
 
-        {/* Сортировка */}
+        {/* Sorting */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Сортировка</Label>
+          <Label className="text-sm font-medium">Sorting</Label>
           <div className="flex items-center gap-2">
             <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
               <SelectTrigger className="flex-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="timestamp">По времени</SelectItem>
-                <SelectItem value="price">По цене</SelectItem>
-                <SelectItem value="amount">По объему</SelectItem>
+                <SelectItem value="timestamp">By time</SelectItem>
+                <SelectItem value="price">By price</SelectItem>
+                <SelectItem value="amount">By volume</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -396,48 +396,48 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
             checked={autoScroll}
             onCheckedChange={setAutoScroll}
           />
-          <Label htmlFor="auto-scroll" className="text-sm">Автопрокрутка к новым сделкам</Label>
+          <Label htmlFor="auto-scroll" className="text-sm">Auto-scroll to new trades</Label>
         </div>
 
         <Separator />
 
-        {/* Статистика */}
+        {/* Statistics */}
         {processedTrades.length > 0 && (
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Статистика ({processedTrades.length} сделок)</Label>
+            <Label className="text-sm font-medium">Statistics ({processedTrades.length} trades)</Label>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-gray-50 p-2 rounded">
                 <div className="flex items-center gap-1">
                   <Hash className="h-3 w-3" />
-                  <span>Всего объем:</span>
+                  <span>Total volume:</span>
                 </div>
                 <div className="font-mono">{formatAmount(stats.totalAmount)}</div>
               </div>
               <div className="bg-gray-50 p-2 rounded">
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-3 w-3" />
-                  <span>Общая сумма:</span>
+                  <span>Total amount:</span>
                 </div>
                 <div className="font-mono">{formatVolume(stats.totalVolume)}</div>
               </div>
               <div className="bg-gray-50 p-2 rounded">
                 <div className="flex items-center gap-1">
                   <TrendingUp className="h-3 w-3 text-green-500" />
-                  <span>Покупки:</span>
+                  <span>Buys:</span>
                 </div>
                 <div className="font-mono">{stats.buyCount}</div>
               </div>
               <div className="bg-gray-50 p-2 rounded">
                 <div className="flex items-center gap-1">
                   <TrendingDown className="h-3 w-3 text-red-500" />
-                  <span>Продажи:</span>
+                  <span>Sells:</span>
                 </div>
                 <div className="font-mono">{stats.sellCount}</div>
               </div>
             </div>
             <div className="bg-blue-50 p-2 rounded">
               <div className="text-xs text-blue-700">
-                💰 Средняя цена: <span className="font-mono">{formatPrice(stats.avgPrice)}</span>
+                💰 Average price: <span className="font-mono">{formatPrice(stats.avgPrice)}</span>
               </div>
             </div>
           </div>
@@ -445,19 +445,19 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
 
         <Separator />
 
-        {/* Список сделок */}
+        {/* Trades list */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Сделки</Label>
+            <Label className="text-sm font-medium">Trades</Label>
             <div className="text-xs text-gray-500">
-              {rawTrades.length} всего / {processedTrades.length} отфильтровано
+              {rawTrades.length} total / {processedTrades.length} filtered
             </div>
           </div>
 
           <div className="max-h-64 overflow-y-auto space-y-1">
             {processedTrades.length === 0 ? (
               <div className="text-center text-gray-400 py-4">
-                {isSubscribed ? 'Ожидание данных...' : 'Подпишитесь для получения данных о сделках'}
+                {isSubscribed ? 'Waiting for data...' : 'Subscribe to receive trade data'}
               </div>
             ) : (
               processedTrades.map((trade, index) => (
@@ -493,7 +493,7 @@ const TradesWidgetV2Inner: React.FC<TradesWidgetV2Props> = ({
 
         {!isSubscribed && (
           <div className="text-xs text-gray-400 text-center pt-2 border-t">
-            💡 Виджет автоматически дедуплицирует подписки - если несколько виджетов запрашивают те же данные, создается только одно соединение.
+            💡 Widget automatically deduplicates subscriptions - if multiple widgets request the same data, only one connection is created.
           </div>
         )}
       </CardContent>

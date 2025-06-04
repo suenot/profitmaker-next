@@ -28,16 +28,16 @@ const DataProviderDemoWidgetInner: React.FC = () => {
   const [exchange, setExchange] = useState('binance');
   const [symbol, setSymbol] = useState('BTC/USDT');
   const [subscribers, setSubscribers] = useState<DemoSubscriber[]>([
-    { id: 'demo-1', name: 'Подписчик A', isActive: false, color: 'bg-blue-100 text-blue-800' },
-    { id: 'demo-2', name: 'Подписчик B', isActive: false, color: 'bg-green-100 text-green-800' },
-    { id: 'demo-3', name: 'Подписчик C', isActive: false, color: 'bg-purple-100 text-purple-800' },
-    { id: 'demo-4', name: 'Подписчик D', isActive: false, color: 'bg-orange-100 text-orange-800' },
+    { id: 'demo-1', name: 'Subscriber A', isActive: false, color: 'bg-blue-100 text-blue-800' },
+    { id: 'demo-2', name: 'Subscriber B', isActive: false, color: 'bg-green-100 text-green-800' },
+    { id: 'demo-3', name: 'Subscriber C', isActive: false, color: 'bg-purple-100 text-purple-800' },
+    { id: 'demo-4', name: 'Subscriber D', isActive: false, color: 'bg-orange-100 text-orange-800' },
   ]);
 
   const activeSubscriptions = getActiveSubscriptionsList();
   const currentTrades = getTrades(exchange, symbol);
   
-  // Находим текущую подписку для наших данных
+  // Find current subscription for our data
   const currentSubscription = activeSubscriptions.find(
     sub => sub.key.exchange === exchange && 
            sub.key.symbol === symbol && 
@@ -49,14 +49,14 @@ const DataProviderDemoWidgetInner: React.FC = () => {
     if (!subscriber) return;
 
     if (subscriber.isActive) {
-      // Отписываемся
+      // Unsubscribe
       unsubscribe(subscriberId, exchange, symbol, 'trades');
     } else {
-      // Подписываемся
+      // Subscribe
       await subscribe(subscriberId, exchange, symbol, 'trades');
     }
 
-    // Обновляем локальное состояние
+    // Update local state
     setSubscribers(prev => 
       prev.map(s => 
         s.id === subscriberId ? { ...s, isActive: !s.isActive } : s
@@ -68,7 +68,7 @@ const DataProviderDemoWidgetInner: React.FC = () => {
     const allActive = subscribers.every(s => s.isActive);
     
     if (allActive) {
-      // Отписываем всех
+      // Unsubscribe all
       for (const subscriber of subscribers) {
         if (subscriber.isActive) {
           unsubscribe(subscriber.id, exchange, symbol, 'trades');
@@ -76,7 +76,7 @@ const DataProviderDemoWidgetInner: React.FC = () => {
       }
       setSubscribers(prev => prev.map(s => ({ ...s, isActive: false })));
     } else {
-      // Подписываем всех
+      // Subscribe all
       for (const subscriber of subscribers) {
         if (!subscriber.isActive) {
           await subscribe(subscriber.id, exchange, symbol, 'trades');
@@ -95,16 +95,16 @@ const DataProviderDemoWidgetInner: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Eye className="h-5 w-5" />
-          Демонстрация дедупликации подписок
+          Subscription Deduplication Demo
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Настройки данных */}
+        {/* Data settings */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Настройки данных</Label>
+          <Label className="text-sm font-medium">Data settings</Label>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Биржа</Label>
+              <Label className="text-xs">Exchange</Label>
               <Input
                 value={exchange}
                 onChange={(e) => setExchange(e.target.value)}
@@ -113,7 +113,7 @@ const DataProviderDemoWidgetInner: React.FC = () => {
               />
             </div>
             <div>
-              <Label className="text-xs">Торговая пара</Label>
+              <Label className="text-xs">Trading pair</Label>
               <Input
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -124,19 +124,19 @@ const DataProviderDemoWidgetInner: React.FC = () => {
           </div>
           
           <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
-            📡 Метод получения: <strong>{dataFetchSettings.method === 'websocket' ? 'WebSocket' : 'REST'}</strong>
+            📡 Fetch method: <strong>{dataFetchSettings.method === 'websocket' ? 'WebSocket' : 'REST'}</strong>
             {dataFetchSettings.method === 'rest' && (
-              <span> (интервал: {dataFetchSettings.restIntervals.trades}ms)</span>
+              <span> (interval: {dataFetchSettings.restIntervals.trades}ms)</span>
             )}
           </div>
         </div>
 
         <Separator />
 
-        {/* Управление подписчиками */}
+        {/* Subscriber management */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Подписчики</Label>
+            <Label className="text-sm font-medium">Subscribers</Label>
             <Button
               onClick={toggleAllSubscribers}
               size="sm"
@@ -145,12 +145,12 @@ const DataProviderDemoWidgetInner: React.FC = () => {
                              {allActive ? (
                  <>
                    <Square className="h-4 w-4 mr-1" />
-                   Отписать всех
+                   Unsubscribe all
                  </>
                ) : (
                 <>
                   <Play className="h-4 w-4 mr-1" />
-                  Подписать всех
+                  Subscribe all
                 </>
               )}
             </Button>
@@ -176,7 +176,7 @@ const DataProviderDemoWidgetInner: React.FC = () => {
                     size="sm"
                     variant={subscriber.isActive ? "destructive" : "outline"}
                   >
-                    {subscriber.isActive ? 'Стоп' : 'Старт'}
+                    {subscriber.isActive ? 'Stop' : 'Start'}
                   </Button>
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
@@ -189,30 +189,30 @@ const DataProviderDemoWidgetInner: React.FC = () => {
 
         <Separator />
 
-        {/* Статистика дедупликации */}
+        {/* Deduplication statistics */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Статистика дедупликации</Label>
+          <Label className="text-sm font-medium">Deduplication statistics</Label>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-blue-50 p-3 rounded">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-blue-500" />
-                <span className="text-sm font-medium">Активные подписчики</span>
+                <span className="text-sm font-medium">Active subscribers</span>
               </div>
               <div className="text-2xl font-bold text-blue-600">{activeSubscriberCount}</div>
-              <div className="text-xs text-gray-600">из {subscribers.length} всего</div>
+              <div className="text-xs text-gray-600">of {subscribers.length} total</div>
             </div>
 
             <div className="bg-green-50 p-3 rounded">
               <div className="flex items-center gap-2">
                 <Wifi className="h-4 w-4 text-green-500" />
-                <span className="text-sm font-medium">Реальные соединения</span>
+                <span className="text-sm font-medium">Real connections</span>
               </div>
               <div className="text-2xl font-bold text-green-600">
                 {currentSubscription ? 1 : 0}
               </div>
               <div className="text-xs text-gray-600">
-                {currentSubscription ? 'Общее соединение' : 'Нет соединения'}
+                {currentSubscription ? 'Shared connection' : 'No connection'}
               </div>
             </div>
           </div>
@@ -221,32 +221,32 @@ const DataProviderDemoWidgetInner: React.FC = () => {
             <div className="bg-gray-50 p-3 rounded">
               <div className="flex items-center gap-2 mb-2">
                 <Database className="h-4 w-4" />
-                <span className="text-sm font-medium">Информация о соединении</span>
+                <span className="text-sm font-medium">Connection information</span>
               </div>
               <div className="text-xs space-y-1">
-                <div>🔑 Ключ: <span className="font-mono">{exchange}:{symbol}:trades</span></div>
-                <div>👥 Подписчики: <span className="font-mono">{currentSubscription.subscriberCount}</span></div>
-                <div>📡 Метод: <span className="font-mono">{currentSubscription.method}</span></div>
-                <div>🟢 Статус: <span className="font-mono">{currentSubscription.isActive ? 'Активно' : 'Неактивно'}</span></div>
-                <div>⏰ Последнее обновление: <span className="font-mono">
-                  {currentSubscription.lastUpdate ? new Date(currentSubscription.lastUpdate).toLocaleTimeString() : 'Никогда'}
+                <div>🔑 Key: <span className="font-mono">{exchange}:{symbol}:trades</span></div>
+                <div>👥 Subscribers: <span className="font-mono">{currentSubscription.subscriberCount}</span></div>
+                <div>📡 Method: <span className="font-mono">{currentSubscription.method}</span></div>
+                <div>🟢 Status: <span className="font-mono">{currentSubscription.isActive ? 'Active' : 'Inactive'}</span></div>
+                <div>⏰ Last update: <span className="font-mono">
+                  {currentSubscription.lastUpdate ? new Date(currentSubscription.lastUpdate).toLocaleTimeString() : 'Never'}
                 </span></div>
               </div>
             </div>
           )}
 
           <div className="text-xs text-gray-500 bg-yellow-50 p-3 rounded">
-            <strong>💡 Принцип дедупликации:</strong><br />
-            Неважно сколько подписчиков запрашивает одни и те же данные — система создает только одно соединение к API.
-            Это экономит ресурсы сервера и не превышает лимиты API.
+            <strong>💡 Deduplication principle:</strong><br />
+            No matter how many subscribers request the same data — the system creates only one connection to the API.
+            This saves server resources and doesn't exceed API limits.
           </div>
         </div>
 
         <Separator />
 
-        {/* Последние данные */}
+        {/* Latest data */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Последние данные ({currentTrades.length} сделок)</Label>
+          <Label className="text-sm font-medium">Latest data ({currentTrades.length} trades)</Label>
           
           {currentTrades.length > 0 ? (
             <div className="max-h-32 overflow-y-auto space-y-1">
@@ -265,7 +265,7 @@ const DataProviderDemoWidgetInner: React.FC = () => {
             </div>
           ) : (
             <div className="text-center text-gray-400 py-4">
-              {anyActive ? 'Ожидание данных...' : 'Активируйте подписчиков для получения данных'}
+              {anyActive ? 'Waiting for data...' : 'Activate subscribers to receive data'}
             </div>
           )}
         </div>
