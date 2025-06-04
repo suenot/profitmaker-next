@@ -295,8 +295,8 @@ const EditAccountSheet: React.FC<{
   }
 
   const handleSave = () => {
-    if (!exchange || !email || !key || !secret) {
-      setError('Fill in all required fields');
+    if (!exchange || !email) {
+      setError('Exchange and email are required');
       return;
     }
     if (!validateEmail(email)) {
@@ -304,9 +304,24 @@ const EditAccountSheet: React.FC<{
       return;
     }
     if (account) {
-      updateAccount(userId, { ...account, exchange, email, key, privateKey: secret, avatarUrl: avatar || undefined, notes });
+      updateAccount(userId, { 
+        ...account, 
+        exchange, 
+        email, 
+        key: key.trim() || undefined, 
+        privateKey: secret.trim() || undefined, 
+        avatarUrl: avatar || undefined, 
+        notes 
+      });
     } else {
-      addAccount(userId, { exchange, email, key, privateKey: secret, avatarUrl: avatar || undefined, notes });
+      addAccount(userId, { 
+        exchange, 
+        email, 
+        key: key.trim() || undefined, 
+        privateKey: secret.trim() || undefined, 
+        avatarUrl: avatar || undefined, 
+        notes 
+      });
     }
     onClose();
   };
@@ -336,8 +351,8 @@ const EditAccountSheet: React.FC<{
             ))}
           </select>
           <Input type="email" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} className="w-full" />
-          <Input placeholder="API Key" value={key} onChange={e => setKey(e.target.value)} className="w-full" />
-          <Input placeholder="Secret" value={secret} onChange={e => setSecret(e.target.value)} className="w-full" />
+          <Input placeholder="API Key (optional)" value={key} onChange={e => setKey(e.target.value)} className="w-full" />
+          <Input placeholder="Secret (optional)" value={secret} onChange={e => setSecret(e.target.value)} className="w-full" />
           <Input placeholder="Avatar URL (optional)" value={avatar} onChange={e => setAvatar(e.target.value)} className="w-full" />
           <textarea placeholder="Notes (optional)" value={notes} onChange={e => setNotes(e.target.value)} className="w-full min-h-[60px] border rounded px-2 py-1" />
           {error && <div className="text-red-500 text-xs">{error}</div>}

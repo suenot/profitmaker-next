@@ -7,8 +7,8 @@ import { z } from 'zod';
 export const ExchangeAccountSchema = z.object({
   id: z.string(), // uuid
   exchange: z.string(), // e.g., 'binance', 'bybit' (required)
-  key: z.string(),
-  privateKey: z.string(),
+  key: z.string().optional(), // API key (optional)
+  privateKey: z.string().optional(), // Secret key (optional)
   email: z.string(), // required
   avatarUrl: z.string().url().optional(),
   notes: z.string().optional(), // optional

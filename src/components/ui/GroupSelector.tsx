@@ -55,8 +55,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
         addAccount(newUser.id, {
           exchange: 'binance',
           email: 'suenot@gmail.com',
-          key: 'test_key',
-          privateKey: 'test_private_key'
+          // API keys are optional - not providing them for test user
         });
       }
     }
