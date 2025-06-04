@@ -22,7 +22,7 @@ const RightClickInfo: React.FC = () => {
   if (!showMessage) return null;
 
   return (
-    <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 z-50 bg-terminal-accent/30 text-terminal-muted px-3 py-1 rounded-md text-xs">
+          <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 z-[5000] bg-terminal-accent/30 text-terminal-muted px-3 py-1 rounded-md text-xs">
       <span>Right-click to add widgets</span>
     </div>
   );

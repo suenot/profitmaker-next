@@ -13,6 +13,7 @@ import {
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Plus, Trash2, Check, Loader2 } from 'lucide-react';
 
 interface UserDrawerProps {
@@ -335,26 +336,31 @@ const EditAccountSheet: React.FC<{
           <SheetTitle>{account ? 'Edit account' : 'Add account'}</SheetTitle>
         </SheetHeader>
         <form className="flex flex-col gap-3 mt-3 flex-1" onSubmit={e => { e.preventDefault(); handleSave(); }}>
-          <label className="text-xs font-medium">Exchange *</label>
-          <select 
-            value={exchange} 
-            onChange={e => setExchange(e.target.value)} 
-            className="w-full border rounded px-2 py-1"
-            disabled={loadingExchanges}
-          >
-            <option value="">
-              {loadingExchanges ? 'Loading exchanges...' : 'Select exchange'}
-            </option>
-            {exchanges.map(ex => (
-              <option key={ex.id} value={ex.id}>{ex.name}</option>
-            ))}
-          </select>
-          {loadingExchanges && (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Loading exchanges from CCXT...
-            </div>
-          )}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Exchange *</label>
+            <Select 
+              value={exchange} 
+              onValueChange={setExchange}
+              disabled={loadingExchanges}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={loadingExchanges ? 'Loading exchanges...' : 'Select exchange'} />
+              </SelectTrigger>
+              <SelectContent>
+                {exchanges.map(ex => (
+                  <SelectItem key={ex.id} value={ex.id}>
+                    {ex.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {loadingExchanges && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading exchanges from CCXT...
+              </div>
+            )}
+          </div>
           <Input type="email" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} className="w-full" />
           <Input placeholder="API Key (optional)" value={key} onChange={e => setKey(e.target.value)} className="w-full" />
           <Input placeholder="Secret (optional)" value={secret} onChange={e => setSecret(e.target.value)} className="w-full" />
