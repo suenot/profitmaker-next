@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUserStore, User, ExchangeAccount } from '@/store/userStore';
+import { useExchangesList } from '@/hooks/useExchangesList';
 import {
   Sheet,
   SheetContent,
@@ -12,17 +13,7 @@ import {
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { Plus, Trash2, Check } from 'lucide-react';
-
-// Static list of exchanges
-const EXCHANGES = [
-  { id: 'binance', name: 'Binance' },
-  { id: 'bybit', name: 'Bybit' },
-  { id: 'okx', name: 'OKX' },
-  { id: 'kucoin', name: 'KuCoin' },
-  { id: 'bitget', name: 'Bitget' },
-  { id: 'mexc', name: 'MEXC' },
-];
+import { Plus, Trash2, Check, Loader2 } from 'lucide-react';
 
 interface UserDrawerProps {
   open: boolean;
@@ -281,6 +272,7 @@ const EditAccountSheet: React.FC<{
   const addAccount = useUserStore(s => s.addAccount);
   const updateAccount = useUserStore(s => s.updateAccount);
   const removeAccount = useUserStore(s => s.removeAccount);
+  const { exchanges, loading: loadingExchanges } = useExchangesList();
   const [exchange, setExchange] = useState(account?.exchange || '');
   const [email, setEmail] = useState(account?.email || '');
   const [key, setKey] = useState(account?.key || '');
@@ -344,12 +336,25 @@ const EditAccountSheet: React.FC<{
         </SheetHeader>
         <form className="flex flex-col gap-3 mt-3 flex-1" onSubmit={e => { e.preventDefault(); handleSave(); }}>
           <label className="text-xs font-medium">Exchange *</label>
-          <select value={exchange} onChange={e => setExchange(e.target.value)} className="w-full border rounded px-2 py-1">
-            <option value="">Select exchange</option>
-            {EXCHANGES.map(ex => (
+          <select 
+            value={exchange} 
+            onChange={e => setExchange(e.target.value)} 
+            className="w-full border rounded px-2 py-1"
+            disabled={loadingExchanges}
+          >
+            <option value="">
+              {loadingExchanges ? 'Loading exchanges...' : 'Select exchange'}
+            </option>
+            {exchanges.map(ex => (
               <option key={ex.id} value={ex.id}>{ex.name}</option>
             ))}
           </select>
+          {loadingExchanges && (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Loading exchanges from CCXT...
+            </div>
+          )}
           <Input type="email" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} className="w-full" />
           <Input placeholder="API Key (optional)" value={key} onChange={e => setKey(e.target.value)} className="w-full" />
           <Input placeholder="Secret (optional)" value={secret} onChange={e => setSecret(e.target.value)} className="w-full" />

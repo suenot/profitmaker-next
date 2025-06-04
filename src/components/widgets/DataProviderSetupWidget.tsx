@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
 import { useDataProviderStore } from '../../store/dataProviderStore';
+import { useExchangesList } from '../../hooks/useExchangesList';
 import { 
   DataProviderType, 
   CCXTBrowserProvider, 
@@ -23,136 +24,6 @@ declare global {
     ccxt: any;
   }
 }
-
-// Interface for exchange information
-interface ExchangeInfo {
-  id: string;
-  name: string;
-  has: any;
-}
-
-// Safe fallback exchanges list
-const getFallbackExchanges = (): ExchangeInfo[] => {
-  return [
-    { id: 'binance', name: 'Binance', has: {} },
-    { id: 'bybit', name: 'Bybit', has: {} },
-    { id: 'okx', name: 'OKX', has: {} },
-    { id: 'kucoin', name: 'KuCoin', has: {} },
-    { id: 'coinbase', name: 'Coinbase Pro', has: {} },
-    { id: 'huobi', name: 'Huobi', has: {} },
-    { id: 'kraken', name: 'Kraken', has: {} },
-    { id: 'bitfinex', name: 'Bitfinex', has: {} },
-    { id: 'gateio', name: 'Gate.io', has: {} },
-    { id: 'mexc', name: 'MEXC', has: {} }
-  ];
-};
-
-// Test CCXT directly (CDN version)
-const testCCXTDirectly = () => {
-  try {
-    console.log('🧪 CCXT DIRECT TEST (CDN version):');
-    if (!window.ccxt) {
-      console.error('❌ CCXT not loaded! Check CDN script tag connection');
-      return;
-    }
-    console.log('📦 CCXT version:', window.ccxt.version);
-    console.log('🏭 CCXT object keys:', Object.keys(window.ccxt).slice(0, 20));
-    
-    const exchanges = window.ccxt.exchanges;
-    console.log('🔍 window.ccxt.exchanges type:', typeof exchanges);
-    console.log('🔍 Is Array?:', Array.isArray(exchanges));
-    
-    if (Array.isArray(exchanges)) {
-      console.log('📊 Exchange count (array):', exchanges.length);
-      console.log('🔤 First 10:', exchanges.slice(0, 10));
-    } else if (exchanges && typeof exchanges === 'object') {
-      const exchangeKeys = Object.keys(exchanges);
-      console.log('📊 Exchange count (object keys):', exchangeKeys.length);
-      console.log('🔤 First 10 keys:', exchangeKeys.slice(0, 10));
-    } else {
-      console.log('❌ exchanges is not array or object:', exchanges);
-    }
-  } catch (error) {
-    console.error('❌ CCXT direct test failed:', error);
-  }
-};
-
-// Safe loading of exchanges list from CCXT with full error handling
-const loadCCXTExchanges = (): Promise<ExchangeInfo[]> => {
-  return new Promise((resolve) => {
-    try {
-      const exchanges: ExchangeInfo[] = [];
-      
-      // Check CCXT availability with detailed logging
-      if (!window?.ccxt) {
-        console.warn('⚠️ CCXT not loaded via CDN, using fallback list');
-        resolve(getFallbackExchanges());
-        return;
-      }
-      
-      // Check window.ccxt.exchanges type  
-      let exchangeIds: string[] = [];
-      
-      if (Array.isArray(window.ccxt.exchanges)) {
-        // If it's an array
-        exchangeIds = window.ccxt.exchanges;
-        console.log('📋 window.ccxt.exchanges is array');
-      } else if (window.ccxt.exchanges && typeof window.ccxt.exchanges === 'object') {
-        // If it's an object - take keys
-        exchangeIds = Object.keys(window.ccxt.exchanges);
-        console.log('📋 window.ccxt.exchanges is object, using keys');
-      } else {
-        // Fallback: search for exchange class functions in window.ccxt
-        exchangeIds = Object.keys(window.ccxt).filter(key => {
-          const item = window.ccxt[key];
-          return typeof item === 'function' && 
-                 key !== 'Exchange' && 
-                 key !== 'version' && 
-                 key !== 'default' &&
-                 !key.startsWith('_') &&
-                 key.length > 2;
-        });
-        console.log('📋 Using fallback: scanning ccxt object keys');
-      }
-    
-    console.log(`🔍 Found ${exchangeIds.length} exchange classes in CCXT:`, exchangeIds);
-    console.log(`📊 First 10 exchanges:`, exchangeIds.slice(0, 10));
-    console.log(`📊 Last 10 exchanges:`, exchangeIds.slice(-10));
-    
-    for (const exchangeId of exchangeIds) {
-      try {
-        const ExchangeClass = window.ccxt[exchangeId] as any;
-        if (ExchangeClass && typeof ExchangeClass === 'function') {
-          const exchange = new ExchangeClass();
-          exchanges.push({
-            id: exchangeId,
-            name: exchange.name || exchangeId,
-            has: exchange.has
-          });
-        }
-      } catch (error) {
-        // Some exchanges may not initialize without parameters
-        // console.warn(`Failed to load exchange ${exchangeId}:`, error);
-        exchanges.push({
-          id: exchangeId,
-          name: exchangeId.charAt(0).toUpperCase() + exchangeId.slice(1),
-          has: {}
-        });
-      }
-    }
-    
-      // Sort by name
-      const sortedExchanges = exchanges.sort((a, b) => a.name.localeCompare(b.name));
-      console.log(`✅ Successfully loaded ${sortedExchanges.length} exchanges from CCXT`);
-      console.log(`🏆 Sample exchanges:`, sortedExchanges.slice(0, 5).map(e => `${e.name} (${e.id})`));
-      resolve(sortedExchanges);
-    } catch (error) {
-      console.error('🛡️ Safe error handling for CCXT exchanges loading:', error);
-      // Return fallback list to ensure functionality
-      resolve(getFallbackExchanges());
-    }
-  });
-};
 
 interface CCXTBrowserFormData {
   name: string;
@@ -174,39 +45,11 @@ interface CCXTServerFormData {
 
 const DataProviderSetupWidgetInner: React.FC = () => {
   const { addProvider } = useDataProviderStore();
+  const { exchanges: supportedExchanges, loading: loadingExchanges } = useExchangesList();
   
   const [providerType, setProviderType] = useState<DataProviderType>('ccxt-browser');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [supportedExchanges, setSupportedExchanges] = useState<ExchangeInfo[]>([]);
-  const [loadingExchanges, setLoadingExchanges] = useState(true);
-
-  // Safe loading of exchanges list on initialization
-  useEffect(() => {
-    const loadExchanges = async () => {
-      setLoadingExchanges(true);
-      try {
-        // Safe CCXT testing
-        try {
-          testCCXTDirectly();
-        } catch (testError) {
-          console.warn('⚠️ Warning during CCXT testing:', testError);
-        }
-        
-        const exchanges = await loadCCXTExchanges();
-        setSupportedExchanges(exchanges);
-        console.log(`🔥 Successfully loaded ${exchanges.length} exchanges from CCXT`);
-      } catch (error) {
-        console.error('🛡️ Caught error loading exchanges:', error);
-        // Set fallback list on any errors
-        setSupportedExchanges(getFallbackExchanges());
-      } finally {
-        setLoadingExchanges(false);
-      }
-    };
-
-    loadExchanges();
-  }, []);
 
   // Form for CCXT Browser
   const [ccxtBrowserForm, setCcxtBrowserForm] = useState<CCXTBrowserFormData>({
