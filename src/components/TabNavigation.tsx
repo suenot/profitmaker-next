@@ -195,7 +195,7 @@ const TabNavigation: React.FC = () => {
           <button 
             className="p-2 rounded-full hover:bg-terminal-accent/50 transition-colors relative"
             onClick={handleNotificationClick}
-            title="Уведомления"
+            title="Notifications"
           >
             <Bell size={18} className="text-terminal-muted" />
             {unreadCount > 0 && (

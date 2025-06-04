@@ -33,8 +33,8 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo
     });
 
-    // Здесь можно отправить ошибку в систему мониторинга
-    // например Sentry, LogRocket и т.д.
+    // Here you can send error to monitoring system
+    // e.g. Sentry, LogRocket, etc.
   }
 
   private handleRetry = () => {

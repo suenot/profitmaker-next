@@ -226,7 +226,7 @@ const Chart: React.FC<ChartProps> = ({
     };
   }, [exchange, symbol, timeframe, market, chartColors]);
 
-  // REST инициализация данных
+          // REST data initialization
   useEffect(() => {
     if (!isChartInitialized || !nightVisionRef.current) return;
 
@@ -376,7 +376,7 @@ const Chart: React.FC<ChartProps> = ({
         }
       }
       else if (event.type === 'update_last_candle') {
-        // Обновление последней свечи - эффективное обновление
+        // Update last candle - efficient update
         if (event.data?.lastCandle && chartInstance.hub && chartInstance.hub.mainOv && chartInstance.hub.mainOv.data) {
           const mainData = chartInstance.hub.mainOv.data;
           const lastIndex = mainData.length - 1;
@@ -392,18 +392,18 @@ const Chart: React.FC<ChartProps> = ({
             ];
             
             mainData[lastIndex] = updatedCandle;
-            chartInstance.update(); // Эффективное обновление без "data" параметра
+            chartInstance.update(); // Efficient update without "data" parameter
             console.log(`🔄 [Chart] Updated last candle: close=${event.data.lastCandle.close}`);
           }
         }
       }
-      // Игнорируем initial_load - используем REST инициализацию
+      // Ignore initial_load - use REST initialization
     } catch (error) {
       console.error('❌ [Chart] Event processing error:', error);
     }
   }, [chartDataLoaded]);
 
-  // Ref для хранения предыдущих настроек event listener
+  // Ref for storing previous event listener settings
   const previousEventListenerRef = useRef<{
     exchange: string;
     symbol: string;
@@ -411,11 +411,11 @@ const Chart: React.FC<ChartProps> = ({
     market: MarketType;
   } | null>(null);
 
-  // Подписка на события store с правильным cleanup
+  // Store event subscription with proper cleanup
   useEffect(() => {
     if (!nightVisionRef.current) return;
 
-    // Отписываемся от предыдущих событий если они есть
+    // Unsubscribe from previous events if they exist
     if (previousEventListenerRef.current) {
       const prev = previousEventListenerRef.current;
       console.log(`📺 [Chart] Unsubscribing from PREVIOUS events: ${prev.exchange}:${prev.symbol}:${prev.timeframe}:${prev.market}`);
@@ -424,10 +424,10 @@ const Chart: React.FC<ChartProps> = ({
 
     console.log(`📺 [Chart] Subscribing to events for ${exchange}:${symbol}:${timeframe}:${market}`);
     
-    // Добавляем listener для новых настроек
+    // Add listener for new settings
     addChartUpdateListener(exchange, symbol, timeframe, market, chartUpdateListener);
     
-    // Сохраняем настройки как предыдущие
+    // Save settings as previous
     previousEventListenerRef.current = { exchange, symbol, timeframe, market };
 
     return () => {
@@ -454,7 +454,7 @@ const Chart: React.FC<ChartProps> = ({
       if (result.success) {
         setIsSubscribed(true);
         
-        // ВАЖНО: Сохраняем текущие настройки как предыдущие ПОСЛЕ успешной подписки
+        // IMPORTANT: Save current settings as previous AFTER successful subscription
         previousSubscriptionRef.current = { exchange, symbol, timeframe, market };
         
         console.log(`📊 Chart subscribed to ${exchange}:${market}:${symbol}:${timeframe} (method: ${dataFetchSettings.method})`);
@@ -477,7 +477,7 @@ const Chart: React.FC<ChartProps> = ({
     console.log(`📊 Chart unsubscribed from ${exchange}:${market}:${symbol}:${timeframe}`);
   };
 
-    // Ref для хранения предыдущих настроек подписки
+    // Ref for storing previous subscription settings
   const previousSubscriptionRef = useRef<{
     exchange: string;
     symbol: string;
@@ -493,10 +493,10 @@ const Chart: React.FC<ChartProps> = ({
     }
   }, [activeProviderId]);
 
-  // Правильное управление подписками при смене настроек
+  // Proper subscription management when settings change
   useEffect(() => {
     if (isSubscribed) {
-      // Отписываемся от ПРЕДЫДУЩИХ настроек если они есть
+      // Unsubscribe from PREVIOUS settings if they exist
       if (previousSubscriptionRef.current) {
         const prev = previousSubscriptionRef.current;
         console.log(`🛑 Chart unsubscribing from PREVIOUS settings: ${prev.exchange}:${prev.market}:${prev.symbol}:${prev.timeframe}`);
@@ -505,7 +505,7 @@ const Chart: React.FC<ChartProps> = ({
         unsubscribe(subscriberId, prev.exchange, prev.symbol, 'candles', prev.timeframe, prev.market);
       }
       
-      // Подписываемся на НОВЫЕ настройки (сохранение произойдет в handleSubscribe)
+      // Subscribe to NEW settings (saving will happen in handleSubscribe)
       setTimeout(() => {
         console.log(`🚀 Chart subscribing to NEW settings: ${exchange}:${market}:${symbol}:${timeframe}`);
         handleSubscribe();
@@ -513,7 +513,7 @@ const Chart: React.FC<ChartProps> = ({
     }
   }, [exchange, symbol, timeframe, market]);
 
-  // Cleanup при unmount компонента
+  // Cleanup on component unmount
   useEffect(() => {
     return () => {
       if (previousSubscriptionRef.current && isSubscribed) {

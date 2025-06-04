@@ -30,7 +30,7 @@ interface NotificationHistoryProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Иконки для типов уведомлений
+// Icons for notification types
 const notificationIcons: Record<NotificationType, React.ComponentType<{ className?: string }>> = {
   success: CheckCircle,
   error: XCircle,
@@ -38,7 +38,7 @@ const notificationIcons: Record<NotificationType, React.ComponentType<{ classNam
   info: Info,
 };
 
-// Цвета для типов уведомлений
+// Colors for notification types
 const notificationColors: Record<NotificationType, string> = {
   success: 'text-green-600 dark:text-green-400',
   error: 'text-red-600 dark:text-red-400',
@@ -112,7 +112,7 @@ const NotificationItem: React.FC<{
                   size="sm"
                   onClick={() => onMarkAsRead(notification.id)}
                   className="h-8 w-8 p-0"
-                  title="Отметить как прочитанное"
+                  title="Mark as read"
                 >
                   <CheckCheck className="h-4 w-4" />
                 </Button>
@@ -123,7 +123,7 @@ const NotificationItem: React.FC<{
                 size="sm"
                 onClick={() => onRemove(notification.id)}
                 className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                title="Удалить уведомление"
+                                  title="Delete notification"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -145,7 +145,7 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({ open, onOpenC
     clearAll 
   } = useNotificationStore();
 
-  // Группировка уведомлений по дням
+  // Group notifications by days
   const groupedNotifications = React.useMemo(() => {
     const groups: Record<string, Notification[]> = {};
     
@@ -157,11 +157,11 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({ open, onOpenC
       
       let groupKey: string;
       if (date.toDateString() === today.toDateString()) {
-        groupKey = 'Сегодня';
+        groupKey = 'Today';
       } else if (date.toDateString() === yesterday.toDateString()) {
-        groupKey = 'Вчера';
+        groupKey = 'Yesterday';
       } else {
-        groupKey = date.toLocaleDateString('ru-RU', {
+        groupKey = date.toLocaleDateString('en-US', {
           day: '2-digit',
           month: 'long'
         });
@@ -183,7 +183,7 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({ open, onOpenC
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              <DrawerTitle>Уведомления</DrawerTitle>
+              <DrawerTitle>Notifications</DrawerTitle>
               {unreadCount > 0 && (
                 <Badge variant="destructive" className="ml-2">
                   {unreadCount}
@@ -197,7 +197,7 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({ open, onOpenC
             </DrawerClose>
           </div>
           <DrawerDescription>
-            История всех уведомлений
+            History of all notifications
           </DrawerDescription>
         </DrawerHeader>
         
@@ -207,16 +207,16 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({ open, onOpenC
               <div>
                 <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-muted-foreground mb-2">
-                  Нет уведомлений
+                  No notifications
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Все уведомления будут отображаться здесь
+                  All notifications will appear here
                 </p>
               </div>
             </div>
           ) : (
             <>
-              {/* Кнопки управления */}
+              {/* Control buttons */}
               <div className="p-4 border-b bg-muted/20">
                 <div className="flex gap-2">
                   {unreadCount > 0 && (
@@ -227,7 +227,7 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({ open, onOpenC
                       className="flex-1"
                     >
                       <CheckCheck className="h-4 w-4 mr-2" />
-                      Прочитать все
+                      Mark all read
                     </Button>
                   )}
                   <Button 
@@ -237,12 +237,12 @@ const NotificationHistory: React.FC<NotificationHistoryProps> = ({ open, onOpenC
                     className="flex-1"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Очистить
+                    Clear all
                   </Button>
                 </div>
               </div>
               
-              {/* Список уведомлений */}
+              {/* Notifications list */}
               <ScrollArea className="flex-1">
                 <div className="space-y-1">
                   {Object.entries(groupedNotifications).map(([groupKey, groupNotifications]) => (

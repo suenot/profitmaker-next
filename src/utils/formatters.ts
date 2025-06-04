@@ -71,12 +71,12 @@ export const formatTimestamp = (timestamp: number): string => {
   
   // If more than a day, show date
   if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString('ru-RU', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+      return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
   } else {
-    return date.toLocaleDateString('ru-RU', {
+    return date.toLocaleDateString('en-US', {
       day: '2-digit',
       month: '2-digit',
       hour: '2-digit',
@@ -90,7 +90,7 @@ export const formatTime = (timestamp: number): string => {
   if (!timestamp) return '--:--:--';
   
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('ru-RU', {
+  return date.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
@@ -102,7 +102,7 @@ export const formatDate = (timestamp: number): string => {
   if (!timestamp) return '--.--.----';
   
   const date = new Date(timestamp);
-  return date.toLocaleDateString('ru-RU', {
+  return date.toLocaleDateString('en-US', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
