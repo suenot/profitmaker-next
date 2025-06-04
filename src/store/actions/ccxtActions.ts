@@ -13,49 +13,49 @@ export const createCCXTActions: StateCreator<
   [],
   CCXTActions
 > = (set, get) => ({
-  // Интеллектуальный выбор CCXT методов
+  // Intelligent CCXT method selection
   selectOptimalOrderBookMethod: (exchange: string, exchangeInstance: any): OrderBookMethodSelection => {
-    console.log(`🔍 Анализ возможностей ${exchange} для выбора оптимального orderbook метода...`);
+    console.log(`🔍 Analyzing ${exchange} capabilities to select optimal orderbook method...`);
     
-    // Проверяем доступные возможности биржи
+    // Check available exchange capabilities
     const capabilities: CCXTMethodCapabilities = {
       watchOrderBookForSymbols: !!exchangeInstance.has?.['watchOrderBookForSymbols'],
       watchOrderBook: !!exchangeInstance.has?.['watchOrderBook'],
       fetchOrderBook: !!exchangeInstance.has?.['fetchOrderBook']
     };
 
-    console.log(`📊 ${exchange} возможности:`, capabilities);
+    console.log(`📊 ${exchange} capabilities:`, capabilities);
 
-    // Приоритет 1: watchOrderBookForSymbols (diff обновления, наиболее эффективно)
+    // Priority 1: watchOrderBookForSymbols (diff updates, most efficient)
     if (capabilities.watchOrderBookForSymbols) {
       return {
         selectedMethod: 'watchOrderBookForSymbols',
-        reason: 'Оптимальный выбор: поддерживает diff обновления для множества пар',
+        reason: 'Optimal choice: supports diff updates for multiple pairs',
         capabilities,
         isOptimal: true
       };
     }
 
-    // Приоритет 2: watchOrderBook (полный orderbook, стандартная эффективность)
+    // Priority 2: watchOrderBook (full orderbook, standard efficiency)
     if (capabilities.watchOrderBook) {
       return {
         selectedMethod: 'watchOrderBook',
-        reason: 'Стандартный WebSocket: полные снепшоты orderbook',
+        reason: 'Standard WebSocket: full orderbook snapshots',
         capabilities,
         isOptimal: true
       };
     }
 
-    // Fallback: fetchOrderBook (REST запросы)
+    // Fallback: fetchOrderBook (REST requests)
     return {
       selectedMethod: 'fetchOrderBook',
-      reason: 'Fallback: REST запросы, WebSocket методы не поддерживаются',
+      reason: 'Fallback: REST requests, WebSocket methods not supported',
       capabilities,
       isOptimal: false
     };
   },
 
-  // Очистка
+  // Cleanup
   cleanup: () => {
     const subscriptions = get().activeSubscriptions;
     Object.keys(subscriptions).forEach(key => {

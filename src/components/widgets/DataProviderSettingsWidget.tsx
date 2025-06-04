@@ -62,13 +62,13 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Настройки получения данных
+          Data Fetching Settings
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Выбор метода получения данных */}
+        {/* Data fetching method selection */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Метод получения данных</Label>
+          <Label className="text-sm font-medium">Data Fetching Method</Label>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Switch
@@ -80,12 +80,12 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
                 {dataFetchSettings.method === 'websocket' ? (
                   <>
                     <Wifi className="h-4 w-4 text-green-500" />
-                    WebSocket (реальное время)
+                    WebSocket (real-time)
                   </>
                 ) : (
                   <>
                     <WifiOff className="h-4 w-4 text-orange-500" />
-                    REST (интервальные запросы)
+                    REST (interval requests)
                   </>
                 )}
               </Label>
@@ -93,35 +93,35 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
           </div>
           <div className="text-xs text-gray-500">
             {dataFetchSettings.method === 'websocket' 
-              ? 'Получение данных в реальном времени через WebSocket соединения. Автоматически переключится на REST если WebSocket не поддерживается.'
-              : 'Получение данных через REST API с настраиваемыми интервалами. Подходит для отладки и бирж без поддержки WebSocket.'
+              ? 'Real-time data fetching via WebSocket connections. Automatically falls back to REST if WebSocket is not supported.'
+              : 'Data fetching via REST API with configurable intervals. Suitable for debugging and exchanges without WebSocket support.'
             }
           </div>
         </div>
 
         <Separator />
 
-        {/* Настройки интервалов REST (отображается только при выборе REST) */}
+        {/* REST interval settings (shown only when REST is selected) */}
         {dataFetchSettings.method === 'rest' && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <Label className="text-sm font-medium">Интервалы REST запросов</Label>
+              <Label className="text-sm font-medium">REST Request Intervals</Label>
             </div>
 
             {/* Trades interval */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-blue-500" />
-                <Label className="text-sm">Сделки (Trades)</Label>
+                <Label className="text-sm">Trades</Label>
                 <span className="text-xs text-gray-500">
-                  Текущий: {formatInterval(dataFetchSettings.restIntervals.trades)}
+                  Current: {formatInterval(dataFetchSettings.restIntervals.trades)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  placeholder="Интервал в миллисекундах"
+                  placeholder="Interval in milliseconds"
                   value={tradesInterval}
                   onChange={(e) => setTradesInterval(e.target.value)}
                   className="flex-1"
@@ -129,7 +129,7 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
                   step="100"
                 />
                 <Button onClick={handleTradesIntervalSubmit} size="sm">
-                  Применить
+                  Apply
                 </Button>
               </div>
             </div>
@@ -138,15 +138,15 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <BarChart className="h-4 w-4 text-green-500" />
-                <Label className="text-sm">Свечи (Candles)</Label>
+                <Label className="text-sm">Candles</Label>
                 <span className="text-xs text-gray-500">
-                  Текущий: {formatInterval(dataFetchSettings.restIntervals.candles)}
+                  Current: {formatInterval(dataFetchSettings.restIntervals.candles)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  placeholder="Интервал в миллисекундах"
+                  placeholder="Interval in milliseconds"
                   value={candlesInterval}
                   onChange={(e) => setCandlesInterval(e.target.value)}
                   className="flex-1"
@@ -154,7 +154,7 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
                   step="100"
                 />
                 <Button onClick={handleCandlesIntervalSubmit} size="sm">
-                  Применить
+                  Apply
                 </Button>
               </div>
             </div>
@@ -163,15 +163,15 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Database className="h-4 w-4 text-purple-500" />
-                <Label className="text-sm">Книга заказов (OrderBook)</Label>
+                <Label className="text-sm">Order Book</Label>
                 <span className="text-xs text-gray-500">
-                  Текущий: {formatInterval(dataFetchSettings.restIntervals.orderbook)}
+                  Current: {formatInterval(dataFetchSettings.restIntervals.orderbook)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  placeholder="Интервал в миллисекундах"
+                  placeholder="Interval in milliseconds"
                   value={orderbookInterval}
                   onChange={(e) => setOrderbookInterval(e.target.value)}
                   className="flex-1"
@@ -179,25 +179,25 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
                   step="100"
                 />
                 <Button onClick={handleOrderbookIntervalSubmit} size="sm">
-                  Применить
+                  Apply
                 </Button>
               </div>
             </div>
 
             <div className="text-xs text-gray-500 bg-yellow-50 p-2 rounded">
-              💡 <strong>Рекомендации:</strong> Trades 500-1000ms, Candles 5000ms, OrderBook 200-500ms. 
-              Слишком частые запросы могут привести к превышению лимитов API.
+              💡 <strong>Recommendations:</strong> Trades 500-1000ms, Candles 5000ms, OrderBook 200-500ms. 
+              Too frequent requests may lead to API rate limit violations.
             </div>
           </div>
         )}
 
         <Separator />
 
-        {/* Информация об активных подписках */}
+        {/* Active subscriptions information */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Активные подписки</Label>
+          <Label className="text-sm font-medium">Active Subscriptions</Label>
           <div className="text-sm text-gray-600">
-            Всего активных подписок: <span className="font-mono">{activeSubscriptions.length}</span>
+            Total active subscriptions: <span className="font-mono">{activeSubscriptions.length}</span>
           </div>
           
           {activeSubscriptions.length > 0 && (
@@ -215,7 +215,7 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
                       {subscription.method === 'websocket' ? '📡' : '🔄'} {subscription.method}
                     </span>
                     <span className="font-mono text-blue-600">
-                      {subscription.subscriberCount} подписчик{subscription.subscriberCount !== 1 ? 'ов' : ''}
+                      {subscription.subscriberCount} subscriber{subscription.subscriberCount !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
@@ -225,13 +225,13 @@ const DataProviderSettingsWidgetInner: React.FC = () => {
 
           {activeSubscriptions.length === 0 && (
             <div className="text-sm text-gray-400 italic">
-              Нет активных подписок. Добавьте виджеты данных для создания подписок.
+              No active subscriptions. Add data widgets to create subscriptions.
             </div>
           )}
         </div>
 
         <div className="text-xs text-gray-400 pt-2 border-t">
-          💡 Подписки автоматически дедуплицируются - если несколько виджетов запрашивают одни и те же данные, создается только одно соединение.
+          💡 Subscriptions are automatically deduplicated - if multiple widgets request the same data, only one connection is created.
         </div>
       </CardContent>
     </Card>

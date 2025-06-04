@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       external: [
-        // Node.js модули которых нет в браузере
+        // Node.js modules that don't exist in browser
         'http-proxy-agent',
         'https-proxy-agent', 
         'socks-proxy-agent',
@@ -50,12 +50,12 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    // Не предзагружаем CCXT из-за сложных зависимостей
+    // Don't preload CCXT due to complex dependencies
     exclude: ['ccxt'],
-    // Включаем только необходимые полифиллы
+    // Include only necessary polyfills
     include: ['buffer', 'process'],
   },
-  // Настройки для совместимости с браузером
+  // Settings for browser compatibility
   esbuild: {
     define: {
       global: 'globalThis',

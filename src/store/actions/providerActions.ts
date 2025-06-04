@@ -14,7 +14,7 @@ export const createProviderActions: StateCreator<
   [],
   ProviderActions
 > = (set, get) => ({
-  // Управление поставщиками
+  // Provider management
   addProvider: (provider: DataProvider) => {
     set(state => {
       state.providers[provider.id] = provider;
@@ -27,7 +27,7 @@ export const createProviderActions: StateCreator<
 
   removeProvider: (providerId: string) => {
     set(state => {
-      // Останавливаем все подписки провайдера
+      // Stop all provider subscriptions
       Object.keys(state.activeSubscriptions).forEach(key => {
         const subscription = state.activeSubscriptions[key];
         if (subscription.key.exchange === providerId) {

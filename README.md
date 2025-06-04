@@ -23,49 +23,49 @@
 
 # Widget Floaty Designer 03
 
-## Последние обновления ✨
+## Latest Updates ✨
 
-### Интеллектуальный выбор CCXT методов для OrderBook
+### Intelligent CCXT Method Selection for OrderBook
 
-Система теперь автоматически выбирает наиболее эффективный метод WebSocket для каждой биржи:
+The system now automatically selects the most efficient WebSocket method for each exchange:
 
-#### Приоритеты выбора:
-1. **`watchOrderBookForSymbols`** - ⚡ diff обновления (самые быстрые)
-2. **`watchOrderBook`** - 📋 полные снепшоты (стандартные)
-3. **`fetchOrderBook`** - 🔄 REST запросы (fallback)
+#### Selection Priorities:
+1. **`watchOrderBookForSymbols`** - ⚡ diff updates (fastest)
+2. **`watchOrderBook`** - 📋 full snapshots (standard)
+3. **`fetchOrderBook`** - 🔄 REST requests (fallback)
 
-#### Преимущества:
-- 🚀 **Автоматическая оптимизация** - выбор лучшего метода для каждой биржи
-- 📊 **Прозрачность** - отображение используемого CCXT метода в UI
-- 🔧 **Интеллектуальная обработка** - поддержка разных форматов данных
-- ⚡ **Максимальная производительность** - приоритет diff обновлений
+#### Benefits:
+- 🚀 **Automatic optimization** - best method selection for each exchange
+- 📊 **Transparency** - display of used CCXT method in UI
+- 🔧 **Intelligent processing** - support for different data formats
+- ⚡ **Maximum performance** - priority for diff updates
 
-#### Что исправлено:
-- ✅ Ошибки "Invalid orderbook entry" с gateio
-- ✅ Поддержка массивов `[price, amount]` от CCXT Pro
-- ✅ Автоматический выбор оптимального метода
-- ✅ Debug UI с информацией о текущем методе
+#### What's Fixed:
+- ✅ "Invalid orderbook entry" errors with gateio
+- ✅ Support for `[price, amount]` arrays from CCXT Pro
+- ✅ Automatic optimal method selection
+- ✅ Debug UI with current method information
 
-## Установка и запуск
+## Installation and Setup
 
 ```bash
 npm install
 npm run dev
 ```
 
-Откройте http://localhost:8087 (или другой доступный порт)
+Open http://localhost:8087 (or another available port)
 
-## Использование OrderBook виджета
+## Using OrderBook Widget
 
-1. Выберите биржу (binance, gateio, etc.)
-2. Укажите торговую пару (BTC/USDT)
-3. Нажмите "Подписаться на orderbook"
-4. Система автоматически выберет лучший метод
-5. В Debug UI увидите используемый CCXT метод
+1. Select exchange (binance, gateio, etc.)
+2. Specify trading pair (BTC/USDT)
+3. Click "Subscribe to orderbook"
+4. System automatically selects best method
+5. See used CCXT method in Debug UI
 
-## Технические детали
+## Technical Details
 
-- **CCXT Pro** для WebSocket соединений
-- **Zustand** для управления состоянием
-- **React + TypeScript** для UI
-- **Tailwind CSS** для стилизации 
+- **CCXT Pro** for WebSocket connections
+- **Zustand** for state management
+- **React + TypeScript** for UI
+- **Tailwind CSS** for styling 

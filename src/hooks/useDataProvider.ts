@@ -9,7 +9,7 @@ import {
   DataState
 } from '../types/dataProviders';
 
-// Хук для использования данных свечей
+// Hook for using candle data
 export const useCandles = (
   symbol: string,
   exchange: string,
@@ -49,7 +49,7 @@ export const useCandles = (
 
       return await createSubscription(params);
     } catch (error) {
-      console.error('🛡️ Безопасный перехват ошибки подписки на candles:', error);
+      console.error('🛡️ Safe error handling for candles subscription:', error);
       return { success: false, error: `Subscription error: ${error}` };
     }
   }, [actualProviderId, symbol, exchange, dashboardId, widgetId, subscriptionId, createSubscription]);
@@ -60,7 +60,7 @@ export const useCandles = (
     }
   }, [subscriptionId, removeSubscription]);
 
-  // Автоматическая подписка/отписка
+  // Automatic subscription/unsubscription
   useEffect(() => {
     if (actualProviderId && subscriptionId) {
       subscribe();
@@ -79,7 +79,7 @@ export const useCandles = (
   };
 };
 
-// Хук для использования данных сделок
+// Hook for using trade data
 export const useTrades = (
   symbol: string,
   exchange: string,
@@ -143,7 +143,7 @@ export const useTrades = (
   };
 };
 
-// Хук для использования данных книги заказов
+// Hook for using order book data
 export const useOrderBook = (
   symbol: string,
   exchange: string,
@@ -207,7 +207,7 @@ export const useOrderBook = (
   };
 };
 
-// Комбинированный хук для использования всех типов данных
+// Combined hook for using all data types
 export const useMarketData = (
   symbol: string,
   exchange: string,
@@ -262,7 +262,7 @@ export const useMarketData = (
   };
 };
 
-// Хук для получения списка поставщиков
+// Hook for getting list of providers
 export const useDataProviders = () => {
   const {
     providers,
@@ -289,7 +289,7 @@ export const useDataProviders = () => {
   };
 };
 
-// Хук для получения информации о соединениях
+// Hook for getting connection information
 export const useConnectionStats = () => {
   const {
     connectionStats,
@@ -321,7 +321,7 @@ export const useConnectionStats = () => {
   };
 };
 
-// Хук для проверки доступности биржи
+// Hook for checking exchange availability
 export const useExchangeSupport = (exchangeId: string) => {
   const { providers } = useDataProviderStore();
   

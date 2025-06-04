@@ -44,7 +44,7 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
 
   const { providers, activeProvider } = useDataProviders();
 
-  // Подписки на данные
+  // Data subscriptions
   const candles = useCandles(
     symbol, 
     exchange, 
@@ -69,7 +69,7 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
     `${widgetId}-orderbook`
   );
 
-  // Получаем последнюю свечу для отображения цены
+  // Get last candle for price display
   const lastCandle = candles.data && candles.data.length > 0 
     ? candles.data[candles.data.length - 1] 
     : null;
@@ -82,10 +82,10 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
     ? (priceChange / candles.data[candles.data.length - 2].close) * 100
     : 0;
 
-  // Получаем последние сделки
+  // Get recent trades
   const recentTrades = trades.data?.slice(-10) || [];
 
-  // Получаем лучшие bid/ask
+  // Get best bid/ask
   const bestBid = orderbook.data?.bids[0];
   const bestAsk = orderbook.data?.asks[0];
   const spread = bestBid && bestAsk ? bestAsk.price - bestBid.price : 0;
@@ -108,14 +108,14 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
 
   return (
     <div className="space-y-4 p-4">
-      {/* Заголовок и настройки */}
+      {/* Header and settings */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             {connectionStatus === 'connected' && <Wifi className="h-4 w-4 text-green-500" />}
             {connectionStatus === 'connecting' && <Activity className="h-4 w-4 text-yellow-500 animate-spin" />}
             {connectionStatus === 'disconnected' && <WifiOff className="h-4 w-4 text-gray-500" />}
-            <h2 className="text-lg font-semibold">Рыночные данные</h2>
+            <h2 className="text-lg font-semibold">Market Data</h2>
           </div>
           <Badge variant="outline">{symbol}</Badge>
           <Badge variant="secondary">{exchange}</Badge>
@@ -127,12 +127,12 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
         )}
       </div>
 
-      {/* Настройки символа */}
+      {/* Symbol settings */}
       <Card>
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="symbol">Торговая пара</Label>
+              <Label htmlFor="symbol">Trading Pair</Label>
               <Input
                 id="symbol"
                 value={symbol}
@@ -141,7 +141,7 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="exchange">Биржа</Label>
+              <Label htmlFor="exchange">Exchange</Label>
               <Input
                 id="exchange"
                 value={exchange}
@@ -153,20 +153,20 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
         </CardContent>
       </Card>
 
-      {/* Основная информация о цене */}
+      {/* Main price information */}
       {showCandles && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Цена
+              Price
             </CardTitle>
           </CardHeader>
           <CardContent>
             {candles.loading ? (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Activity className="h-4 w-4 animate-spin" />
-                Загрузка свечей...
+                Loading candles...
               </div>
             ) : candles.error ? (
               <div className="text-red-500 text-sm">{candles.error}</div>
@@ -191,66 +191,66 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
                 
                 <div className="grid grid-cols-4 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Открытие</p>
+                    <p className="text-muted-foreground">Open</p>
                     <p className="font-medium">{formatPrice(lastCandle.open)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Максимум</p>
+                    <p className="text-muted-foreground">High</p>
                     <p className="font-medium text-green-600">{formatPrice(lastCandle.high)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Минимум</p>
+                    <p className="text-muted-foreground">Low</p>
                     <p className="font-medium text-red-600">{formatPrice(lastCandle.low)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Объем</p>
+                    <p className="text-muted-foreground">Volume</p>
                     <p className="font-medium">{formatVolume(lastCandle.volume)}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  Обновлено: {formatTimestamp(candles.lastUpdate)}
+                  Updated: {formatTimestamp(candles.lastUpdate)}
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">Нет данных о свечах</p>
+              <p className="text-muted-foreground">No candle data</p>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Книга заказов */}
+      {/* Order book */}
       {showOrderBook && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              Книга заказов
+              Order Book
             </CardTitle>
           </CardHeader>
           <CardContent>
             {orderbook.loading ? (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Activity className="h-4 w-4 animate-spin" />
-                Загрузка книги заказов...
+                Loading order book...
               </div>
             ) : orderbook.error ? (
               <div className="text-red-500 text-sm">{orderbook.error}</div>
             ) : orderbook.data ? (
               <div className="space-y-3">
-                {/* Спред */}
+                {/* Spread */}
                 {bestBid && bestAsk && (
                   <div className="flex items-center justify-between p-2 bg-muted rounded text-sm">
-                    <span className="text-muted-foreground">Спред:</span>
+                    <span className="text-muted-foreground">Spread:</span>
                     <span className="font-medium">{formatPrice(spread)}</span>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Заявки на покупку */}
+                  {/* Buy orders */}
                   <div>
-                    <h4 className="text-sm font-medium text-green-600 mb-2">Покупка (Bid)</h4>
+                    <h4 className="text-sm font-medium text-green-600 mb-2">Buy (Bid)</h4>
                     <div className="space-y-1">
                       {orderbook.data.bids.slice(0, 5).map((bid, index) => (
                         <div key={index} className="flex justify-between text-xs">
@@ -261,9 +261,9 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
                     </div>
                   </div>
 
-                  {/* Заявки на продажу */}
+                  {/* Sell orders */}
                   <div>
-                    <h4 className="text-sm font-medium text-red-600 mb-2">Продажа (Ask)</h4>
+                    <h4 className="text-sm font-medium text-red-600 mb-2">Sell (Ask)</h4>
                     <div className="space-y-1">
                       {orderbook.data.asks.slice(0, 5).map((ask, index) => (
                         <div key={index} className="flex justify-between text-xs">
@@ -277,30 +277,30 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
 
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  Обновлено: {formatTimestamp(orderbook.lastUpdate)}
+                  Updated: {formatTimestamp(orderbook.lastUpdate)}
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">Нет данных книги заказов</p>
+              <p className="text-muted-foreground">No order book data</p>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Последние сделки */}
+      {/* Recent trades */}
       {showTrades && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <ArrowUpDown className="h-4 w-4" />
-              Последние сделки
+              Recent Trades
             </CardTitle>
           </CardHeader>
           <CardContent>
             {trades.loading ? (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Activity className="h-4 w-4 animate-spin" />
-                Загрузка сделок...
+                Loading trades...
               </div>
             ) : trades.error ? (
               <div className="text-red-500 text-sm">{trades.error}</div>
@@ -330,11 +330,11 @@ export const MarketDataWidget: React.FC<MarketDataWidgetProps> = ({
 
                 <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
                   <Clock className="h-3 w-3" />
-                  Обновлено: {formatTimestamp(trades.lastUpdate)}
+                  Updated: {formatTimestamp(trades.lastUpdate)}
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">Нет данных о сделках</p>
+              <p className="text-muted-foreground">No trade data</p>
             )}
           </CardContent>
         </Card>

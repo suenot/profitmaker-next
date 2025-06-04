@@ -1,8 +1,8 @@
-// Форматирование цены
+// Price formatting
 export const formatPrice = (price: number, decimals: number = 2): string => {
   if (price === 0) return '0.00';
   
-  // Автоматически определяем количество знаков после запятой
+  // Automatically determine decimal places
   if (price >= 1000) {
     return price.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -26,7 +26,7 @@ export const formatPrice = (price: number, decimals: number = 2): string => {
   }
 };
 
-// Форматирование объема
+// Volume formatting
 export const formatVolume = (volume: number): string => {
   if (volume === 0) return '0';
   
@@ -43,33 +43,33 @@ export const formatVolume = (volume: number): string => {
   }
 };
 
-// Форматирование временной метки
+// Timestamp formatting
 export const formatTimestamp = (timestamp: number): string => {
-  if (!timestamp) return 'Никогда';
+  if (!timestamp) return 'Never';
   
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   
-  // Если меньше минуты
+  // If less than a minute
   if (diff < 60000) {
     const seconds = Math.floor(diff / 1000);
-    return `${seconds}с назад`;
+    return `${seconds}s ago`;
   }
   
-  // Если меньше часа
+  // If less than an hour
   if (diff < 3600000) {
     const minutes = Math.floor(diff / 60000);
-    return `${minutes}м назад`;
+    return `${minutes}m ago`;
   }
   
-  // Если меньше дня
+  // If less than a day
   if (diff < 86400000) {
     const hours = Math.floor(diff / 3600000);
-    return `${hours}ч назад`;
+    return `${hours}h ago`;
   }
   
-  // Если больше дня, показываем дату
+  // If more than a day, show date
   if (date.toDateString() === now.toDateString()) {
     return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
@@ -85,7 +85,7 @@ export const formatTimestamp = (timestamp: number): string => {
   }
 };
 
-// Форматирование времени для отображения
+// Time formatting for display
 export const formatTime = (timestamp: number): string => {
   if (!timestamp) return '--:--:--';
   
@@ -97,7 +97,7 @@ export const formatTime = (timestamp: number): string => {
   });
 };
 
-// Форматирование даты
+// Date formatting
 export const formatDate = (timestamp: number): string => {
   if (!timestamp) return '--.--.----';
   
@@ -109,7 +109,7 @@ export const formatDate = (timestamp: number): string => {
   });
 };
 
-// Форматирование процентов
+// Percentage formatting
 export const formatPercent = (value: number, decimals: number = 2): string => {
   if (value === 0) return '0.00%';
   
@@ -117,13 +117,13 @@ export const formatPercent = (value: number, decimals: number = 2): string => {
   return `${sign}${value.toFixed(decimals)}%`;
 };
 
-// Форматирование изменения цены
+// Price change formatting
 export const formatPriceChange = (change: number, percent: number): string => {
   const sign = change >= 0 ? '+' : '';
   return `${sign}${formatPrice(change)} (${formatPercent(percent)})`;
 };
 
-// Форматирование маркет-кап
+// Market cap formatting
 export const formatMarketCap = (marketCap: number): string => {
   if (marketCap >= 1e12) {
     return `$${(marketCap / 1e12).toFixed(2)}T`;
@@ -138,19 +138,19 @@ export const formatMarketCap = (marketCap: number): string => {
   }
 };
 
-// Форматирование размера ордера
+// Order size formatting
 export const formatOrderSize = (size: number, symbol: string): string => {
   const baseCurrency = symbol.split('/')[0] || '';
   return `${formatVolume(size)} ${baseCurrency}`;
 };
 
-// Форматирование торгового объема в долларах
+// Trading volume formatting in USD
 export const formatVolumeUSD = (volume: number, price: number): string => {
   const volumeUSD = volume * price;
   return `$${formatVolume(volumeUSD)}`;
 };
 
-// Форматирование спреда
+// Spread formatting
 export const formatSpread = (bid: number, ask: number): string => {
   if (!bid || !ask) return '--';
   
@@ -160,27 +160,27 @@ export const formatSpread = (bid: number, ask: number): string => {
   return `${formatPrice(spread)} (${spreadPercent.toFixed(3)}%)`;
 };
 
-// Форматирование времени до экспирации
+// Time to expiry formatting
 export const formatTimeToExpiry = (expiryTimestamp: number): string => {
   const now = Date.now();
   const diff = expiryTimestamp - now;
   
-  if (diff <= 0) return 'Истекло';
+  if (diff <= 0) return 'Expired';
   
   const days = Math.floor(diff / 86400000);
   const hours = Math.floor((diff % 86400000) / 3600000);
   const minutes = Math.floor((diff % 3600000) / 60000);
   
   if (days > 0) {
-    return `${days}д ${hours}ч`;
+    return `${days}d ${hours}h`;
   } else if (hours > 0) {
-    return `${hours}ч ${minutes}м`;
+    return `${hours}h ${minutes}m`;
   } else {
-    return `${minutes}м`;
+    return `${minutes}m`;
   }
 };
 
-// Форматирование количества знаков после запятой на основе цены
+// Decimal places formatting based on price
 export const getDecimalPlaces = (price: number): number => {
   if (price >= 1000) return 2;
   if (price >= 1) return 4;
@@ -188,13 +188,13 @@ export const getDecimalPlaces = (price: number): number => {
   return 8;
 };
 
-// Утилита для сокращения длинных строк
+// Utility for truncating long strings
 export const truncateString = (str: string, maxLength: number = 20): string => {
   if (str.length <= maxLength) return str;
   return str.substring(0, maxLength - 3) + '...';
 };
 
-// Форматирование хеша транзакции
+// Transaction hash formatting
 export const formatTxHash = (hash: string, startLength: number = 6, endLength: number = 4): string => {
   if (hash.length <= startLength + endLength) return hash;
   return `${hash.substring(0, startLength)}...${hash.substring(hash.length - endLength)}`;

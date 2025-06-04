@@ -16,7 +16,7 @@ export const createFetchingActions: StateCreator<
   [],
   FetchingActions
 > = (set, get) => ({
-  // Внутренние функции управления потоками данных
+  // Internal data flow management functions
   startDataFetching: async (subscriptionKey: string): Promise<void> => {
     const subscription = get().activeSubscriptions[subscriptionKey];
     if (!subscription || subscription.isActive) {
@@ -59,13 +59,13 @@ export const createFetchingActions: StateCreator<
 
     console.log(`🛑 Stopping data fetching for ${subscriptionKey}`);
 
-    // Останавливаем WebSocket соединение
+    // Stop WebSocket connection
     if (subscription.wsConnection) {
       subscription.wsConnection.close();
       console.log(`🔌 WebSocket connection closed for ${subscriptionKey}`);
     }
 
-    // Останавливаем REST цикл
+    // Stop REST cycle
     if (subscription.intervalId) {
       clearInterval(subscription.intervalId);
       console.log(`⏰ REST interval cleared for ${subscriptionKey}`);
@@ -78,17 +78,17 @@ export const createFetchingActions: StateCreator<
     });
   },
 
-  // Запуск WebSocket получения данных через CCXT Pro
+  // Start WebSocket data fetching via CCXT Pro
   startWebSocketFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
     if (provider.type !== 'ccxt-browser') {
-      console.warn(`⚠️ WebSocket не поддерживается для провайдера типа ${provider.type}`);
+      console.warn(`⚠️ WebSocket not supported for provider type ${provider.type}`);
       return;
     }
 
     const ccxtProvider = provider as CCXTBrowserProvider;
     const ccxtPro = getCCXTPro();
           if (!ccxtPro) {
-        console.warn(`⚠️ CCXT Pro недоступен, переключаемся на REST`);
+        console.warn(`⚠️ CCXT Pro unavailable, switching to REST`);
         await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
         return;
       }
@@ -104,13 +104,13 @@ export const createFetchingActions: StateCreator<
       const exchangeInstance = new ExchangeClass(ccxtProvider.config);
       const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
 
-      // CCXT Pro поддерживает WebSocket по умолчанию для всех основных бирж
+      // CCXT Pro supports WebSocket by default for all major exchanges
       console.log(`📡 Starting CCXT Pro WebSocket stream: ${exchange} ${symbol} ${dataType}`);
       
-      // Проверяем доступные методы в CCXT Pro
+      // Check available methods in CCXT Pro
       console.log(`🔍 CCXT Pro ${exchange} available methods:`, Object.keys(exchangeInstance.has || {}));
       
-      // Проверяем поддержку WebSocket методов в CCXT Pro
+      // Check WebSocket methods support in CCXT Pro
       let watchMethod: string;
       let hasSupport: boolean;
 
@@ -124,18 +124,18 @@ export const createFetchingActions: StateCreator<
           hasSupport = !!exchangeInstance.has?.[watchMethod];
           break;
         case 'orderbook':
-          // Используем интеллектуальный выбор метода для orderbook
+          // Use intelligent method selection for orderbook
           const methodSelection = get().selectOptimalOrderBookMethod(exchange, exchangeInstance);
           watchMethod = methodSelection.selectedMethod;
-          hasSupport = methodSelection.selectedMethod !== 'fetchOrderBook'; // все кроме REST имеют WebSocket поддержку
+          hasSupport = methodSelection.selectedMethod !== 'fetchOrderBook'; // all except REST have WebSocket support
           
-          console.log(`🎯 Выбран оптимальный метод для ${exchange} orderbook:`, {
+          console.log(`🎯 Optimal method selected for ${exchange} orderbook:`, {
             method: methodSelection.selectedMethod,
             reason: methodSelection.reason,
             isOptimal: methodSelection.isOptimal
           });
           
-          // Сохраняем выбранный метод в подписке для отображения в UI
+          // Save selected method in subscription for UI display
           set(state => {
             if (state.activeSubscriptions[subscriptionKey]) {
               state.activeSubscriptions[subscriptionKey].ccxtMethod = methodSelection.selectedMethod;
@@ -151,18 +151,18 @@ export const createFetchingActions: StateCreator<
       if (!hasSupport) {
         console.warn(`⚠️ CCXT Pro ${exchange} does not support ${watchMethod}, falling back to REST`);
         
-        // Автоматически переключаемся на REST с флагом fallback
+        // Automatically switch to REST with fallback flag
         set(state => {
           if (state.activeSubscriptions[subscriptionKey]) {
             state.activeSubscriptions[subscriptionKey].method = 'rest';
-            state.activeSubscriptions[subscriptionKey].isFallback = true; // ВАЖНО: Помечаем как fallback
+            state.activeSubscriptions[subscriptionKey].isFallback = true; // IMPORTANT: Mark as fallback
           }
         });
         await get().startRestFetching(exchange, symbol, dataType, provider, timeframe, market);
         return;
       }
 
-      // Сначала загружаем исторические данные через REST для candles
+      // First load historical data via REST for candles
       if (dataType === 'candles') {
         try {
           console.log(`📊 Loading historical candles for ${exchange} ${symbol} ${timeframe} before WebSocket`);
@@ -191,7 +191,7 @@ export const createFetchingActions: StateCreator<
         }
       }
 
-      // Запускаем CCXT Pro WebSocket поток с бесконечным циклом
+      // Start CCXT Pro WebSocket stream with infinite loop
       const startWebSocketStream = async () => {
         console.log(`🚀 Starting CCXT Pro WebSocket loop for ${exchange} ${symbol} ${dataType}`);
         
@@ -225,21 +225,21 @@ export const createFetchingActions: StateCreator<
                 }
                 break;
               case 'orderbook':
-                // Получаем информацию о выбранном методе
+                // Get information about selected method
                 const currentSubscription = get().activeSubscriptions[subscriptionKey];
                 const selectedMethod = currentSubscription?.ccxtMethod || 'watchOrderBook';
                 
                 let orderbook;
                 switch (selectedMethod) {
                   case 'watchOrderBookForSymbols':
-                    // Для множественных пар (возвращает объект с парами)
+                    // For multiple pairs (returns object with pairs)
                     const multiOrderbook = await exchangeInstance.watchOrderBookForSymbols([symbol]);
                     orderbook = multiOrderbook[symbol];
                     console.log(`📋 OrderBook (watchOrderBookForSymbols) received for ${exchange} ${symbol}`);
                     break;
                   case 'watchOrderBook':
                   default:
-                    // Стандартный полный orderbook
+                    // Standard full orderbook
                     orderbook = await exchangeInstance.watchOrderBook(symbol);
                     console.log(`📋 OrderBook (watchOrderBook) received for ${exchange} ${symbol}`);
                     break;
@@ -259,7 +259,7 @@ export const createFetchingActions: StateCreator<
           } catch (error) {
             console.error(`❌ CCXT Pro WebSocket error for ${subscriptionKey}:`, error);
             
-            // При ошибке WebSocket - переключаемся на REST с флагом fallback
+            // On WebSocket error - switch to REST with fallback flag
             console.log(`🔄 Switching to REST fallback due to WebSocket error`);
             set(state => {
               if (state.activeSubscriptions[subscriptionKey]) {
@@ -273,7 +273,7 @@ export const createFetchingActions: StateCreator<
         }
       };
 
-      // Запускаем WebSocket поток в фоновом режиме
+      // Start WebSocket stream in background
       startWebSocketStream().catch(error => {
         console.error(`❌ Failed to start CCXT Pro WebSocket for ${subscriptionKey}:`, error);
       });
@@ -284,10 +284,10 @@ export const createFetchingActions: StateCreator<
     }
   },
 
-  // Запуск REST получения данных
+  // Start REST data fetching
   startRestFetching: async (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
     if (provider.type !== 'ccxt-browser') {
-      console.warn(`⚠️ REST не поддерживается для провайдера типа ${provider.type}`);
+      console.warn(`⚠️ REST not supported for provider type ${provider.type}`);
       return;
     }
 
@@ -347,14 +347,14 @@ export const createFetchingActions: StateCreator<
           }
         } catch (error) {
           console.error(`❌ REST fetch error for ${subscriptionKey}:`, error);
-          // При ошибке продолжаем попытки через увеличенный интервал
+          // On error continue attempts with increased interval
         }
       };
 
-      // Первый запрос сразу
+      // First request immediately
       await fetchData();
 
-      // Запускаем интервал
+      // Start interval
       const intervalId = setInterval(fetchData, interval) as any;
 
       set(state => {

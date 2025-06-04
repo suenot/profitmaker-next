@@ -1,4 +1,4 @@
-// Типы данных для финансовых инструментов
+// Data types for financial instruments
 export interface Candle {
   timestamp: number;
   open: number;
@@ -27,36 +27,36 @@ export interface OrderBook {
   asks: OrderBookEntry[];
 }
 
-// Типы подписок на данные
+// Data subscription types
 export type DataType = 'candles' | 'trades' | 'orderbook';
 
-// Поддерживаемые таймфреймы для candles
+// Supported timeframes for candles
 export type Timeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1M';
 
-// Типы рынков
+// Market types
 export type MarketType = 'spot' | 'futures';
 
 export interface DataSubscription {
   id: string;
-  symbol: string; // Например: 'BTC/USDT'
+  symbol: string; // Example: 'BTC/USDT'
   dataType: DataType;
   exchange: string;
   dashboardId: string;
   widgetId: string;
-  timeframe?: Timeframe; // Опционально для candles
-  market?: MarketType; // Тип рынка (spot/futures)
+  timeframe?: Timeframe; // Optional for candles
+  market?: MarketType; // Market type (spot/futures)
 }
 
-// Ключ для уникальной идентификации соединения
+// Key for unique connection identification
 export interface ConnectionKey {
   exchange: string;
   symbol: string;
   dataType: DataType;
-  timeframe?: Timeframe; // Опционально для candles
-  market?: MarketType; // Тип рынка (spot/futures)
+  timeframe?: Timeframe; // Optional for candles
+  market?: MarketType; // Market type (spot/futures)
 }
 
-// Статус соединения
+// Connection status
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export interface ConnectionInfo {
@@ -67,7 +67,7 @@ export interface ConnectionInfo {
   error?: string;
 }
 
-// Базовый интерфейс для поставщика данных
+// Base interface for data provider
 export interface BaseDataProvider {
   id: string;
   name: string;
@@ -75,10 +75,10 @@ export interface BaseDataProvider {
   status: ConnectionStatus;
 }
 
-// Типы поставщиков данных
+// Data provider types
 export type DataProviderType = 'ccxt-browser' | 'ccxt-server' | 'custom';
 
-// Конфигурация для CCXT Browser
+// Configuration for CCXT Browser
 export interface CCXTBrowserConfig {
   exchangeId: string; // binance, bybit, etc.
   sandbox?: boolean;
@@ -89,7 +89,7 @@ export interface CCXTBrowserConfig {
   options?: Record<string, any>;
 }
 
-// Конфигурация для CCXT Server
+// Configuration for CCXT Server
 export interface CCXTServerConfig {
   serverUrl: string;
   privateKey: string;
@@ -97,14 +97,14 @@ export interface CCXTServerConfig {
   timeout?: number;
 }
 
-// Кастомная конфигурация для других провайдеров
+// Custom configuration for other providers
 export interface CustomProviderConfig {
   schema: Record<string, any>;
   endpoints: Record<string, string>;
   authentication?: Record<string, any>;
 }
 
-// Конкретные типы поставщиков
+// Specific provider types
 export interface CCXTBrowserProvider extends BaseDataProvider {
   type: 'ccxt-browser';
   config: CCXTBrowserConfig;
@@ -120,21 +120,21 @@ export interface CustomProvider extends BaseDataProvider {
   config: CustomProviderConfig;
 }
 
-// Объединенный тип поставщика
+// Combined provider type
 export type DataProvider = CCXTBrowserProvider | CCXTServerProvider | CustomProvider;
 
-// Интерфейс для WebSocket соединения
+// Interface for WebSocket connection
 export interface WebSocketConnection {
-  key: string; // строковое представление ConnectionKey
+  key: string; // string representation of ConnectionKey
   ws: WebSocket | null;
   status: ConnectionStatus;
-  subscriptions: Set<string>; // ID подписок
+  subscriptions: Set<string>; // subscription IDs
   reconnectAttempts: number;
   lastPing: number;
   provider: DataProvider;
 }
 
-// Состояние данных по подпискам
+// Data state by subscriptions
 export interface DataState<T> {
   data: T | null;
   lastUpdate: number;
@@ -142,14 +142,14 @@ export interface DataState<T> {
   error?: string;
 }
 
-// Обобщенный интерфейс для данных по подпискам
+// Generic interface for subscription data
 export interface SubscriptionData {
   candles: Record<string, DataState<Candle[]>>;
   trades: Record<string, DataState<Trade[]>>;
   orderbook: Record<string, DataState<OrderBook>>;
 }
 
-// Параметры для создания подписки
+// Parameters for creating subscription
 export interface CreateSubscriptionParams {
   symbol: string;
   dataType: DataType;
@@ -159,7 +159,7 @@ export interface CreateSubscriptionParams {
   providerId: string;
 }
 
-// Результат операции с провайдером
+// Provider operation result
 export interface ProviderOperationResult {
   success: boolean;
   error?: string;

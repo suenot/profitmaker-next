@@ -2,7 +2,7 @@ import { StateCreator } from 'zustand';
 import { DataProviderStore } from '../types';
 import { ChartUpdateListener, ChartUpdateEvent, Timeframe, MarketType } from '../../types/dataProviders';
 
-// Actions для event system Chart widgets
+// Actions for Chart widgets event system
 export interface EventActions {
   addChartUpdateListener: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType, listener: ChartUpdateListener) => void;
   removeChartUpdateListener: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType, listener: ChartUpdateListener) => void;
@@ -23,7 +23,7 @@ export const createEventActions: StateCreator<
         state.chartUpdateListeners[subscriptionKey] = [];
       }
       
-      // Добавляем listener если его еще нет
+      // Add listener if it doesn't exist yet
       if (!state.chartUpdateListeners[subscriptionKey].includes(listener)) {
         state.chartUpdateListeners[subscriptionKey].push(listener);
         console.log(`📺 [EventSystem] Added chart listener for ${subscriptionKey}, total listeners: ${state.chartUpdateListeners[subscriptionKey].length}`);
@@ -41,7 +41,7 @@ export const createEventActions: StateCreator<
           state.chartUpdateListeners[subscriptionKey].splice(index, 1);
           console.log(`📺 [EventSystem] Removed chart listener for ${subscriptionKey}, remaining listeners: ${state.chartUpdateListeners[subscriptionKey].length}`);
           
-          // Удаляем массив если он пустой
+          // Remove array if empty
           if (state.chartUpdateListeners[subscriptionKey].length === 0) {
             delete state.chartUpdateListeners[subscriptionKey];
           }
@@ -62,7 +62,7 @@ export const createEventActions: StateCreator<
         data: event.data
       });
       
-      // Вызываем всех слушателей асинхронно чтобы не блокировать store
+      // Call all listeners asynchronously to not block store
       setTimeout(() => {
         listeners.forEach(listener => {
           try {

@@ -16,85 +16,85 @@ import type {
   ChartUpdateEvent
 } from '../types/dataProviders';
 
-// Интерфейс состояния store
+// Store state interface
 export interface DataProviderState {
-  // Поставщики данных
+  // Data providers
   providers: Record<string, DataProvider>;
   activeProviderId: string | null;
   
-  // Настройки получения данных
+  // Data fetch settings
   dataFetchSettings: DataFetchSettings;
   
-  // Активные подписки с дедупликацией
+  // Active subscriptions with deduplication
   activeSubscriptions: Record<string, ActiveSubscription>;
   
-  // REST циклы
+  // REST cycles
   restCycles: Record<string, RestCycleManager>;
   
-  // Централизованное хранилище данных
+  // Centralized data storage
   marketData: {
     candles: Record<string, Record<string, Record<string, Record<string, Candle[]>>>>; // [exchange][market][symbol][timeframe] -> Candle[]
     trades: Record<string, Record<string, Record<string, Trade[]>>>;   // [exchange][market][symbol] -> Trade[]
     orderbook: Record<string, Record<string, Record<string, OrderBook>>>; // [exchange][market][symbol] -> OrderBook
   };
   
-  // Event system для уведомления Chart widgets
+  // Event system for notifying Chart widgets
   chartUpdateListeners: Record<string, ChartUpdateListener[]>; // [subscriptionKey] -> [listeners]
   
-  // Состояние
+  // State
   loading: boolean;
   error: string | null;
 }
 
-// Интерфейс действий store
+// Store actions interface
 export interface DataProviderActions {
-  // Управление поставщиками
+  // Provider management
   addProvider: (provider: DataProvider) => void;
   removeProvider: (providerId: string) => void;
   setActiveProvider: (providerId: string) => void;
   
-  // Управление настройками получения данных
+  // Data fetch settings management
   setDataFetchMethod: (method: DataFetchMethod) => Promise<void>;
   setRestInterval: (dataType: DataType, interval: number) => void;
   
-  // Управление дедуплицированными подписками
+  // Deduplicated subscriptions management
   subscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => Promise<ProviderOperationResult>;
   unsubscribe: (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => void;
   
-  // Получение данных из store
+  // Data retrieval from store
   getCandles: (exchange: string, symbol: string, timeframe?: Timeframe, market?: MarketType) => Candle[];
   getTrades: (exchange: string, symbol: string, market?: MarketType) => Trade[];
   getOrderBook: (exchange: string, symbol: string, market?: MarketType) => OrderBook | null;
   
-  // REST инициализация данных для Chart widgets
+  // REST data initialization for Chart widgets
   initializeChartData: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType) => Promise<Candle[]>;
   
-  // Обновление данных в центральном store
+  // Central store data updates
   updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe?: Timeframe, market?: MarketType) => void;
   updateTrades: (exchange: string, symbol: string, trades: Trade[], market?: MarketType) => void;
   updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook, market?: MarketType) => void;
   
-  // Утилиты
+  // Utilities
   getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => string;
   getActiveSubscriptionsList: () => ActiveSubscription[];
   
-  // Event system для Chart widgets
+  // Event system for Chart widgets
   addChartUpdateListener: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType, listener: ChartUpdateListener) => void;
   removeChartUpdateListener: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType, listener: ChartUpdateListener) => void;
   emitChartUpdateEvent: (event: ChartUpdateEvent) => void;
   
-  // Внутренние функции управления потоками данных
+  // Internal data flow management functions
   startDataFetching: (subscriptionKey: string) => Promise<void>;
   stopDataFetching: (subscriptionKey: string) => void;
   startWebSocketFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
   startRestFetching: (exchange: string, symbol: string, dataType: DataType, provider: DataProvider, timeframe?: Timeframe, market?: MarketType) => Promise<void>;
   
-  // Интеллектуальный выбор CCXT методов
+  // Intelligent CCXT method selection
   selectOptimalOrderBookMethod: (exchange: string, exchangeInstance: any) => OrderBookMethodSelection;
   
-  // Очистка
+  // Cleanup
   cleanup: () => void;
 }
 
-// Основной тип store
+// Main store type
 export type DataProviderStore = DataProviderState & DataProviderActions; 

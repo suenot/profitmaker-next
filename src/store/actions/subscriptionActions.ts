@@ -13,7 +13,7 @@ export const createSubscriptionActions: StateCreator<
   [],
   SubscriptionActions
 > = (set, get) => ({
-  // Управление дедуплицированными подписками
+  // Deduplicated subscriptions management
   subscribe: async (subscriberId: string, exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market: MarketType = 'spot'): Promise<ProviderOperationResult> => {
     const subscriptionKey = get().getSubscriptionKey(exchange, symbol, dataType, timeframe, market);
     const currentMethod = get().dataFetchSettings.method;
@@ -23,25 +23,25 @@ export const createSubscriptionActions: StateCreator<
       let needsRestart = false;
       
       set(state => {
-        // Ищем существующую подписку
+        // Look for existing subscription
         if (state.activeSubscriptions[subscriptionKey]) {
-          // Увеличиваем счетчик подписчиков
+          // Increase subscriber count
           state.activeSubscriptions[subscriptionKey].subscriberCount++;
           console.log(`📈 Subscriber ${subscriberId} added to existing subscription: ${subscriptionKey} (count: ${state.activeSubscriptions[subscriptionKey].subscriberCount})`);
           
-          // ВАЖНО: Проверяем соответствует ли метод подписки текущим настройкам
+          // IMPORTANT: Check if subscription method matches current settings
           if (state.activeSubscriptions[subscriptionKey].method !== currentMethod) {
             console.log(`🔄 Subscription ${subscriptionKey} method outdated (${state.activeSubscriptions[subscriptionKey].method} -> ${currentMethod})`);
             state.activeSubscriptions[subscriptionKey].method = currentMethod;
             needsRestart = true;
           }
         } else {
-          // Создаем новую подписку с текущим методом
+          // Create new subscription with current method
           state.activeSubscriptions[subscriptionKey] = {
             key: { exchange, symbol, dataType, timeframe, market },
             subscriberCount: 1,
             method: currentMethod,
-            isFallback: false, // Изначально не fallback
+            isFallback: false, // Initially not fallback
             isActive: false,
             lastUpdate: 0
           };
@@ -50,14 +50,14 @@ export const createSubscriptionActions: StateCreator<
         }
       });
 
-      // Перезапускаем если метод изменился
+      // Restart if method changed
       if (needsRestart) {
         console.log(`🔄 Restarting subscription ${subscriptionKey} due to method change`);
         get().stopDataFetching(subscriptionKey);
         await new Promise(resolve => setTimeout(resolve, 100));
         await get().startDataFetching(subscriptionKey);
       }
-      // Запускаем получение данных если подписка новая
+      // Start data fetching if subscription is new
       else if (needsStart) {
         await get().startDataFetching(subscriptionKey);
       }
@@ -77,7 +77,7 @@ export const createSubscriptionActions: StateCreator<
         state.activeSubscriptions[subscriptionKey].subscriberCount--;
         console.log(`📉 Subscriber ${subscriberId} removed from subscription: ${subscriptionKey} (count: ${state.activeSubscriptions[subscriptionKey].subscriberCount})`);
         
-        // Если подписчиков не осталось - останавливаем получение данных
+        // If no subscribers left - stop data fetching
         if (state.activeSubscriptions[subscriptionKey].subscriberCount <= 0) {
           get().stopDataFetching(subscriptionKey);
           delete state.activeSubscriptions[subscriptionKey];

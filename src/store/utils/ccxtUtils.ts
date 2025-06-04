@@ -1,4 +1,4 @@
-// CCXT загружается через CDN script tag - доступен как window.ccxt
+// CCXT loaded via CDN script tag - available as window.ccxt
 declare global {
   interface Window {
     ccxt: any;
@@ -6,18 +6,18 @@ declare global {
 }
 
 /**
- * Получение CCXT из глобального объекта (CDN версия)
+ * Get CCXT from global object (CDN version)
  */
 export const getCCXT = () => {
   if (!window.ccxt) {
-    console.error('CCXT не загружен! Проверьте подключение CDN script tag');
+    console.error('CCXT not loaded! Check CDN script tag connection');
     return null;
   }
   return window.ccxt;
 };
 
 /**
- * Получение CCXT Pro (для WebSocket)
+ * Get CCXT Pro (for WebSocket)
  */
 export const getCCXTPro = () => {
   const ccxt = getCCXT();
@@ -25,6 +25,6 @@ export const getCCXTPro = () => {
     return ccxt.pro;
   }
   
-  console.error('❌ CCXT Pro не доступен. Убедитесь что используется полная версия CCXT с поддержкой WebSocket');
+  console.error('❌ CCXT Pro not available. Make sure you are using the full CCXT version with WebSocket support');
   return null;
 }; 

@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import BottomLeftInfo from './components/BottomLeftInfo';
+import RightClickInfo from './components/RightClickInfo';
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
         <BottomLeftInfo />
+        <RightClickInfo />
         <CookieNotification />
       </TooltipProvider>
     </ThemeProvider>

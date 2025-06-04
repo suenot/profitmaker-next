@@ -17,21 +17,21 @@ import {
 } from '../../types/dataProviders';
 import { Plus, Settings, TestTube, Loader2 } from 'lucide-react';
 
-// CCXT загружается через CDN script tag - доступен как window.ccxt
+// CCXT loaded via CDN script tag - available as window.ccxt
 declare global {
   interface Window {
     ccxt: any;
   }
 }
 
-// Интерфейс для информации о бирже
+// Interface for exchange information
 interface ExchangeInfo {
   id: string;
   name: string;
   has: any;
 }
 
-// Безопасный fallback список бирж
+// Safe fallback exchanges list
 const getFallbackExchanges = (): ExchangeInfo[] => {
   return [
     { id: 'binance', name: 'Binance', has: {} },
@@ -47,12 +47,12 @@ const getFallbackExchanges = (): ExchangeInfo[] => {
   ];
 };
 
-// Тестирование CCXT напрямую (CDN версия)
+// Test CCXT directly (CDN version)
 const testCCXTDirectly = () => {
   try {
-    console.log('🧪 CCXT DIRECT TEST (CDN версия):');
+    console.log('🧪 CCXT DIRECT TEST (CDN version):');
     if (!window.ccxt) {
-      console.error('❌ CCXT не загружен! Проверьте подключение CDN script tag');
+      console.error('❌ CCXT not loaded! Check CDN script tag connection');
       return;
     }
     console.log('📦 CCXT version:', window.ccxt.version);
@@ -77,32 +77,32 @@ const testCCXTDirectly = () => {
   }
 };
 
-// Безопасная загрузка списка бирж из CCXT с полной обработкой ошибок
+// Safe loading of exchanges list from CCXT with full error handling
 const loadCCXTExchanges = (): Promise<ExchangeInfo[]> => {
   return new Promise((resolve) => {
     try {
       const exchanges: ExchangeInfo[] = [];
       
-      // Проверяем доступность CCXT с детальным логированием
+      // Check CCXT availability with detailed logging
       if (!window?.ccxt) {
-        console.warn('⚠️ CCXT не загружен через CDN, используем fallback список');
+        console.warn('⚠️ CCXT not loaded via CDN, using fallback list');
         resolve(getFallbackExchanges());
         return;
       }
       
-      // Проверяем тип window.ccxt.exchanges  
+      // Check window.ccxt.exchanges type  
       let exchangeIds: string[] = [];
       
       if (Array.isArray(window.ccxt.exchanges)) {
-        // Если это массив
+        // If it's an array
         exchangeIds = window.ccxt.exchanges;
         console.log('📋 window.ccxt.exchanges is array');
       } else if (window.ccxt.exchanges && typeof window.ccxt.exchanges === 'object') {
-        // Если это объект - берем ключи
+        // If it's an object - take keys
         exchangeIds = Object.keys(window.ccxt.exchanges);
         console.log('📋 window.ccxt.exchanges is object, using keys');
       } else {
-        // Fallback: ищем функции-классы бирж в window.ccxt
+        // Fallback: search for exchange class functions in window.ccxt
         exchangeIds = Object.keys(window.ccxt).filter(key => {
           const item = window.ccxt[key];
           return typeof item === 'function' && 
@@ -131,7 +131,7 @@ const loadCCXTExchanges = (): Promise<ExchangeInfo[]> => {
           });
         }
       } catch (error) {
-        // Некоторые биржи могут не инициализироваться без параметров
+        // Some exchanges may not initialize without parameters
         // console.warn(`Failed to load exchange ${exchangeId}:`, error);
         exchanges.push({
           id: exchangeId,
@@ -141,14 +141,14 @@ const loadCCXTExchanges = (): Promise<ExchangeInfo[]> => {
       }
     }
     
-      // Сортируем по имени
+      // Sort by name
       const sortedExchanges = exchanges.sort((a, b) => a.name.localeCompare(b.name));
       console.log(`✅ Successfully loaded ${sortedExchanges.length} exchanges from CCXT`);
       console.log(`🏆 Sample exchanges:`, sortedExchanges.slice(0, 5).map(e => `${e.name} (${e.id})`));
       resolve(sortedExchanges);
     } catch (error) {
-      console.error('🛡️ Безопасный перехват ошибки загрузки CCXT exchanges:', error);
-      // Возвращаем fallback список для обеспечения работоспособности
+      console.error('🛡️ Safe error handling for CCXT exchanges loading:', error);
+      // Return fallback list to ensure functionality
       resolve(getFallbackExchanges());
     }
   });
@@ -181,24 +181,24 @@ const DataProviderSetupWidgetInner: React.FC = () => {
   const [supportedExchanges, setSupportedExchanges] = useState<ExchangeInfo[]>([]);
   const [loadingExchanges, setLoadingExchanges] = useState(true);
 
-  // Безопасная загрузка списка бирж при инициализации
+  // Safe loading of exchanges list on initialization
   useEffect(() => {
     const loadExchanges = async () => {
       setLoadingExchanges(true);
       try {
-        // Безопасное тестирование CCXT
+        // Safe CCXT testing
         try {
           testCCXTDirectly();
         } catch (testError) {
-          console.warn('⚠️ Предупреждение при тестировании CCXT:', testError);
+          console.warn('⚠️ Warning during CCXT testing:', testError);
         }
         
         const exchanges = await loadCCXTExchanges();
         setSupportedExchanges(exchanges);
-        console.log(`🔥 Успешно загружено ${exchanges.length} бирж из CCXT`);
+        console.log(`🔥 Successfully loaded ${exchanges.length} exchanges from CCXT`);
       } catch (error) {
-        console.error('🛡️ Перехваченная ошибка загрузки бирж:', error);
-        // Устанавливаем fallback список при любых ошибках
+        console.error('🛡️ Caught error loading exchanges:', error);
+        // Set fallback list on any errors
         setSupportedExchanges(getFallbackExchanges());
       } finally {
         setLoadingExchanges(false);
@@ -208,7 +208,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
     loadExchanges();
   }, []);
 
-  // Форма для CCXT Browser
+  // Form for CCXT Browser
   const [ccxtBrowserForm, setCcxtBrowserForm] = useState<CCXTBrowserFormData>({
     name: '',
     exchangeId: '',
@@ -219,7 +219,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
     uid: ''
   });
 
-  // Форма для CCXT Server
+  // Form for CCXT Server
   const [ccxtServerForm, setCcxtServerForm] = useState<CCXTServerFormData>({
     name: '',
     exchangeId: '',
@@ -256,15 +256,15 @@ const DataProviderSetupWidgetInner: React.FC = () => {
     try {
       const tempProvider = createTempProvider();
       if (!tempProvider) {
-        setTestResult({ success: false, message: '🛡️ Ошибка создания тестового провайдера' });
+        setTestResult({ success: false, message: '🛡️ Error creating test provider' });
         return;
       }
 
-      // Прямое тестирование через CCXT
+      // Direct testing via CCXT
       if (tempProvider.type === 'ccxt-browser') {
         const ccxt = window.ccxt;
         if (!ccxt) {
-          setTestResult({ success: false, message: '❌ CCXT не загружен! Проверьте подключение CDN' });
+          setTestResult({ success: false, message: '❌ CCXT not loaded! Check CDN connection' });
           return;
         }
 
@@ -272,7 +272,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
         const ExchangeClass = ccxt[config.exchangeId];
         
         if (!ExchangeClass) {
-          setTestResult({ success: false, message: `❌ Биржа ${config.exchangeId} не найдена в CCXT` });
+          setTestResult({ success: false, message: `❌ Exchange ${config.exchangeId} not found in CCXT` });
           return;
         }
 
@@ -282,16 +282,16 @@ const DataProviderSetupWidgetInner: React.FC = () => {
           timeout: 10000
         });
 
-        // Тестируем загрузку рынков
+        // Test loading markets
         const markets = await exchange.loadMarkets();
         const marketCount = Object.keys(markets).length;
         
         setTestResult({
           success: true,
-          message: `✅ Соединение успешно! Биржа ${exchange.name}, найдено ${marketCount} торговых пар`
+          message: `✅ Connection successful! Exchange ${exchange.name}, found ${marketCount} trading pairs`
         });
       } else if (tempProvider.type === 'ccxt-server') {
-        // Для CCXT Server можно добавить простую проверку URL
+        // For CCXT Server we can add simple URL check
         const config = tempProvider.config as CCXTServerConfig;
         try {
           const response = await fetch(config.serverUrl + '/health', { 
@@ -303,26 +303,26 @@ const DataProviderSetupWidgetInner: React.FC = () => {
           if (response.ok) {
             setTestResult({
               success: true,
-              message: `✅ Сервер доступен! URL: ${config.serverUrl}`
+              message: `✅ Server available! URL: ${config.serverUrl}`
             });
           } else {
             setTestResult({
               success: false,
-              message: `❌ Сервер недоступен. Статус: ${response.status}`
+              message: `❌ Server unavailable. Status: ${response.status}`
             });
           }
         } catch (fetchError) {
           setTestResult({
             success: false,
-            message: `❌ Ошибка подключения к серверу: ${fetchError instanceof Error ? fetchError.message : 'Неизвестная ошибка'}`
+            message: `❌ Server connection error: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`
           });
         }
       }
     } catch (error) {
-      console.error('🛡️ Перехваченная ошибка тестирования:', error);
+      console.error('🛡️ Caught testing error:', error);
       setTestResult({ 
         success: false, 
-        message: `🛡️ Безопасная обработка ошибки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}` 
+        message: `🛡️ Safe error handling: ${error instanceof Error ? error.message : 'Unknown error'}` 
       });
     } finally {
       setIsTestingConnection(false);
@@ -386,17 +386,17 @@ const DataProviderSetupWidgetInner: React.FC = () => {
     setSubmitResult(null);
 
     try {
-      // Создаем реальный ID
+      // Create real ID
       provider.id = `${provider.type}-${Date.now()}`;
       
       addProvider(provider);
       
       setSubmitResult({
         success: true,
-        message: `Поставщик "${provider.name}" успешно добавлен!`
+        message: `Provider "${provider.name}" successfully added!`
       });
       
-      // Очищаем форму
+      // Clear form
       if (providerType === 'ccxt-browser') {
         setCcxtBrowserForm({
           name: '',
@@ -421,7 +421,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
     } catch (error) {
       setSubmitResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Неизвестная ошибка при добавлении поставщика'
+        message: error instanceof Error ? error.message : 'Unknown error adding provider'
       });
     } finally {
       setIsSubmitting(false);
@@ -436,17 +436,17 @@ const DataProviderSetupWidgetInner: React.FC = () => {
     <div className="space-y-6 p-4">
       <div className="flex items-center gap-2">
         <Settings className="h-5 w-5" />
-        <h2 className="text-lg font-semibold">Настройка поставщиков данных</h2>
+        <h2 className="text-lg font-semibold">Data Providers Setup</h2>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Добавить поставщика данных</CardTitle>
+          <CardTitle className="text-sm">Add Data Provider</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Выбор типа поставщика */}
+          {/* Provider type selection */}
           <div className="space-y-2">
-            <Label>Тип поставщика</Label>
+            <Label>Provider Type</Label>
             <Select value={providerType} onValueChange={(value: DataProviderType) => setProviderType(value)}>
               <SelectTrigger>
                 <SelectValue />
@@ -454,39 +454,39 @@ const DataProviderSetupWidgetInner: React.FC = () => {
               <SelectContent>
                 <SelectItem value="ccxt-browser">CCXT Browser</SelectItem>
                 <SelectItem value="ccxt-server">CCXT Server</SelectItem>
-                <SelectItem value="custom" disabled>Кастомный (скоро)</SelectItem>
+                <SelectItem value="custom" disabled>Custom (coming soon)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Форма для CCXT Browser */}
+          {/* Form for CCXT Browser */}
           {providerType === 'ccxt-browser' && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="browser-name">Название поставщика</Label>
+                <Label htmlFor="browser-name">Provider Name</Label>
                 <Input
                   id="browser-name"
                   value={ccxtBrowserForm.name}
                   onChange={(e) => handleCcxtBrowserFormChange('name', e.target.value)}
-                  placeholder="Например: Binance Spot"
+                  placeholder="e.g.: Binance Spot"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="browser-exchange">Биржа</Label>
+                <Label htmlFor="browser-exchange">Exchange</Label>
                 <Select 
                   value={ccxtBrowserForm.exchangeId} 
                   onValueChange={(value) => handleCcxtBrowserFormChange('exchangeId', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Выберите биржу" />
+                    <SelectValue placeholder="Select exchange" />
                   </SelectTrigger>
                   <SelectContent>
                     {loadingExchanges ? (
                       <SelectItem value="loading" disabled>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Загружаем биржи...
+                          Loading exchanges...
                         </div>
                       </SelectItem>
                     ) : (
@@ -506,84 +506,84 @@ const DataProviderSetupWidgetInner: React.FC = () => {
                   checked={ccxtBrowserForm.sandbox}
                   onCheckedChange={(checked) => handleCcxtBrowserFormChange('sandbox', checked)}
                 />
-                <Label htmlFor="browser-sandbox">Тестовый режим (Sandbox)</Label>
+                <Label htmlFor="browser-sandbox">Test Mode (Sandbox)</Label>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="browser-apiKey">API Key (опционально)</Label>
+                  <Label htmlFor="browser-apiKey">API Key (optional)</Label>
                   <Input
                     id="browser-apiKey"
                     type="password"
                     value={ccxtBrowserForm.apiKey}
                     onChange={(e) => handleCcxtBrowserFormChange('apiKey', e.target.value)}
-                    placeholder="Для приватных данных"
+                    placeholder="For private data"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="browser-secret">Secret (опционально)</Label>
+                  <Label htmlFor="browser-secret">Secret (optional)</Label>
                   <Input
                     id="browser-secret"
                     type="password"
                     value={ccxtBrowserForm.secret}
                     onChange={(e) => handleCcxtBrowserFormChange('secret', e.target.value)}
-                    placeholder="Для приватных данных"
+                    placeholder="For private data"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="browser-password">Passphrase (опционально)</Label>
+                  <Label htmlFor="browser-password">Passphrase (optional)</Label>
                   <Input
                     id="browser-password"
                     type="password"
                     value={ccxtBrowserForm.password}
                     onChange={(e) => handleCcxtBrowserFormChange('password', e.target.value)}
-                    placeholder="Для некоторых бирж"
+                    placeholder="For some exchanges"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="browser-uid">UID (опционально)</Label>
+                  <Label htmlFor="browser-uid">UID (optional)</Label>
                   <Input
                     id="browser-uid"
                     value={ccxtBrowserForm.uid}
                     onChange={(e) => handleCcxtBrowserFormChange('uid', e.target.value)}
-                    placeholder="Для некоторых бирж"
+                    placeholder="For some exchanges"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Форма для CCXT Server */}
+          {/* Form for CCXT Server */}
           {providerType === 'ccxt-server' && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="server-name">Название поставщика</Label>
+                <Label htmlFor="server-name">Provider Name</Label>
                 <Input
                   id="server-name"
                   value={ccxtServerForm.name}
                   onChange={(e) => handleCcxtServerFormChange('name', e.target.value)}
-                  placeholder="Например: CCXT Server Binance"
+                  placeholder="e.g.: CCXT Server Binance"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="server-exchange">Биржа</Label>
+                <Label htmlFor="server-exchange">Exchange</Label>
                 <Select 
                   value={ccxtServerForm.exchangeId} 
                   onValueChange={(value) => handleCcxtServerFormChange('exchangeId', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Выберите биржу" />
+                    <SelectValue placeholder="Select exchange" />
                   </SelectTrigger>
                   <SelectContent>
                     {loadingExchanges ? (
                       <SelectItem value="loading" disabled>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Загружаем биржи...
+                          Loading exchanges...
                         </div>
                       </SelectItem>
                     ) : (
@@ -598,7 +598,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="server-url">URL сервера</Label>
+                <Label htmlFor="server-url">Server URL</Label>
                 <Input
                   id="server-url"
                   value={ccxtServerForm.serverUrl}
@@ -608,18 +608,18 @@ const DataProviderSetupWidgetInner: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="private-key">Приватный ключ</Label>
+                <Label htmlFor="private-key">Private Key</Label>
                 <Textarea
                   id="private-key"
                   value={ccxtServerForm.privateKey}
                   onChange={(e) => handleCcxtServerFormChange('privateKey', e.target.value)}
-                  placeholder="Приватный ключ для аутентификации"
+                  placeholder="Private key for authentication"
                   rows={4}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="timeout">Таймаут (мс)</Label>
+                <Label htmlFor="timeout">Timeout (ms)</Label>
                 <Input
                   id="timeout"
                   type="number"
@@ -632,7 +632,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
             </div>
           )}
 
-          {/* Результат тестирования */}
+          {/* Test result */}
           {testResult && (
             <div className={`p-3 rounded-lg ${
               testResult.success 
@@ -643,7 +643,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
             </div>
           )}
 
-          {/* Результат добавления */}
+          {/* Submit result */}
           {submitResult && (
             <div className={`p-3 rounded-lg ${
               submitResult.success 
@@ -654,7 +654,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
             </div>
           )}
 
-          {/* Кнопки */}
+          {/* Buttons */}
           <div className="flex gap-2">
             <Button
               onClick={testConnection}
@@ -663,7 +663,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
               className="flex items-center gap-2"
             >
               <TestTube className="h-4 w-4" />
-              {isTestingConnection ? 'Тестируем...' : 'Тест соединения'}
+              {isTestingConnection ? 'Testing...' : 'Test Connection'}
             </Button>
             
             <Button
@@ -672,7 +672,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              {isSubmitting ? 'Добавляем...' : 'Добавить поставщика'}
+              {isSubmitting ? 'Adding...' : 'Add Provider'}
             </Button>
           </div>
         </CardContent>
@@ -683,7 +683,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
 
 export const DataProviderSetupWidget: React.FC = () => {
   return (
-    <ErrorBoundary fallbackTitle="Ошибка виджета настройки поставщиков" showDetails={false}>
+    <ErrorBoundary fallbackTitle="Data Provider Setup Widget Error" showDetails={false}>
       <DataProviderSetupWidgetInner />
     </ErrorBoundary>
   );

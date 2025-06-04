@@ -4,24 +4,24 @@ import type { DataType, DataFetchMethod, Candle, Trade, OrderBook, ActiveSubscri
 import { getCCXT } from '../utils/ccxtUtils';
 
 export interface DataActions {
-  // Управление настройками получения данных
+  // Data fetch settings management
   setDataFetchMethod: (method: DataFetchMethod) => Promise<void>;
   setRestInterval: (dataType: DataType, interval: number) => void;
   
-  // Получение данных из store
+  // Data retrieval from store
   getCandles: (exchange: string, symbol: string, timeframe?: Timeframe, market?: MarketType) => Candle[];
   getTrades: (exchange: string, symbol: string, market?: MarketType) => Trade[];
   getOrderBook: (exchange: string, symbol: string, market?: MarketType) => OrderBook | null;
   
-  // REST инициализация данных для Chart widgets
+  // REST data initialization for Chart widgets
   initializeChartData: (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType) => Promise<Candle[]>;
   
-  // Обновление данных в центральном store
+  // Central store data updates
   updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe?: Timeframe, market?: MarketType) => void;
   updateTrades: (exchange: string, symbol: string, trades: Trade[], market?: MarketType) => void;
   updateOrderBook: (exchange: string, symbol: string, orderbook: OrderBook, market?: MarketType) => void;
   
-  // Утилиты
+  // Utilities
   getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market?: MarketType) => string;
   getActiveSubscriptionsList: () => ActiveSubscription[];
 }
@@ -32,18 +32,18 @@ export const createDataActions: StateCreator<
   [],
   DataActions
 > = (set, get) => ({
-  // Управление настройками получения данных
+  // Data fetch settings management
   setDataFetchMethod: async (method: DataFetchMethod) => {
     const oldMethod = get().dataFetchSettings.method;
     
-    // Сначала обновляем настройки
+    // First update settings
     set(state => {
       state.dataFetchSettings.method = method;
     });
     
     console.log(`🔄 Data fetch method changed from ${oldMethod} to ${method}`);
     
-    // При смене метода - перезапускаем все активные подписки
+    // When method changes - restart all active subscriptions
     if (oldMethod !== method) {
       const activeKeys = Object.keys(get().activeSubscriptions).filter(key => 
         get().activeSubscriptions[key].isActive
@@ -51,13 +51,13 @@ export const createDataActions: StateCreator<
       
       console.log(`🔄 Restarting ${activeKeys.length} active subscriptions with new method: ${method}`);
       
-      // Останавливаем все активные подписки
+      // Stop all active subscriptions
       activeKeys.forEach(key => {
         console.log(`🛑 Stopping subscription ${key} for method change`);
         get().stopDataFetching(key);
       });
       
-      // Обновляем метод в подписках
+      // Update method in subscriptions
       set(state => {
         activeKeys.forEach(key => {
           if (state.activeSubscriptions[key]) {
@@ -67,10 +67,10 @@ export const createDataActions: StateCreator<
         });
       });
       
-      // Ждем немного для завершения остановки
+      // Wait a bit for stopping to complete
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Запускаем подписки заново с новым методом
+      // Restart subscriptions with new method
       for (const key of activeKeys) {
         const subscription = get().activeSubscriptions[key];
         if (subscription) {
@@ -89,7 +89,7 @@ export const createDataActions: StateCreator<
       state.dataFetchSettings.restIntervals[dataType] = interval;
       console.log(`⏱️ REST interval for ${dataType} changed from ${oldInterval}ms to ${interval}ms`);
       
-      // Перезапускаем REST подписки для этого типа данных
+      // Restart REST subscriptions for this data type
       Object.keys(state.activeSubscriptions).forEach(key => {
         const subscription = state.activeSubscriptions[key];
         if (subscription.key.dataType === dataType && subscription.method === 'rest' && subscription.isActive) {
@@ -100,7 +100,7 @@ export const createDataActions: StateCreator<
     });
   },
 
-  // Получение данных из store
+  // Data retrieval from store
   getCandles: (exchange: string, symbol: string, timeframe: Timeframe = '1m', market: MarketType = 'spot'): Candle[] => {
     const state = get();
     return state.marketData.candles[exchange]?.[market]?.[symbol]?.[timeframe] || [];
@@ -130,7 +130,7 @@ export const createDataActions: StateCreator<
     return result;
   },
 
-  // Обновление данных в центральном store
+  // Central store data updates
   updateCandles: (exchange: string, symbol: string, candles: Candle[], timeframe: Timeframe = '1m', market: MarketType = 'spot') => {
     let eventType: 'initial_load' | 'new_candles' | 'update_last_candle' = 'new_candles';
     let eventData: any = {};
@@ -149,7 +149,7 @@ export const createDataActions: StateCreator<
       const existing = state.marketData.candles[exchange][market][symbol][timeframe] || [];
       
       if (existing.length === 0) {
-        // Если нет данных - это первая загрузка (REST snapshot)
+        // If no data - this is first load (REST snapshot)
         state.marketData.candles[exchange][market][symbol][timeframe] = candles;
         eventType = 'initial_load';
         eventData = {
@@ -158,29 +158,29 @@ export const createDataActions: StateCreator<
         };
         console.log(`📊 [updateCandles] Initial snapshot loaded: ${candles.length} candles for ${exchange}:${market}:${symbol}:${timeframe}`);
       } else {
-        // Есть данные - объединяем с существующими (WebSocket updates)
+        // Have data - merge with existing (WebSocket updates)
         const candleMap = new Map<number, Candle>();
         
-        // Добавляем существующие свечи
+        // Add existing candles
         existing.forEach(candle => {
           candleMap.set(candle.timestamp, candle);
         });
         
-        // Определяем тип обновления
+        // Determine update type
         const lastExistingTime = existing[existing.length - 1]?.timestamp || 0;
         const newCandlesCount = candles.filter(c => c.timestamp > lastExistingTime).length;
         const hasUpdatedLastCandle = candles.some(c => c.timestamp === lastExistingTime);
         
-        // Обновляем/добавляем новые свечи
+        // Update/add new candles
         candles.forEach(candle => {
           candleMap.set(candle.timestamp, candle);
         });
         
-        // Сортируем по времени и сохраняем
+        // Sort by time and save
         const mergedCandles = Array.from(candleMap.values()).sort((a, b) => a.timestamp - b.timestamp);
         state.marketData.candles[exchange][market][symbol][timeframe] = mergedCandles;
         
-        // Определяем тип события для Chart widgets
+        // Determine event type for Chart widgets
         if (newCandlesCount > 0) {
           eventType = 'new_candles';
           eventData = {
@@ -199,14 +199,14 @@ export const createDataActions: StateCreator<
         console.log(`🔄 [updateCandles] WebSocket update: ${candles.length} new/updated candles, total: ${mergedCandles.length} for ${exchange}:${market}:${symbol}:${timeframe}, event: ${eventType}`);
       }
       
-      // Обновляем timestamp последнего обновления
+      // Update last update timestamp
       const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'candles', timeframe, market);
       if (state.activeSubscriptions[subscriptionKey]) {
         state.activeSubscriptions[subscriptionKey].lastUpdate = Date.now();
       }
     });
 
-    // Эмитим событие для Chart widgets после обновления store
+    // Emit event for Chart widgets after store update
     get().emitChartUpdateEvent({
       type: eventType,
       exchange,
@@ -227,12 +227,12 @@ export const createDataActions: StateCreator<
         state.marketData.trades[exchange][market] = {};
       }
       
-      // Для trades добавляем новые сделки к существующим (максимум 1000)
+      // For trades add new trades to existing (maximum 1000)
       const existing = state.marketData.trades[exchange][market][symbol] || [];
       const combined = [...existing, ...trades];
-      state.marketData.trades[exchange][market][symbol] = combined.slice(-1000); // Оставляем последние 1000
+      state.marketData.trades[exchange][market][symbol] = combined.slice(-1000); // Keep last 1000
       
-      // Обновляем timestamp последнего обновления
+      // Update last update timestamp
       const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'trades', undefined, market);
       if (state.activeSubscriptions[subscriptionKey]) {
         state.activeSubscriptions[subscriptionKey].lastUpdate = Date.now();
@@ -268,7 +268,7 @@ export const createDataActions: StateCreator<
         allExchanges: Object.keys(state.marketData.orderbook)
       });
       
-      // Обновляем timestamp последнего обновления
+      // Update last update timestamp
       const subscriptionKey = get().getSubscriptionKey(exchange, symbol, 'orderbook', undefined, market);
       if (state.activeSubscriptions[subscriptionKey]) {
         state.activeSubscriptions[subscriptionKey].lastUpdate = Date.now();
@@ -276,7 +276,7 @@ export const createDataActions: StateCreator<
     });
   },
 
-  // Утилиты
+  // Utilities
   getSubscriptionKey: (exchange: string, symbol: string, dataType: DataType, timeframe?: Timeframe, market: MarketType = 'spot'): string => {
     let key = `${exchange}:${market}:${symbol}:${dataType}`;
     if (dataType === 'candles' && timeframe) {
@@ -289,7 +289,7 @@ export const createDataActions: StateCreator<
     return Object.values(get().activeSubscriptions);
   },
 
-  // REST инициализация данных для Chart widgets
+  // REST data initialization for Chart widgets
   initializeChartData: async (exchange: string, symbol: string, timeframe: Timeframe, market: MarketType): Promise<Candle[]> => {
     const state = get();
     const activeProviderId = state.activeProviderId;
@@ -310,7 +310,7 @@ export const createDataActions: StateCreator<
     console.log(`🚀 [initializeChartData] Loading initial data for ${exchange}:${market}:${symbol}:${timeframe}`);
     
     try {
-      // Используем CCXT утилиты
+      // Use CCXT utilities
       const ccxt = getCCXT();
       
       if (!ccxt) {
@@ -324,14 +324,14 @@ export const createDataActions: StateCreator<
       
       const exchangeInstance = new ExchangeClass(provider.config);
       
-      // Загружаем исторические данные (последние 100 свечей)
+      // Load historical data (last 100 candles)
       const ohlcvData = await exchangeInstance.fetchOHLCV(symbol, timeframe, undefined, 100);
       
       if (!ohlcvData || ohlcvData.length === 0) {
         throw new Error('No data received from exchange');
       }
       
-      // Конвертируем в формат Candle
+      // Convert to Candle format
       const candles: Candle[] = ohlcvData.map((c: any[]) => ({
         timestamp: c[0],
         open: c[1],
@@ -343,7 +343,7 @@ export const createDataActions: StateCreator<
       
       console.log(`✅ [initializeChartData] Loaded ${candles.length} candles for ${exchange}:${market}:${symbol}:${timeframe}`);
       
-      // НЕ сохраняем в store - возвращаем напрямую для chart
+      // DO NOT save to store - return directly for chart
       return candles;
       
     } catch (error) {

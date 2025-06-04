@@ -1,101 +1,101 @@
-# DataProvider Store - Модульная архитектура
+# DataProvider Store - Modular Architecture
 
-Этот документ описывает модульную архитектуру DataProvider Store после рефакторинга от больших монолитных файлов к логически разделенным модулям.
+This document describes the modular architecture of DataProvider Store after refactoring from large monolithic files to logically separated modules.
 
-## 🎯 Цели рефакторинга
+## 🎯 Refactoring Goals
 
-- **Читаемость**: Разбить файл 809 строк на логические модули
-- **Поддерживаемость**: Легче находить и редактировать конкретную функциональность  
-- **Расширяемость**: Проще добавлять новые features без конфликтов
-- **Тестируемость**: Возможность юнит-тестирования отдельных модулей
+- **Readability**: Split 809-line file into logical modules
+- **Maintainability**: Easier to find and edit specific functionality  
+- **Extensibility**: Simpler to add new features without conflicts
+- **Testability**: Ability to unit-test individual modules
 
-## 📁 Структура файлов
+## 📁 File Structure
 
 ```
 src/store/
-├── dataProviderStore.ts      # Основной store (65 строк)
-├── types.ts                  # Типы для store (75 строк)
+├── dataProviderStore.ts      # Main store (65 lines)
+├── types.ts                  # Store types (75 lines)
 ├── utils/
-│   └── ccxtUtils.ts         # CCXT утилиты (29 строк)
+│   └── ccxtUtils.ts         # CCXT utilities (29 lines)
 └── actions/
-    ├── providerActions.ts   # Управление поставщиками (55 строк)
-    ├── subscriptionActions.ts # Управление подписками (77 строк)  
-    ├── dataActions.ts       # Работа с данными (153 строки)
-    ├── fetchingActions.ts   # WebSocket/REST получение (318 строк)
-    └── ccxtActions.ts       # CCXT специфичные методы (67 строк)
+    ├── providerActions.ts   # Provider management (55 lines)
+    ├── subscriptionActions.ts # Subscription management (77 lines)  
+    ├── dataActions.ts       # Data operations (153 lines)
+    ├── fetchingActions.ts   # WebSocket/REST fetching (318 lines)
+    └── ccxtActions.ts       # CCXT specific methods (67 lines)
 ```
 
-## 🔧 Модули
+## 🔧 Modules
 
-### 1. Основной Store (`dataProviderStore.ts`)
-- Создание Zustand store с middleware (immer, subscribeWithSelector)
-- Композиция всех action модулей
-- Определение начального состояния с default provider
+### 1. Main Store (`dataProviderStore.ts`)
+- Creating Zustand store with middleware (immer, subscribeWithSelector)
+- Composition of all action modules
+- Initial state definition with default provider
 
-### 2. Типы (`types.ts`) 
-- `DataProviderState` - интерфейс состояния
-- `DataProviderActions` - интерфейс действий
-- `DataProviderStore` - основной тип store
+### 2. Types (`types.ts`) 
+- `DataProviderState` - state interface
+- `DataProviderActions` - actions interface
+- `DataProviderStore` - main store type
 
-### 3. Утилиты (`utils/ccxtUtils.ts`)
-- `getCCXT()` - получение CCXT из глобального объекта
-- `getCCXTPro()` - получение CCXT Pro для WebSocket
+### 3. Utils (`utils/ccxtUtils.ts`)
+- `getCCXT()` - get CCXT from global object
+- `getCCXTPro()` - get CCXT Pro for WebSocket
 
 ### 4. Actions
 
 #### Provider Actions (`providerActions.ts`)
-Управление поставщиками данных:
-- `addProvider()` - добавление поставщика  
-- `removeProvider()` - удаление поставщика
-- `setActiveProvider()` - установка активного поставщика
+Data provider management:
+- `addProvider()` - add provider  
+- `removeProvider()` - remove provider
+- `setActiveProvider()` - set active provider
 
 #### Subscription Actions (`subscriptionActions.ts`) 
-Управление подписками с дедупликацией:
-- `subscribe()` - создание подписки с умной дедупликацией
-- `unsubscribe()` - отписка с подсчетом подписчиков
+Subscription management with deduplication:
+- `subscribe()` - create subscription with smart deduplication
+- `unsubscribe()` - unsubscribe with subscriber counting
 
 #### Data Actions (`dataActions.ts`)
-Работа с данными и настройками:
-- `setDataFetchMethod()` - смена метода получения данных (WebSocket/REST)
-- `setRestInterval()` - настройка интервалов REST запросов
-- `getCandles()`, `getTrades()`, `getOrderBook()` - получение данных
-- `updateCandles()`, `updateTrades()`, `updateOrderBook()` - обновление данных
-- Утилиты для работы с ключами подписок
+Data operations and settings:
+- `setDataFetchMethod()` - change data fetching method (WebSocket/REST)
+- `setRestInterval()` - configure REST request intervals
+- `getCandles()`, `getTrades()`, `getOrderBook()` - get data
+- `updateCandles()`, `updateTrades()`, `updateOrderBook()` - update data
+- Utilities for working with subscription keys
 
 #### Fetching Actions (`fetchingActions.ts`)
-WebSocket и REST получение данных:
-- `startDataFetching()` - запуск получения данных для подписки
-- `stopDataFetching()` - остановка получения данных
-- `startWebSocketFetching()` - WebSocket потоки через CCXT Pro
-- `startRestFetching()` - REST polling через CCXT
+WebSocket and REST data fetching:
+- `startDataFetching()` - start data fetching for subscription
+- `stopDataFetching()` - stop data fetching
+- `startWebSocketFetching()` - WebSocket streams via CCXT Pro
+- `startRestFetching()` - REST polling via CCXT
 
 #### CCXT Actions (`ccxtActions.ts`)
-CCXT специфичные методы:
-- `selectOptimalOrderBookMethod()` - интеллектуальный выбор orderbook метода
-- `cleanup()` - очистка store
+CCXT specific methods:
+- `selectOptimalOrderBookMethod()` - intelligent orderbook method selection
+- `cleanup()` - store cleanup
 
-## 🔄 Использование
+## 🔄 Usage
 
-Импорт и использование остается точно таким же:
+Import and usage remains exactly the same:
 
 ```typescript
 import { useDataProviderStore } from './store/dataProviderStore';
 
-// В компоненте
+// In component
 const { subscribe, getCandles, setDataFetchMethod } = useDataProviderStore();
 ```
 
-## ⚡ Преимущества новой архитектуры
+## ⚡ New Architecture Benefits
 
-1. **Модульность**: Каждый файл отвечает за конкретную область функциональности
-2. **Изоляция**: Изменения в одном модуле не влияют на другие  
-3. **Повторное использование**: Actions можно переиспользовать в других stores
-4. **Типизация**: Четкое разделение типов состояния и действий
-5. **Дебаг**: Легче находить источник проблем по названию файла
-6. **Code Review**: Проще ревьюить изменения в конкретных областях
+1. **Modularity**: Each file is responsible for specific functionality area
+2. **Isolation**: Changes in one module don't affect others  
+3. **Reusability**: Actions can be reused in other stores
+4. **Typing**: Clear separation of state and action types
+5. **Debugging**: Easier to find problem sources by file name
+6. **Code Review**: Easier to review changes in specific areas
 
-## 🚀 Совместимость
+## 🚀 Compatibility
 
-✅ **Полная обратная совместимость** - все существующие компоненты работают без изменений.
+✅ **Full backward compatibility** - all existing components work without changes.
 
-TypeScript компиляция проходит без ошибок, все типы совпадают с предыдущей версией. 
+TypeScript compilation passes without errors, all types match the previous version. 

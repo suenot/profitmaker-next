@@ -14,13 +14,13 @@ import { createFetchingActions } from './actions/fetchingActions';
 import { createCCXTActions } from './actions/ccxtActions';
 import { createEventActions } from './actions/eventActions';
 
-// Включаем поддержку Map и Set в Immer
+// Enable Map and Set support in Immer
 enableMapSet();
 
 export const useDataProviderStore = create<DataProviderStore>()(
   subscribeWithSelector(
     immer((set, get, store) => {
-      // Создаем провайдер по умолчанию
+      // Create default provider
       const defaultProvider: CCXTBrowserProvider = {
         id: 'binance-default',
         type: 'ccxt-browser',
@@ -32,7 +32,7 @@ export const useDataProviderStore = create<DataProviderStore>()(
         }
       };
 
-      // Начальное состояние
+      // Initial state
       const initialState: DataProviderState = {
         providers: {
           [defaultProvider.id]: defaultProvider
@@ -41,9 +41,9 @@ export const useDataProviderStore = create<DataProviderStore>()(
         dataFetchSettings: {
           method: 'websocket',
           restIntervals: {
-            trades: 1000,   // 1 секунда
-            candles: 5000,  // 5 секунд
-            orderbook: 500  // 0.5 секунды
+            trades: 1000,   // 1 second
+            candles: 5000,  // 5 seconds
+            orderbook: 500  // 0.5 seconds
           }
         },
         activeSubscriptions: {},
@@ -53,7 +53,7 @@ export const useDataProviderStore = create<DataProviderStore>()(
           trades: {},  // [exchange][market][symbol] -> Trade[]
           orderbook: {} // [exchange][market][symbol] -> OrderBook
         },
-        chartUpdateListeners: {}, // Event system для Chart widgets
+        chartUpdateListeners: {}, // Event system for Chart widgets
         loading: false,
         error: null
       };
