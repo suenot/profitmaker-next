@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -162,31 +161,29 @@ const MyTradesWidget: React.FC<MyTradesWidgetProps> = ({
   };
 
   return (
-    <Card className="trading-card">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {onBack && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onBack}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            )}
-            <User className="h-5 w-5 text-primary" />
-            {selectionMode ? 'Select Trades' : 'My Trades'}
-          </div>
-          {selectionMode && selectedTrades.size > 0 && (
-            <Button onClick={handleConfirmSelection} className="gap-2">
-              <Check className="h-4 w-4" />
-              Add Selected ({selectedTrades.size})
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onBack}
+            >
+              <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+          <User className="h-5 w-5 text-primary" />
+          <span className="font-medium">{selectionMode ? 'Select Trades' : 'My Trades'}</span>
+        </div>
+        {selectionMode && selectedTrades.size > 0 && (
+          <Button onClick={handleConfirmSelection} className="gap-2">
+            <Check className="h-4 w-4" />
+            Add Selected ({selectedTrades.size})
+          </Button>
+        )}
+      </div>
+      <div className="flex-1 p-3 overflow-auto">
         <div className="space-y-4">
           {/* Statistics */}
           <div className="grid grid-cols-2 gap-4">
@@ -325,8 +322,8 @@ const MyTradesWidget: React.FC<MyTradesWidgetProps> = ({
             Real-time trade tracking • Last update: {new Date().toLocaleTimeString()}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

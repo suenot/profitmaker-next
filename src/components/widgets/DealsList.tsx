@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Plus, Info, Edit, Trash2, TrendingUp, Eye } from 'lucide-react';
@@ -53,20 +52,18 @@ const DealsList: React.FC<DealsListProps> = ({
   const winRate = deals.length > 0 ? (winningDeals / deals.length) * 100 : 0;
 
   return (
-    <Card className="trading-card">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Deals
-          </div>
-          <Button onClick={onAddDeal} size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Deal
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <span className="font-medium">Deals</span>
+        </div>
+        <Button onClick={onAddDeal} size="sm" className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Deal
+        </Button>
+      </div>
+      <div className="flex-1 p-3 overflow-auto">
         {/* Summary Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
           <div className="text-center">
@@ -235,8 +232,8 @@ const DealsList: React.FC<DealsListProps> = ({
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

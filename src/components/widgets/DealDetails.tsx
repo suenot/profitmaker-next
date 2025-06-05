@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -122,31 +121,29 @@ const DealDetails: React.FC<DealDetailsProps> = ({
   }
 
   return (
-    <Card className="trading-card">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onBack}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <span>Deal Details</span>
-          </div>
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b border-border">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
-            onClick={() => setShowMyTrades(true)}
-            className="gap-2"
+            size="icon"
+            onClick={onBack}
           >
-            <Package className="h-4 w-4" />
-            Add Trades
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+          <span className="font-medium">Deal Details</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowMyTrades(true)}
+          className="gap-2"
+        >
+          <Package className="h-4 w-4" />
+          Add Trades
+        </Button>
+      </div>
+      <div className="flex-1 p-3 overflow-auto">
         {/* Deal Info Form */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           <div className="lg:col-span-1">
@@ -283,8 +280,8 @@ const DealDetails: React.FC<DealDetailsProps> = ({
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

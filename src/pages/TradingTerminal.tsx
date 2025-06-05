@@ -14,6 +14,7 @@ import { DataProviderDemoWidget } from '@/components/widgets/DataProviderDemoWid
 import { DataProviderSetupWidget } from '@/components/widgets/DataProviderSetupWidget';
 import { DataProviderDebugWidget } from '@/components/widgets/DataProviderDebugWidget';
 import NotificationTestWidget from '@/components/NotificationTestWidget';
+import DealsWidget from '@/components/widgets/DealsWidget';
 import AlignmentGuides from '@/components/AlignmentGuides';
 import { GuideLineType } from '@/types/alignmentGuides';
 import CollapsedWidgetsZone from '@/components/CollapsedWidgetsZone';
@@ -26,6 +27,7 @@ const widgetComponents: Record<string, React.FC<any>> = {
   custom: PortfolioWidget, // Placeholder
   orderbook: OrderBookWidgetV2,
   trades: TradesWidgetV2,
+  deals: DealsWidget,
   dataProviderSettings: DataProviderSettingsWidget,
   dataProviderDemo: DataProviderDemoWidget,
   dataProviderSetup: DataProviderSetupWidget,

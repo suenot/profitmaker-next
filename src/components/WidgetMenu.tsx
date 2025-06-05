@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug, Bell } from 'lucide-react';
+import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug, Bell, Handshake } from 'lucide-react';
 
-type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug' | 'notificationTest';
+type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'deals' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug' | 'notificationTest';
 
 interface WidgetMenuProps {
   position: { x: number; y: number };
@@ -56,6 +56,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       custom: { width: 400, height: 300 },
       orderbook: { width: 500, height: 650 },
       trades: { width: 600, height: 550 },
+      deals: { width: 900, height: 600 },
       dataProviderSettings: { width: 500, height: 450 },
       dataProviderDemo: { width: 700, height: 400 },
       dataProviderSetup: { width: 500, height: 400 },
@@ -83,6 +84,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       custom: 'Custom Widget',
       orderbook: 'Order Book',
       trades: 'Trades',
+      deals: 'Deals',
       dataProviderSettings: 'Data Provider Settings',
       dataProviderDemo: 'Data Provider Demo',
       dataProviderSetup: 'Data Provider Setup',
@@ -111,6 +113,7 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     { type: 'transactionHistory' as WidgetType, label: 'Transaction History', icon: <ListOrdered size={16} /> },
     { type: 'orderbook' as WidgetType, label: 'Order Book', icon: <BookOpen size={16} /> },
     { type: 'trades' as WidgetType, label: 'Trades', icon: <ArrowUpDown size={16} /> },
+    { type: 'deals' as WidgetType, label: 'Deals', icon: <Handshake size={16} /> },
     { type: 'dataProviderSettings' as WidgetType, label: 'Data Provider Settings (REST/WS)', icon: <Settings size={16} /> },
     { type: 'dataProviderDemo' as WidgetType, label: 'Data Provider Demo (Deduplication)', icon: <Bug size={16} /> },
     { type: 'dataProviderSetup' as WidgetType, label: 'Data Provider Setup', icon: <Settings size={16} /> },
