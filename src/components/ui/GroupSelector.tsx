@@ -4,6 +4,7 @@ import { Plus, X } from 'lucide-react';
 import { useGroupStore } from '../../store/groupStore';
 import { useUserStore } from '../../store/userStore';
 import { Group } from '../../types/groups';
+import InstrumentSearch, { Instrument } from './InstrumentSearch';
 
 interface GroupSelectorProps {
   selectedGroupId?: string;
@@ -17,9 +18,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [accountInput, setAccountInput] = useState('');
-  const [exchangeInput, setExchangeInput] = useState('');
-  const [tradingPairInput, setTradingPairInput] = useState('');
+  const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
   const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | null>(null);
   const { 
     groups, 
@@ -28,6 +27,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
     setTradingPair,
     setAccount,
     setExchange,
+    setMarket,
     resetGroup
   } = useGroupStore();
 
@@ -63,40 +63,39 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
 
   const selectedGroup = selectedGroupId ? getGroupById(selectedGroupId) : undefined;
 
-  // Initialize input values based on user and group data
+  // Initialize selected instrument based on user and group data
   React.useEffect(() => {
-    if (selectedGroup) {
-      // If group is selected, show data from group
-      setAccountInput(selectedGroup.account || firstAccount?.email || activeUser?.email || 'suenot@gmail.com');
-      setExchangeInput(selectedGroup.exchange || firstAccount?.exchange || 'binance');
-      setTradingPairInput(selectedGroup.tradingPair || 'btcusdt');
+    if (selectedGroup && selectedGroup.account && selectedGroup.exchange && selectedGroup.market && selectedGroup.tradingPair) {
+      // If group has all instrument data, set it
+      setSelectedInstrument({
+        account: selectedGroup.account,
+        exchange: selectedGroup.exchange,
+        market: selectedGroup.market,
+        pair: selectedGroup.tradingPair,
+        searchText: `${selectedGroup.account} ${selectedGroup.exchange} ${selectedGroup.market} ${selectedGroup.tradingPair}`.toLowerCase()
+      });
+    } else if (!selectedGroup && firstAccount) {
+      // If no group selected, set default from first account
+      setSelectedInstrument({
+        account: firstAccount.email,
+        exchange: firstAccount.exchange,
+        market: 'spot',
+        pair: 'BTC/USDT',
+        searchText: `${firstAccount.email} ${firstAccount.exchange} spot BTC/USDT`.toLowerCase()
+      });
     } else {
-      // If no group is selected, show user data
-      setAccountInput(firstAccount?.email || activeUser?.email || 'suenot@gmail.com');
-      setExchangeInput(firstAccount?.exchange || 'binance');
-      setTradingPairInput('btcusdt');
+      setSelectedInstrument(null);
     }
   }, [firstAccount, activeUser, selectedGroup]);
 
-  // Input change handlers with store synchronization
-  const handleAccountChange = (value: string) => {
-    setAccountInput(value);
-    if (selectedGroup) {
-      setAccount(selectedGroup.id, value);
-    }
-  };
-
-  const handleExchangeChange = (value: string) => {
-    setExchangeInput(value);
-    if (selectedGroup) {
-      setExchange(selectedGroup.id, value);
-    }
-  };
-
-  const handleTradingPairChange = (value: string) => {
-    setTradingPairInput(value);
-    if (selectedGroup) {
-      setTradingPair(selectedGroup.id, value);
+  // Instrument change handler with store synchronization
+  const handleInstrumentChange = (instrument: Instrument | null) => {
+    setSelectedInstrument(instrument);
+    if (selectedGroup && instrument) {
+      setAccount(selectedGroup.id, instrument.account);
+      setExchange(selectedGroup.id, instrument.exchange);
+      setMarket(selectedGroup.id, instrument.market);
+      setTradingPair(selectedGroup.id, instrument.pair);
     }
   };
 
@@ -114,7 +113,6 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
       '#9C27B0': 'Purple',
       '#2196F3': 'Blue',
       '#4CAF50': 'Green',
-      '#FFC107': 'Yellow',
       '#FF9800': 'Orange',
       '#E91E63': 'Pink',
     };
@@ -164,52 +162,27 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
           
           {/* Popover */}
           <div 
-            className="fixed w-96 bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-[9999]"
+            className="fixed w-[500px] bg-terminal-widget border border-terminal-border rounded-md shadow-lg z-[9999]"
             style={{
               left: buttonPosition.x,
               top: buttonPosition.y + 4,
             }}
           >
             <div className="p-3">
-              {/* Three inputs for account, exchange and trading pair */}
+              {/* Super instrument search input */}
               <div className="space-y-2 mb-3">
-                                  {/* Account */}
                 <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Account"
-                    value={accountInput}
-                    onChange={(e) => handleAccountChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
-                  />
-                </div>
-                
-                {/* Exchange */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Exchange"
-                    value={exchangeInput}
-                    onChange={(e) => handleExchangeChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
-                  />
-                </div>
-                
-                {/* Trading pair with cross for group reset */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Trading Pair"
-                    value={tradingPairInput}
-                    onChange={(e) => handleTradingPairChange(e.target.value)}
-                    className={`w-full px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent ${selectedGroup ? 'pr-8' : ''}`}
-                    autoFocus
+                  <InstrumentSearch
+                    value={selectedInstrument}
+                    onChange={handleInstrumentChange}
+                    placeholder="Search account | exchange | market | pair..."
+                    className="w-full"
                   />
                   {/* Cross for group reset - only if group is selected */}
                   {selectedGroup && (
                     <button
                       onClick={() => handleGroupSelect(null)}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-terminal-accent/20 transition-colors"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-terminal-accent/20 transition-colors z-10"
                       title="Remove group binding"
                     >
                       <X size={12} className="text-terminal-muted hover:text-terminal-text" />
@@ -219,7 +192,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
               </div>
               
               {/* Group list */}
-              <div className="max-h-48 overflow-y-auto">
+              <div className="max-h-72 overflow-y-auto">
                 {groups.map((group) => (
                   <div
                     key={group.id}
@@ -236,8 +209,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({
                       }}
                     />
                     <span className="text-left flex-1">
-                      {group.account || group.exchange || group.tradingPair 
-                        ? `${group.account || 'account'} | ${group.exchange || 'exchange'} | ${group.tradingPair || 'pair'}`
+                      {group.account || group.exchange || group.market || group.tradingPair 
+                        ? `${group.account || 'account'} | ${group.exchange || 'exchange'} | ${group.market || 'market'} | ${group.tradingPair || 'pair'}`
                         : getColorName(group.color)
                       }
                     </span>

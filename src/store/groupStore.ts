@@ -17,6 +17,7 @@ interface GroupStoreActions {
   setTradingPair: (groupId: string, tradingPair: string | undefined) => void;
   setAccount: (groupId: string, account: string | undefined) => void;
   setExchange: (groupId: string, exchange: string | undefined) => void;
+  setMarket: (groupId: string, market: string | undefined) => void;
   resetGroup: (groupId: string) => void;
   
   // Test data initialization
@@ -110,6 +111,17 @@ export const useGroupStore = create<GroupStore>()(
         }));
       },
 
+      // Set market for group
+      setMarket: (groupId: string, market: string | undefined) => {
+        set((state) => ({
+          groups: state.groups.map(group =>
+            group.id === groupId
+              ? { ...group, market, updatedAt: new Date().toISOString() }
+              : group
+          )
+        }));
+      },
+
       // Reset group settings
       resetGroup: (groupId: string) => {
         set((state) => ({
@@ -119,6 +131,7 @@ export const useGroupStore = create<GroupStore>()(
                   ...group, 
                   account: undefined, 
                   exchange: undefined, 
+                  market: undefined,
                   tradingPair: undefined, 
                   updatedAt: new Date().toISOString() 
                 }
@@ -138,7 +151,6 @@ export const useGroupStore = create<GroupStore>()(
             { name: 'Purple', color: '#9C27B0' },
             { name: 'Blue', color: '#2196F3' },
             { name: 'Green', color: '#4CAF50' },
-            { name: 'Yellow', color: '#FFC107' },
             { name: 'Orange', color: '#FF9800' },
             { name: 'Pink', color: '#E91E63' },
           ];
@@ -151,7 +163,7 @@ export const useGroupStore = create<GroupStore>()(
     }),
     {
       name: 'group-store',
-      version: 1,
+      version: 2,
     }
   )
 ); 

@@ -8,7 +8,6 @@ export const GroupColors = [
   '#9C27B0', // purple
   '#2196F3', // blue
   '#4CAF50', // green
-  '#FFC107', // yellow
   '#FF9800', // orange
   '#E91E63', // pink
 ] as const;
@@ -23,6 +22,7 @@ export const GroupSchema = z.object({
   tradingPair: z.string().optional(), // trading pair for display instead of color
   account: z.string().optional(), // account email
   exchange: z.string().optional(), // exchange name
+  market: z.string().optional(), // market type (spot, futures, etc.)
   description: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),

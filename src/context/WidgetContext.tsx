@@ -80,15 +80,16 @@ const widgetTitles: Record<WidgetType, string> = {
   dataProviderDebug: 'Data Provider Debug'
 };
 
-// Group color palette
+// Group color palette - aligned with GroupSelector colors
 const groupColors = [
-  '#FFD700', // Gold/Yellow (USDRUB)
-  '#F87171', // Red (Group 2)
-  '#A78BFA', // Purple (Group 3)
-  '#60A5FA', // Blue (Group 4)
-  '#BEF264', // Light Green (Group 5)
-  '#6EE7B7', // Teal (Group 6)
-  '#FCD34D'  // Amber/Orange (Group 7)
+  'transparent', // transparent (default)
+  '#00BCD4', // cyan
+  '#F44336', // red  
+  '#9C27B0', // purple
+  '#2196F3', // blue
+  '#4CAF50', // green
+  '#FF9800', // orange
+  '#E91E63'  // pink
 ];
 
 export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -142,55 +143,62 @@ export const WidgetProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       },
     ];
     
-    // Create default groups
+    // Create default groups - aligned with GroupSelector
     const defaultGroups: WidgetGroup[] = [
       {
-        id: 'group-1',
-        name: 'USDRUB',
+        id: 'group-0',
+        name: 'Transparent',
         color: groupColors[0],
-        symbol: 'USDRUB',
+        symbol: 'DEFAULT',
         isActive: true
       },
       {
-        id: 'group-2',
-        name: 'Group 2',
+        id: 'group-1',
+        name: 'Cyan',
         color: groupColors[1],
-        symbol: 'GROUP 2',
+        symbol: 'CYAN',
+        isActive: false
+      },
+      {
+        id: 'group-2',
+        name: 'Red',
+        color: groupColors[2],
+        symbol: 'RED',
         isActive: false
       },
       {
         id: 'group-3',
-        name: 'Group 3',
-        color: groupColors[2],
-        symbol: 'GROUP 3',
+        name: 'Purple',
+        color: groupColors[3],
+        symbol: 'PURPLE',
         isActive: false
       },
       {
         id: 'group-4',
-        name: 'Group 4',
-        color: groupColors[3],
-        symbol: 'GROUP 4',
+        name: 'Blue',
+        color: groupColors[4],
+        symbol: 'BLUE',
         isActive: false
       },
       {
         id: 'group-5',
-        name: 'Group 5',
-        color: groupColors[4],
-        symbol: 'GROUP 5',
+        name: 'Green',
+        color: groupColors[5],
+        symbol: 'GREEN',
         isActive: false
       },
       {
         id: 'group-6',
-        name: 'Group 6',
-        color: groupColors[5],
-        symbol: 'GROUP 6',
+        name: 'Orange',
+        color: groupColors[6],
+        symbol: 'ORANGE',
         isActive: false
       },
       {
         id: 'group-7',
-        name: 'Group 7',
-        color: groupColors[6],
-        symbol: 'GROUP 7',
+        name: 'Pink',
+        color: groupColors[7],
+        symbol: 'PINK',
         isActive: false
       }
     ];
