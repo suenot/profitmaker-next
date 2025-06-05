@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { DataProviderStore } from '../types';
 import type { DataType, DataFetchMethod, Candle, Trade, OrderBook, ActiveSubscription, Timeframe, MarketType } from '../../types/dataProviders';
 import { getCCXT } from '../utils/ccxtUtils';
+import { createExchangeInstance } from '../utils/providerUtils';
 
 export interface DataActions {
   // Data fetch settings management
