@@ -23,7 +23,7 @@ export interface ProviderActions {
   isProviderEnabled: (providerId: string) => boolean;
   getEnabledProviders: () => DataProvider[];
   
-  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server', name: string, exchanges: string[], config?: any) => DataProvider;
+  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'marketmaker.cc' | 'custom-server-with-adapter', name: string, exchanges: string[], config?: any) => DataProvider;
   updateProvider: (providerId: string, updates: { name?: string; exchanges?: string[]; priority?: number; config?: any }) => void;
   getProviderForExchange: (exchange: string) => DataProvider | null;
   getProviderExchangeMappings: (exchanges: string[]) => ProviderExchangeMapping[];
@@ -126,7 +126,7 @@ export const createProviderActions: StateCreator<
   },
 
   // NEW: Create provider with simplified config
-  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server', name: string, exchanges: string[], config: any = {}) => {
+  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'marketmaker.cc' | 'custom-server-with-adapter', name: string, exchanges: string[], config: any = {}) => {
     const providers = Object.values(get().providers);
     const priority = getNextProviderPriority(providers);
     const id = generateProviderId(type, exchanges, name);
@@ -161,16 +161,6 @@ export const createProviderActions: StateCreator<
           sandbox: config.sandbox || false
         }
       };
-    } else if (type === 'stocksharp') {
-      newProvider = {
-        ...baseProvider,
-        type: 'stocksharp',
-        config: {
-          serverUrl: config.serverUrl || '',
-          timeout: config.timeout || 30000,
-          authentication: config.authentication || {}
-        }
-      };
     } else if (type === 'marketmaker.cc') {
       newProvider = {
         ...baseProvider,
@@ -181,10 +171,10 @@ export const createProviderActions: StateCreator<
           authentication: config.authentication || {}
         }
       };
-    } else if (type === 'custom-json-server') {
+    } else if (type === 'custom-server-with-adapter') {
       newProvider = {
         ...baseProvider,
-        type: 'custom-json-server',
+        type: 'custom-server-with-adapter',
         config: {
           serverUrl: config.serverUrl || '',
           timeout: config.timeout || 30000,
@@ -280,21 +270,17 @@ export const createProviderActions: StateCreator<
            // For now, return basic fallback until implementation
            return ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'];
            
-         case 'stocksharp':
-           // StockSharp provider will implement its own logic
-           console.log(`📊 Getting symbols for ${exchange} from StockSharp provider ${provider.id}`);
-           // For now, return basic fallback until implementation
-           return ['BTC/USDT', 'ETH/USDT'];
+         
            
          case 'marketmaker.cc':
            // MarketMaker.cc provider will implement its own logic
            console.log(`📊 Getting symbols for ${exchange} from MarketMaker.cc provider ${provider.id}`);
            return ['BTC/USDT', 'ETH/USDT'];
            
-         case 'custom-json-server':
-           // Custom JSON Server provider will implement its own logic
-           console.log(`📊 Getting symbols for ${exchange} from Custom JSON Server provider ${provider.id}`);
-           return ['BTC/USDT', 'ETH/USDT'];
+                   case 'custom-server-with-adapter':
+            // Custom Server with Adapter provider will implement its own logic
+            console.log(`📊 Getting symbols for ${exchange} from Custom Server with Adapter provider ${provider.id}`);
+            return ['BTC/USDT', 'ETH/USDT'];
            
          case 'custom':
            // Custom providers will implement their own logic
@@ -331,21 +317,17 @@ export const createProviderActions: StateCreator<
            // For now, return basic fallback until implementation
            return ['spot', 'futures', 'margin'];
            
-         case 'stocksharp':
-           // StockSharp provider will implement its own logic
-           console.log(`📈 Getting markets for ${exchange} from StockSharp provider ${provider.id}`);
-           // For now, return basic fallback until implementation
-           return ['spot', 'futures'];
+         
            
          case 'marketmaker.cc':
            // MarketMaker.cc provider will implement its own logic
            console.log(`📈 Getting markets for ${exchange} from MarketMaker.cc provider ${provider.id}`);
            return ['spot', 'futures'];
            
-         case 'custom-json-server':
-           // Custom JSON Server provider will implement its own logic
-           console.log(`📈 Getting markets for ${exchange} from Custom JSON Server provider ${provider.id}`);
-           return ['spot'];
+                   case 'custom-server-with-adapter':
+            // Custom Server with Adapter provider will implement its own logic
+            console.log(`📈 Getting markets for ${exchange} from Custom Server with Adapter provider ${provider.id}`);
+            return ['spot'];
            
          case 'custom':
            // Custom providers will implement their own logic

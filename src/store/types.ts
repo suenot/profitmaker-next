@@ -63,7 +63,7 @@ export interface DataProviderActions {
   getEnabledProviders: () => DataProvider[];
   
   // NEW: Advanced provider management with user integration
-  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server', name: string, exchanges: string[], config?: any) => DataProvider;
+  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'marketmaker.cc' | 'custom-server-with-adapter', name: string, exchanges: string[], config?: any) => DataProvider;
   updateProvider: (providerId: string, updates: { name?: string; exchanges?: string[]; priority?: number; config?: any }) => void;
   getProviderForExchange: (exchange: string) => DataProvider | null;
   getProviderExchangeMappings: (exchanges: string[]) => ProviderExchangeMapping[];

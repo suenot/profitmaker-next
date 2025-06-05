@@ -14,7 +14,7 @@ import { DataProviderType, DataProvider } from '../../types/dataProviders';
 import { Plus, Settings, X, Edit, Save, Trash2 } from 'lucide-react';
 
 interface NewProviderFormData {
-  type: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server';
+  type: 'ccxt-browser' | 'ccxt-server' | 'marketmaker.cc' | 'custom-server-with-adapter';
   name: string;
   exchanges: string[];
   priority?: number;
@@ -93,7 +93,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
   const validateForm = (data: NewProviderFormData): boolean => {
     if (!data.name.trim()) return false;
     if (data.exchanges.length === 0) return false;
-    if ((data.type === 'ccxt-server' || data.type === 'stocksharp' || data.type === 'custom-json-server') && !data.serverUrl?.trim()) return false;
+    if ((data.type === 'ccxt-server' || data.type === 'custom-server-with-adapter') && !data.serverUrl?.trim()) return false;
     if (data.type === 'marketmaker.cc' && !data.apiUrl?.trim()) return false;
     return true;
   };
@@ -101,14 +101,14 @@ const DataProviderSetupWidgetInner: React.FC = () => {
   const startEdit = (provider: DataProvider) => {
     setEditingProviderId(provider.id);
     setEditFormData({
-      type: provider.type as 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server',
+      type: provider.type as 'ccxt-browser' | 'ccxt-server' | 'marketmaker.cc' | 'custom-server-with-adapter',
       name: provider.name,
       exchanges: [...provider.exchanges],
       priority: provider.priority,
-      serverUrl: (provider.type === 'ccxt-server' || provider.type === 'stocksharp' || provider.type === 'custom-json-server') ? (provider.config as any).serverUrl : undefined,
-      timeout: (provider.type === 'ccxt-server' || provider.type === 'stocksharp' || provider.type === 'marketmaker.cc' || provider.type === 'custom-json-server') ? (provider.config as any).timeout : 30000,
+      serverUrl: (provider.type === 'ccxt-server' || provider.type === 'custom-server-with-adapter') ? (provider.config as any).serverUrl : undefined,
+      timeout: (provider.type === 'ccxt-server' || provider.type === 'marketmaker.cc' || provider.type === 'custom-server-with-adapter') ? (provider.config as any).timeout : 30000,
       apiUrl: provider.type === 'marketmaker.cc' ? (provider.config as any).apiUrl : undefined,
-      jsonSchema: provider.type === 'custom-json-server' ? (provider.config as any).jsonSchema : undefined
+      jsonSchema: provider.type === 'custom-server-with-adapter' ? (provider.config as any).jsonSchema : undefined
     });
   };
 
@@ -182,15 +182,11 @@ const DataProviderSetupWidgetInner: React.FC = () => {
       } else if (formData.type === 'ccxt-server') {
         config.serverUrl = formData.serverUrl;
         config.timeout = formData.timeout || 30000;
-      } else if (formData.type === 'stocksharp') {
-        config.serverUrl = formData.serverUrl;
-        config.timeout = formData.timeout || 30000;
-        config.authentication = {};
       } else if (formData.type === 'marketmaker.cc') {
         config.apiUrl = formData.apiUrl;
         config.timeout = formData.timeout || 30000;
         config.authentication = {};
-      } else if (formData.type === 'custom-json-server') {
+      } else if (formData.type === 'custom-server-with-adapter') {
         config.serverUrl = formData.serverUrl;
         config.timeout = formData.timeout || 30000;
         config.jsonSchema = formData.jsonSchema || {};
@@ -328,7 +324,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
             <Label>Provider Type</Label>
             <Select 
               value={formData.type} 
-              onValueChange={(value: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server') => handleFormChange('type', value)}
+              onValueChange={(value: 'ccxt-browser' | 'ccxt-server' | 'marketmaker.cc' | 'custom-server-with-adapter') => handleFormChange('type', value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -346,21 +342,16 @@ const DataProviderSetupWidgetInner: React.FC = () => {
                     <span className="text-xs text-red-500 dark:text-red-400">Not Implemented</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="stocksharp" disabled>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-medium text-muted-foreground">StockSharp</span>
-                    <span className="text-xs text-red-500 dark:text-red-400">Not Implemented</span>
-                  </div>
-                </SelectItem>
+
                 <SelectItem value="marketmaker.cc" disabled>
                   <div className="flex flex-col gap-0.5">
                     <span className="font-medium text-muted-foreground">MarketMaker.cc</span>
                     <span className="text-xs text-red-500 dark:text-red-400">Not Implemented</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="custom-json-server" disabled>
+                <SelectItem value="custom-server-with-adapter" disabled>
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-medium text-muted-foreground">Custom JSON Server</span>
+                    <span className="font-medium text-muted-foreground">Custom Server with Adapter</span>
                     <span className="text-xs text-red-500 dark:text-red-400">Not Implemented</span>
                   </div>
                 </SelectItem>

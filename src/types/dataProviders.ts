@@ -78,7 +78,7 @@ export interface BaseDataProvider {
 }
 
 // Data provider types
-export type DataProviderType = 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server' | 'custom';
+export type DataProviderType = 'ccxt-browser' | 'ccxt-server' | 'marketmaker.cc' | 'custom-server-with-adapter' | 'custom';
 
 // Configuration for CCXT Browser - УПРОЩЕННАЯ ВЕРСИЯ
 export interface CCXTBrowserConfig {
@@ -93,16 +93,7 @@ export interface CCXTServerConfig {
   sandbox?: boolean;
 }
 
-// Configuration for StockSharp - БУДЕТ РЕАЛИЗОВАНО ПОЗЖЕ
-export interface StockSharpConfig {
-  serverUrl: string;
-  timeout?: number;
-  authentication?: {
-    username?: string;
-    password?: string;
-    apiKey?: string;
-  };
-}
+
 
 // Configuration for MarketMaker.cc - НЕ РЕАЛИЗОВАН
 export interface MarketMakerConfig {
@@ -114,8 +105,8 @@ export interface MarketMakerConfig {
   };
 }
 
-// Configuration for Custom JSON Server - НЕ РЕАЛИЗОВАН
-export interface CustomJsonServerConfig {
+// Configuration for Custom Server with Adapter - НЕ РЕАЛИЗОВАН
+export interface CustomServerWithAdapterConfig {
   serverUrl: string;
   timeout?: number;
   jsonSchema?: Record<string, any>;
@@ -140,19 +131,16 @@ export interface CCXTServerProvider extends BaseDataProvider {
   config: CCXTServerConfig;
 }
 
-export interface StockSharpProvider extends BaseDataProvider {
-  type: 'stocksharp';
-  config: StockSharpConfig;
-}
+
 
 export interface MarketMakerProvider extends BaseDataProvider {
   type: 'marketmaker.cc';
   config: MarketMakerConfig;
 }
 
-export interface CustomJsonServerProvider extends BaseDataProvider {
-  type: 'custom-json-server';
-  config: CustomJsonServerConfig;
+export interface CustomServerWithAdapterProvider extends BaseDataProvider {
+  type: 'custom-server-with-adapter';
+  config: CustomServerWithAdapterConfig;
 }
 
 export interface CustomProvider extends BaseDataProvider {
@@ -161,7 +149,7 @@ export interface CustomProvider extends BaseDataProvider {
 }
 
 // Combined provider type
-export type DataProvider = CCXTBrowserProvider | CCXTServerProvider | StockSharpProvider | MarketMakerProvider | CustomJsonServerProvider | CustomProvider;
+export type DataProvider = CCXTBrowserProvider | CCXTServerProvider | MarketMakerProvider | CustomServerWithAdapterProvider | CustomProvider;
 
 // Utility types for provider-exchange mapping
 export interface ProviderExchangeMapping {
