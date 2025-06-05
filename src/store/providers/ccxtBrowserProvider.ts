@@ -55,148 +55,98 @@ export class CCXTBrowserProviderImpl {
 
   /**
    * Определяет доступные рынки для биржи
-   * 100% CCXT-BASED: Только реальные данные из CCXT API
+   * Основывается на статической конфигурации биржи в CCXT (exchange.has)
+   * БЕЗ запросов к API биржи
    */
   async getMarketsForExchange(exchange: string): Promise<string[]> {
     try {
-      // Используем кэшированный instance
-      const exchangeInstance = await ccxtInstanceManager.getExchangeInstance(exchange, this.provider);
-
-      if (!exchangeInstance.markets) {
-        console.warn(`❌ [CCXTBrowser] No markets data available for ${exchange}`);
-        return [];
+      // Получаем CCXT класс биржи БЕЗ создания инстанса с API ключами
+      const { getCCXT } = await import('../utils/ccxtUtils');
+      const ccxt = getCCXT();
+      if (!ccxt) {
+        throw new Error('CCXT not available');
       }
 
-      console.log(`🔍 [CCXTBrowser] Analyzing ${exchange} CCXT markets data:`, {
-        totalMarkets: Object.keys(exchangeInstance.markets).length,
-        sampleMarkets: Object.keys(exchangeInstance.markets).slice(0, 5),
-        exchangeInfo: exchangeInstance.describe ? exchangeInstance.describe() : 'No describe()'
-      });
-
-      const marketTypes = new Set<string>();
-      
-      // Анализируем ВСЕ рынки из CCXT
-      for (const [symbol, market] of Object.entries(exchangeInstance.markets)) {
-        if (market && typeof market === 'object') {
-          const marketObj = market as any;
-          
-          // Логируем структуру первых нескольких рынков для дебага
-          if (marketTypes.size < 3) {
-            console.log(`📊 [CCXTBrowser] Sample market structure for ${symbol}:`, {
-              type: marketObj.type,
-              subType: marketObj.subType,
-              spot: marketObj.spot,
-              future: marketObj.future,
-              option: marketObj.option,
-              swap: marketObj.swap,
-              linear: marketObj.linear,
-              inverse: marketObj.inverse,
-              settle: marketObj.settle,
-              settleId: marketObj.settleId,
-              contractSize: marketObj.contractSize,
-              expiry: marketObj.expiry
-            });
-          }
-          
-          // Извлекаем все возможные типы рынков из CCXT данных
-          if (marketObj.type) {
-            marketTypes.add(marketObj.type.toLowerCase());
-          }
-          
-          if (marketObj.subType) {
-            marketTypes.add(marketObj.subType.toLowerCase());
-          }
-          
-          // Boolean флаги для типов рынков
-          if (marketObj.spot === true) {
-            marketTypes.add('spot');
-          }
-          if (marketObj.future === true) {
-            marketTypes.add('future');
-          }
-          if (marketObj.option === true) {
-            marketTypes.add('option');
-          }
-          if (marketObj.swap === true) {
-            marketTypes.add('swap');
-          }
-          if (marketObj.linear === true) {
-            marketTypes.add('linear');
-          }
-          if (marketObj.linear === false) {
-            marketTypes.add('inverse');
-          }
-          
-          // Дополнительные индикаторы
-          if (marketObj.settle && marketObj.settle !== marketObj.base) {
-            marketTypes.add('futures'); // Если есть settlement currency отличная от base
-          }
-          if (marketObj.expiry) {
-            marketTypes.add('expiry'); // Инструменты с истечением
-          }
-          if (marketObj.contractSize && marketObj.contractSize !== 1) {
-            marketTypes.add('contract'); // Контрактные инструменты
-          }
-        }
+      const ExchangeClass = ccxt[exchange];
+      if (!ExchangeClass) {
+        throw new Error(`Exchange ${exchange} not found in CCXT`);
       }
-      
-      console.log(`🎯 [CCXTBrowser] Raw market types detected from CCXT:`, Array.from(marketTypes));
-      
-      // Конвертируем CCXT типы в стандартные названия
-      const finalMarkets: string[] = [];
-      
-      marketTypes.forEach(type => {
-        switch (type) {
-          case 'spot':
-            if (!finalMarkets.includes('spot')) finalMarkets.push('spot');
-            break;
-          case 'future':
-          case 'futures':
-          case 'linear':
-          case 'contract':
-            if (!finalMarkets.includes('futures')) finalMarkets.push('futures');
-            break;
-          case 'option':
-          case 'options':
-          case 'expiry':
-            if (!finalMarkets.includes('options')) finalMarkets.push('options');
-            break;
-          case 'swap':
-            if (!finalMarkets.includes('swap')) finalMarkets.push('swap');
-            break;
-          case 'inverse':
-            if (!finalMarkets.includes('inverse')) finalMarkets.push('inverse');
-            break;
-          case 'margin':
-            if (!finalMarkets.includes('margin')) finalMarkets.push('margin');
-            break;
-        }
+
+      // Создаем минимальный инстанс только для получения конфигурации
+      const exchangeInstance = new ExchangeClass();
+      const hasCapabilities = exchangeInstance.has || {};
+
+      console.log(`🔍 [CCXTBrowser] Analyzing ${exchange} static capabilities:`, {
+        exchange: exchange,
+        hasCapabilities: hasCapabilities
       });
 
-      // Дополнительная проверка через CCXT has API (но НЕ добавляем, только подтверждаем)
-      const hasCapabilities = {
-        futures: !!(exchangeInstance.has?.fetchFuturesBalance || 
-                   exchangeInstance.has?.fetchDerivativesMarkets ||
-                   exchangeInstance.has?.fetchPositions),
-        margin: !!(exchangeInstance.has?.fetchMarginBalance || 
-                  exchangeInstance.has?.fetchBorrowRate),
-        options: !!(exchangeInstance.has?.fetchOption ||
-                   exchangeInstance.has?.fetchOptions)
-      };
+      const availableMarkets: string[] = [];
 
-      console.log(`🔧 [CCXTBrowser] CCXT API capabilities:`, hasCapabilities);
-      
+      // Проверяем поддержку рынков согласно статической конфигурации биржи
+      if (hasCapabilities.spot === true) {
+        availableMarkets.push('spot');
+        console.log(`✅ [CCXTBrowser] ${exchange} supports spot trading`);
+      }
+
+      if (hasCapabilities.margin === true) {
+        availableMarkets.push('margin');
+        console.log(`✅ [CCXTBrowser] ${exchange} supports margin trading`);
+      }
+
+      if (hasCapabilities.swap === true) {
+        availableMarkets.push('swap');
+        console.log(`✅ [CCXTBrowser] ${exchange} supports swap trading`);
+      }
+
+      if (hasCapabilities.future === true) {
+        availableMarkets.push('futures');
+        console.log(`✅ [CCXTBrowser] ${exchange} supports futures trading`);
+      }
+
+      if (hasCapabilities.option === true) {
+        availableMarkets.push('options');
+        console.log(`✅ [CCXTBrowser] ${exchange} supports options trading`);
+      }
+
+      // Дополнительные проверки для futures через API capabilities
+      if (!availableMarkets.includes('futures') && (
+        hasCapabilities.fetchFuturesBalance ||
+        hasCapabilities.fetchDerivativesMarkets ||
+        hasCapabilities.fetchPositions ||
+        hasCapabilities.fetchPosition
+      )) {
+        availableMarkets.push('futures');
+        console.log(`✅ [CCXTBrowser] ${exchange} supports futures (detected via API methods)`);
+      }
+
+      // Дополнительные проверки для margin через API capabilities
+      if (!availableMarkets.includes('margin') && (
+        hasCapabilities.fetchMarginBalance ||
+        hasCapabilities.fetchBorrowRate ||
+        hasCapabilities.fetchBorrowRates
+      )) {
+        availableMarkets.push('margin');
+        console.log(`✅ [CCXTBrowser] ${exchange} supports margin (detected via API methods)`);
+      }
+
       console.log(`✅ [CCXTBrowser] Final markets for ${exchange}:`, {
-        total: finalMarkets.length,
-        markets: finalMarkets,
-        source: '100% CCXT Data',
-        hasCapabilities
+        total: availableMarkets.length,
+        markets: availableMarkets,
+        source: 'Static Exchange Configuration (has)',
+        exchangeConfig: {
+          spot: hasCapabilities.spot,
+          margin: hasCapabilities.margin,
+          swap: hasCapabilities.swap,
+          future: hasCapabilities.future,
+          option: hasCapabilities.option
+        }
       });
       
-      return finalMarkets.length > 0 ? finalMarkets : [];
+      return availableMarkets;
     } catch (error) {
       console.error(`❌ [CCXTBrowser] Error getting markets for exchange: ${exchange}`, error);
-      return []; // Возвращаем пустой массив, НЕ делаем предположений
+      return []; // Показываем реальную ошибку, НЕ скрываем
     }
   }
 
