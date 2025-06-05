@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import UserDrawer from './UserDrawer';
 import NotificationHistory from './NotificationHistory';
+import { AnimatedLogo } from './AnimatedLogo';
 
 const TabNavigation: React.FC = () => {
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
@@ -140,55 +141,62 @@ const TabNavigation: React.FC = () => {
   return (
     <div className="flex flex-col h-auto bg-terminal-bg border-b border-terminal-border mb-0 pb-0">
       <div className="flex items-center justify-between h-12 px-2">
-        <div className="flex overflow-x-auto hide-scrollbar">
-          {dashboards.map((dashboard) => (
-            <div
-              key={dashboard.id}
-              className={`flex items-center px-4 h-full cursor-pointer border-r border-terminal-border whitespace-nowrap ${
-                activeDashboardId === dashboard.id ? 'bg-terminal-accent/20 text-terminal-text' : 'text-terminal-muted hover:bg-terminal-accent/10'
-              }`}
-              onClick={() => {
-                if (editingDashboardId !== dashboard.id) {
-                  console.log('TabNavigation: Switching to dashboard', dashboard.id, dashboard.title);
-                  setActiveDashboard(dashboard.id);
-                }
-              }}
+        <div className="flex items-center">
+          {/* Animated Logo */}
+          <div className="mr-4 flex-shrink-0">
+            <AnimatedLogo width={32} height={32} className="transition-opacity hover:opacity-80" />
+          </div>
+          {/* Dashboard Tabs */}
+            <div className="flex overflow-x-auto hide-scrollbar">
+            {dashboards.map((dashboard) => (
+              <div
+                key={dashboard.id}
+                className={`flex items-center px-4 h-full cursor-pointer border-r border-terminal-border whitespace-nowrap ${
+                  activeDashboardId === dashboard.id ? 'bg-terminal-accent/20 text-terminal-text' : 'text-terminal-muted hover:bg-terminal-accent/10'
+                }`}
+                onClick={() => {
+                  if (editingDashboardId !== dashboard.id) {
+                    console.log('TabNavigation: Switching to dashboard', dashboard.id, dashboard.title);
+                    setActiveDashboard(dashboard.id);
+                  }
+                }}
+              >
+                {editingDashboardId === dashboard.id ? (
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onBlur={handleTitleSave}
+                    onKeyDown={handleTitleKeyDown}
+                    className="text-sm bg-transparent border-none outline-none w-full min-w-[80px] max-w-[200px]"
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span 
+                    className="text-sm select-none"
+                    onDoubleClick={(e) => handleDashboardDoubleClick(dashboard, e)}
+                  >
+                    {dashboard.title}
+                  </span>
+                )}
+                {dashboards.length > 1 && editingDashboardId !== dashboard.id && (
+                  <button 
+                    className="ml-2 p-0.5 rounded-full hover:bg-terminal-accent/50"
+                    onClick={(e) => handleRemoveDashboard(dashboard.id, e)}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button 
+              className="flex items-center justify-center w-10 h-full text-terminal-muted hover:bg-terminal-accent/20"
+              onClick={handleAddDashboard}
             >
-              {editingDashboardId === dashboard.id ? (
-                <input
-                  type="text"
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  onBlur={handleTitleSave}
-                  onKeyDown={handleTitleKeyDown}
-                  className="text-sm bg-transparent border-none outline-none w-full min-w-[80px] max-w-[200px]"
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <span 
-                  className="text-sm select-none"
-                  onDoubleClick={(e) => handleDashboardDoubleClick(dashboard, e)}
-                >
-                  {dashboard.title}
-                </span>
-              )}
-              {dashboards.length > 1 && editingDashboardId !== dashboard.id && (
-                <button 
-                  className="ml-2 p-0.5 rounded-full hover:bg-terminal-accent/50"
-                  onClick={(e) => handleRemoveDashboard(dashboard.id, e)}
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          ))}
-          <button 
-            className="flex items-center justify-center w-10 h-full text-terminal-muted hover:bg-terminal-accent/20"
-            onClick={handleAddDashboard}
-          >
-            <Plus size={18} />
-          </button>
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
         {/* Block with three icons */}
         <div className="flex items-center space-x-3">
