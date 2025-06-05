@@ -4,6 +4,7 @@ import { useDashboardStore } from '@/store/dashboardStore';
 import { cn } from '@/lib/utils';
 import GroupSelector from './ui/GroupSelector';
 import { useGroupStore } from '@/store/groupStore';
+import { useSettingsDrawerStore } from '@/store/settingsDrawerStore';
 
 interface WidgetSimpleProps {
   id: string;
@@ -78,6 +79,9 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
   
   // Group store
   const setTradingPair = useGroupStore(s => s.setTradingPair);
+  
+  // Settings drawer store
+  const openSettingsDrawer = useSettingsDrawerStore(s => s.openDrawer);
 
   // Get other widgets for snapping
   const activeDashboard = dashboards.find(d => d.id === activeDashboardId);
@@ -485,6 +489,19 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
     toggleWidgetMinimized(activeDashboardId, id);
   }, [activeDashboardId, id, toggleWidgetMinimized]);
 
+  // Handle settings button click
+  const handleSettingsClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (widgetType) {
+      openSettingsDrawer(id, widgetType, userTitle || defaultTitle);
+    }
+  }, [id, widgetType, userTitle, defaultTitle, openSettingsDrawer]);
+
+  // Check if widget has settings available
+  const hasSettings = widgetType && ['chart', 'orderBook', 'portfolio', 'trades', 'orderForm'].includes(widgetType);
+
   return (
     <div
       ref={widgetRef}
@@ -543,10 +560,11 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
           </div>
         </div>
         <div className="flex items-center space-x-1">
-          {!isCollapsed && (
+          {!isCollapsed && hasSettings && (
             <button 
               className="p-1 rounded-sm hover:bg-terminal-widget/50 transition-colors"
-              onClick={() => {}}
+              onClick={handleSettingsClick}
+              title="Widget Settings"
             >
               <Settings size={14} className="text-terminal-muted hover:text-terminal-text transition-colors" />
             </button>
@@ -580,7 +598,10 @@ const WidgetSimple: React.FC<WidgetSimpleProps> = ({
       </div>
       
       {!isCollapsed && (
-        <div className="p-3 h-[calc(100%-40px)] overflow-auto bg-terminal-bg">
+        <div className={cn(
+          "h-[calc(100%-40px)] overflow-auto bg-terminal-bg",
+          widgetType === 'chart' ? '' : 'p-3'
+        )}>
           {children}
         </div>
       )}

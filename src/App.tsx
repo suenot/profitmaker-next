@@ -11,6 +11,7 @@ import BottomLeftInfo from './components/BottomLeftInfo';
 import RightClickInfo from './components/RightClickInfo';
 import TestProviderIntegration from './components/TestProviderIntegration';
 import { TestChartWidget } from './components/TestChartWidget';
+import WidgetSettingsManager from './components/WidgetSettingsManager';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
         <BottomLeftInfo />
         <RightClickInfo />
         <CookieNotification />
+        <WidgetSettingsManager />
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
