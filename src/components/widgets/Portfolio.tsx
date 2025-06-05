@@ -81,9 +81,9 @@ const PortfolioWidget: React.FC = () => {
             onClick={() => setSelectedCategory(selectedCategory === 'currency' ? null : 'currency')}
           >
             {selectedCategory === 'currency' ? (
-              <ChevronDown size={16} className="mr-1" />
+              <ChevronDown size={16} className="mr-1 text-terminal-text/70" />
             ) : (
-              <ChevronRight size={16} className="mr-1" />
+              <ChevronRight size={16} className="mr-1 text-terminal-text/70" />
             )}
             <span className="font-medium">Currency and Metals</span>
             <span className="ml-auto">1 110,73 ₽</span>
@@ -131,9 +131,9 @@ const PortfolioWidget: React.FC = () => {
             onClick={() => setSelectedCategory(selectedCategory === 'funds' ? null : 'funds')}
           >
             {selectedCategory === 'funds' ? (
-              <ChevronDown size={16} className="mr-1" />
+              <ChevronDown size={16} className="mr-1 text-terminal-text/70" />
             ) : (
-              <ChevronRight size={16} className="mr-1" />
+              <ChevronRight size={16} className="mr-1 text-terminal-text/70" />
             )}
             <span className="font-medium">Funds</span>
             <span className="ml-auto">13 404 600,00 ₽</span>

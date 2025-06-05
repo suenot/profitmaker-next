@@ -78,13 +78,13 @@ export const MarketsWidget: React.FC = () => {
             className="w-full flex items-center justify-between px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
           >
             <div className="flex items-center space-x-2">
-              <User size={16} className="text-terminal-accent" />
+              <User size={16} className="text-terminal-text/80" />
               <span>
                 {selectedAccount?.email || 
                  (selectedAccountId === null ? 'No account (all exchanges)' : 'Select account...')}
               </span>
             </div>
-            <ChevronDown size={16} className="text-terminal-muted" />
+            <ChevronDown size={16} className="text-terminal-text/70" />
           </button>
 
           {isAccountDropdownOpen && (
@@ -98,7 +98,7 @@ export const MarketsWidget: React.FC = () => {
                 }}
                 className="w-full flex items-center space-x-2 px-3 py-2 hover:bg-terminal-accent/20 text-left text-sm text-terminal-muted"
               >
-                <User size={16} />
+                <User size={16} className="text-terminal-text/60" />
                 <span>No account (all exchanges)</span>
               </button>
               {availableAccounts.map((account) => (
@@ -112,7 +112,7 @@ export const MarketsWidget: React.FC = () => {
                   }}
                   className="w-full flex items-center space-x-2 px-3 py-2 hover:bg-terminal-accent/20 text-left text-sm"
                 >
-                  <User size={16} />
+                  <User size={16} className="text-terminal-text/70" />
                   <div>
                     <div className="font-medium">{account.email}</div>
                     <div className="text-xs text-terminal-muted">{account.exchange}</div>
@@ -135,10 +135,10 @@ export const MarketsWidget: React.FC = () => {
             className="w-full flex items-center justify-between px-3 py-2 bg-terminal-bg border border-terminal-border rounded text-sm focus:outline-none focus:border-terminal-accent"
           >
             <div className="flex items-center space-x-2">
-              <ArrowUpDown size={16} className="text-terminal-accent" />
+              <ArrowUpDown size={16} className="text-terminal-text/80" />
               <span>{selectedExchange || 'Select exchange...'}</span>
             </div>
-            <ChevronDown size={16} className="text-terminal-muted" />
+            <ChevronDown size={16} className="text-terminal-text/70" />
           </button>
 
           {isExchangeDropdownOpen && (
@@ -152,7 +152,7 @@ export const MarketsWidget: React.FC = () => {
                   }}
                   className="w-full flex items-center space-x-2 px-3 py-2 hover:bg-terminal-accent/20 text-left text-sm"
                 >
-                  <ArrowUpDown size={16} />
+                  <ArrowUpDown size={16} className="text-terminal-text/70" />
                   <span>{exchange}</span>
                 </button>
               ))}

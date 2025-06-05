@@ -67,13 +67,13 @@ export const ExchangesWidget: React.FC = () => {
   const getProviderIcon = (type: string) => {
     switch (type) {
       case 'ccxt-browser':
-        return <Globe size={16} className="text-terminal-accent" />;
+        return <Globe size={16} className="text-terminal-text/80" />;
       case 'ccxt-server':
-        return <Server size={16} className="text-terminal-accent" />;
+        return <Server size={16} className="text-terminal-text/80" />;
       case 'stocksharp':
-        return <Database size={16} className="text-terminal-accent" />;
+        return <Database size={16} className="text-terminal-text/80" />;
       default:
-        return <Server size={16} className="text-terminal-muted" />;
+        return <Server size={16} className="text-terminal-text/60" />;
     }
   };
 
@@ -93,7 +93,7 @@ export const ExchangesWidget: React.FC = () => {
               {selectedProvider && getProviderIcon(selectedProvider.type)}
               <span>{selectedProvider?.name || 'Select provider...'}</span>
             </div>
-            <ChevronDown size={16} className="text-terminal-muted" />
+            <ChevronDown size={16} className="text-terminal-text/70" />
           </button>
 
           {isProviderDropdownOpen && (
