@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { useUserStore } from '../../store/userStore';
-import { getCCXT } from '../../store/utils/ccxtUtils';
+import { useDataProviderStore } from '../../store/dataProviderStore';
 
 export interface Instrument {
   account: string;
@@ -18,107 +18,6 @@ interface InstrumentSearchProps {
   className?: string;
 }
 
-// Helper function to get popular trading pairs for an exchange from CCXT
-const getPopularPairsForExchange = (exchange: string): string[] => {
-  const ccxt = getCCXT();
-  if (!ccxt) {
-    // Fallback to basic pairs if CCXT is not available
-    return ['BTC/USDT', 'ETH/USDT'];
-  }
-
-  try {
-    const ExchangeClass = ccxt[exchange];
-    if (!ExchangeClass) {
-      return ['BTC/USDT', 'ETH/USDT'];
-    }
-
-    const exchangeInstance = new ExchangeClass({ sandbox: false });
-    
-    // Get common symbols that are likely to be supported
-    const commonSymbols = [
-      'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'SOL/USDT', 
-      'DOT/USDT', 'MATIC/USDT', 'AVAX/USDT', 'LINK/USDT', 'UNI/USDT',
-      'ATOM/USDT', 'FTM/USDT', 'NEAR/USDT', 'ALGO/USDT',
-      'BTC/USD', 'ETH/USD', 'SOL/USD', 'ADA/USD', 'DOT/USD', 'MATIC/USD'
-    ];
-
-    // If exchange has markets loaded, filter common symbols
-    if (exchangeInstance.markets) {
-      return commonSymbols.filter(symbol => symbol in exchangeInstance.markets).slice(0, 8);
-    }
-
-    // Return exchange-specific defaults based on what we know
-    switch (exchange.toLowerCase()) {
-      case 'coinbase':
-      case 'kraken':
-        return ['BTC/USD', 'ETH/USD', 'SOL/USD', 'ADA/USD', 'DOT/USD', 'MATIC/USD', 'LINK/USD', 'UNI/USD'];
-      default:
-        return ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'ADA/USDT', 'DOT/USDT', 'MATIC/USDT', 'LINK/USDT', 'UNI/USDT'];
-    }
-  } catch (error) {
-    console.warn(`Failed to get pairs for ${exchange}:`, error);
-    return ['BTC/USDT', 'ETH/USDT'];
-  }
-};
-
-// Helper function to get supported markets for an exchange from CCXT
-const getMarketsForExchange = (exchange: string): string[] => {
-  const ccxt = getCCXT();
-  if (!ccxt) {
-    return ['spot'];
-  }
-
-  try {
-    const ExchangeClass = ccxt[exchange];
-    if (!ExchangeClass) {
-      return ['spot'];
-    }
-
-    const exchangeInstance = new ExchangeClass({ sandbox: false });
-    
-    // Check exchange capabilities to determine supported markets
-    const markets: string[] = ['spot']; // spot is always supported
-    
-    // Check for futures support
-    if (exchangeInstance.has?.fetchFuturesBalance || 
-        exchangeInstance.has?.fetchDerivativesMarkets ||
-        exchangeInstance.has?.fetchPositions) {
-      markets.push('futures');
-    }
-    
-    // Check for margin support
-    if (exchangeInstance.has?.fetchMarginBalance || 
-        exchangeInstance.has?.fetchBorrowRate) {
-      markets.push('margin');
-    }
-
-    // Add exchange-specific markets based on known capabilities
-    switch (exchange.toLowerCase()) {
-      case 'bybit':
-        if (!markets.includes('futures')) markets.push('futures');
-        markets.push('inverse');
-        break;
-      case 'okx':
-        if (!markets.includes('futures')) markets.push('futures');
-        markets.push('swap');
-        break;
-      case 'coinbase':
-        markets.push('advanced');
-        break;
-      case 'binance':
-      case 'kucoin':
-        if (!markets.includes('futures')) markets.push('futures');
-        if (!markets.includes('margin')) markets.push('margin');
-        break;
-    }
-
-    return markets;
-  } catch (error) {
-    console.warn(`Failed to get markets for ${exchange}:`, error);
-    return ['spot'];
-  }
-};
-
 const InstrumentSearch: React.FC<InstrumentSearchProps> = ({
   value,
   onChange,
@@ -128,11 +27,60 @@ const InstrumentSearch: React.FC<InstrumentSearchProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [exchangeData, setExchangeData] = useState<Record<string, { symbols: string[]; markets: string[] }>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   
   const { users, activeUserId } = useUserStore();
+  const { getSymbolsForExchange, getMarketsForExchange } = useDataProviderStore();
   const activeUser = users.find(u => u.id === activeUserId);
+
+  // Load exchange data when activeUser changes
+  useEffect(() => {
+    if (!activeUser) return;
+
+    console.log(`🔍 [InstrumentSearch] Loading data for user:`, {
+      email: activeUser.email,
+      accountsCount: activeUser.accounts.length,
+      accounts: activeUser.accounts.map(acc => ({ exchange: acc.exchange, email: acc.email }))
+    });
+
+    const loadExchangeData = async () => {
+      const newExchangeData: Record<string, { symbols: string[]; markets: string[] }> = {};
+      
+      for (const account of activeUser.accounts) {
+        console.log(`🏦 [InstrumentSearch] Loading data for exchange: ${account.exchange}`);
+        if (!newExchangeData[account.exchange]) {
+          try {
+            const [symbols, markets] = await Promise.all([
+              getSymbolsForExchange(account.exchange),
+              getMarketsForExchange(account.exchange)
+            ]);
+            
+            newExchangeData[account.exchange] = { symbols, markets };
+            console.log(`✅ [InstrumentSearch] Loaded for ${account.exchange}:`, {
+              symbolsCount: symbols.length,
+              marketsCount: markets.length,
+              symbolsSample: symbols.slice(0, 3),
+              markets
+            });
+          } catch (error) {
+            console.error(`Failed to load data for ${account.exchange}:`, error);
+            // Fallback to basic data
+            newExchangeData[account.exchange] = {
+              symbols: ['BTC/USDT', 'ETH/USDT'],
+              markets: ['spot']
+            };
+          }
+        }
+      }
+      
+      setExchangeData(newExchangeData);
+      console.log(`📊 [InstrumentSearch] Final exchange data:`, newExchangeData);
+    };
+
+    loadExchangeData();
+  }, [activeUser, getSymbolsForExchange, getMarketsForExchange]);
 
   // Generate all possible instruments from user accounts
   const allInstruments = useMemo((): Instrument[] => {
@@ -141,11 +89,13 @@ const InstrumentSearch: React.FC<InstrumentSearchProps> = ({
     const instruments: Instrument[] = [];
 
     activeUser.accounts.forEach(account => {
-      const pairs = getPopularPairsForExchange(account.exchange);
-      const markets = getMarketsForExchange(account.exchange);
+      const exchangeInfo = exchangeData[account.exchange];
+      if (!exchangeInfo) return; // Skip if data not loaded yet
+      
+      const { symbols, markets } = exchangeInfo;
       
       markets.forEach(market => {
-        pairs.forEach(pair => {
+        symbols.forEach(pair => {
           const instrument: Instrument = {
             account: account.email,
             exchange: account.exchange,
@@ -159,7 +109,7 @@ const InstrumentSearch: React.FC<InstrumentSearchProps> = ({
     });
 
     return instruments;
-  }, [activeUser]);
+  }, [activeUser, exchangeData]);
 
   // Filter instruments based on search query
   const filteredInstruments = useMemo(() => {

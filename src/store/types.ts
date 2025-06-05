@@ -63,11 +63,16 @@ export interface DataProviderActions {
   getEnabledProviders: () => DataProvider[];
   
   // NEW: Advanced provider management with user integration
-  createProvider: (type: 'ccxt-browser' | 'ccxt-server', name: string, exchanges: string[], config?: any) => DataProvider;
+  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server', name: string, exchanges: string[], config?: any) => DataProvider;
   updateProvider: (providerId: string, updates: { name?: string; exchanges?: string[]; priority?: number; config?: any }) => void;
   getProviderForExchange: (exchange: string) => DataProvider | null;
   getProviderExchangeMappings: (exchanges: string[]) => ProviderExchangeMapping[];
   updateProviderPriority: (providerId: string, priority: number) => void;
+  
+  // NEW: Get symbols and markets from provider
+  getSymbolsForExchange: (exchange: string) => Promise<string[]>;
+  getMarketsForExchange: (exchange: string) => Promise<string[]>;
+  getAllSupportedExchanges: () => string[];
   
   // Data fetch settings management
   setDataFetchMethod: (method: DataFetchMethod) => Promise<void>;

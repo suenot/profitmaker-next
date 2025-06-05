@@ -15,6 +15,11 @@ import { DataProviderSetupWidget } from '@/components/widgets/DataProviderSetupW
 import { DataProviderDebugWidget } from '@/components/widgets/DataProviderDebugWidget';
 import NotificationTestWidget from '@/components/NotificationTestWidget';
 import DealsWidget from '@/components/widgets/DealsWidget';
+import { DebugUserData } from '@/components/DebugUserData';
+import { DebugCCXTCache } from '@/components/DebugCCXTCache';
+import { ExchangesWidget } from '@/components/ExchangesWidget';
+import { MarketsWidget } from '@/components/MarketsWidget';
+import { PairsWidget } from '@/components/PairsWidget';
 import AlignmentGuides from '@/components/AlignmentGuides';
 import { GuideLineType } from '@/types/alignmentGuides';
 import CollapsedWidgetsZone from '@/components/CollapsedWidgetsZone';
@@ -33,6 +38,11 @@ const widgetComponents: Record<string, React.FC<any>> = {
   dataProviderSetup: DataProviderSetupWidget,
   dataProviderDebug: DataProviderDebugWidget,
   notificationTest: NotificationTestWidget,
+  debugUserData: DebugUserData,
+  debugCCXTCache: DebugCCXTCache,
+  exchanges: ExchangesWidget,
+  markets: MarketsWidget,
+  pairs: PairsWidget,
 };
 
 const TradingTerminal: React.FC = () => {

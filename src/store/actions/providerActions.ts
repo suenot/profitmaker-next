@@ -9,6 +9,7 @@ import {
   validateProviderConfig 
 } from '../utils/providerUtils';
 import { useUserStore } from '../userStore';
+import { createCCXTBrowserProvider } from '../providers/ccxtBrowserProvider';
 
 export interface ProviderActions {
   addProvider: (provider: DataProvider) => void;
@@ -22,11 +23,16 @@ export interface ProviderActions {
   isProviderEnabled: (providerId: string) => boolean;
   getEnabledProviders: () => DataProvider[];
   
-  createProvider: (type: 'ccxt-browser' | 'ccxt-server', name: string, exchanges: string[], config?: any) => DataProvider;
+  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server', name: string, exchanges: string[], config?: any) => DataProvider;
   updateProvider: (providerId: string, updates: { name?: string; exchanges?: string[]; priority?: number; config?: any }) => void;
   getProviderForExchange: (exchange: string) => DataProvider | null;
   getProviderExchangeMappings: (exchanges: string[]) => ProviderExchangeMapping[];
   updateProviderPriority: (providerId: string, priority: number) => void;
+  
+  // NEW: Get symbols and markets from provider
+  getSymbolsForExchange: (exchange: string) => Promise<string[]>;
+  getMarketsForExchange: (exchange: string) => Promise<string[]>;
+  getAllSupportedExchanges: () => string[];
 }
 
 export const createProviderActions: StateCreator<
@@ -120,7 +126,7 @@ export const createProviderActions: StateCreator<
   },
 
   // NEW: Create provider with simplified config
-  createProvider: (type: 'ccxt-browser' | 'ccxt-server', name: string, exchanges: string[], config: any = {}) => {
+  createProvider: (type: 'ccxt-browser' | 'ccxt-server' | 'stocksharp' | 'marketmaker.cc' | 'custom-json-server', name: string, exchanges: string[], config: any = {}) => {
     const providers = Object.values(get().providers);
     const priority = getNextProviderPriority(providers);
     const id = generateProviderId(type, exchanges, name);
@@ -153,6 +159,37 @@ export const createProviderActions: StateCreator<
           serverUrl: config.serverUrl || '',
           timeout: config.timeout || 30000,
           sandbox: config.sandbox || false
+        }
+      };
+    } else if (type === 'stocksharp') {
+      newProvider = {
+        ...baseProvider,
+        type: 'stocksharp',
+        config: {
+          serverUrl: config.serverUrl || '',
+          timeout: config.timeout || 30000,
+          authentication: config.authentication || {}
+        }
+      };
+    } else if (type === 'marketmaker.cc') {
+      newProvider = {
+        ...baseProvider,
+        type: 'marketmaker.cc',
+        config: {
+          apiUrl: config.apiUrl || '',
+          timeout: config.timeout || 30000,
+          authentication: config.authentication || {}
+        }
+      };
+    } else if (type === 'custom-json-server') {
+      newProvider = {
+        ...baseProvider,
+        type: 'custom-json-server',
+        config: {
+          serverUrl: config.serverUrl || '',
+          timeout: config.timeout || 30000,
+          jsonSchema: config.jsonSchema || {},
+          authentication: config.authentication || {}
         }
       };
     } else {
@@ -220,5 +257,135 @@ export const createProviderActions: StateCreator<
         console.log(`🔄 Updated provider ${providerId} priority to ${priority}`);
       }
     });
-  }
+  },
+
+     // NEW: Get symbols and markets from provider
+   getSymbolsForExchange: async (exchange: string): Promise<string[]> => {
+     const provider = get().getProviderForExchange(exchange);
+     if (!provider) {
+       console.warn(`❌ No suitable provider found for exchange: ${exchange}`);
+       return [];
+     }
+
+     try {
+       // Delegate to provider-specific implementation
+       switch (provider.type) {
+         case 'ccxt-browser': {
+           const ccxtProvider = createCCXTBrowserProvider(provider);
+           return await ccxtProvider.getSymbolsForExchange(exchange);
+         }
+         case 'ccxt-server':
+           // CCXT Server provider will implement its own logic
+           console.log(`📊 Getting symbols for ${exchange} from CCXT Server provider ${provider.id}`);
+           // For now, return basic fallback until implementation
+           return ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'];
+           
+         case 'stocksharp':
+           // StockSharp provider will implement its own logic
+           console.log(`📊 Getting symbols for ${exchange} from StockSharp provider ${provider.id}`);
+           // For now, return basic fallback until implementation
+           return ['BTC/USDT', 'ETH/USDT'];
+           
+         case 'marketmaker.cc':
+           // MarketMaker.cc provider will implement its own logic
+           console.log(`📊 Getting symbols for ${exchange} from MarketMaker.cc provider ${provider.id}`);
+           return ['BTC/USDT', 'ETH/USDT'];
+           
+         case 'custom-json-server':
+           // Custom JSON Server provider will implement its own logic
+           console.log(`📊 Getting symbols for ${exchange} from Custom JSON Server provider ${provider.id}`);
+           return ['BTC/USDT', 'ETH/USDT'];
+           
+         case 'custom':
+           // Custom providers will implement their own logic
+           console.log(`📊 Getting symbols for ${exchange} from custom provider ${provider.id}`);
+           return [];
+           
+         default:
+           console.error(`❌ Unknown provider type: ${(provider as any).type}`);
+           return [];
+       }
+     } catch (error) {
+       console.error(`❌ Error getting symbols for exchange: ${exchange}`, error);
+       return [];
+     }
+   },
+
+   getMarketsForExchange: async (exchange: string): Promise<string[]> => {
+     const provider = get().getProviderForExchange(exchange);
+     if (!provider) {
+       console.warn(`❌ No suitable provider found for exchange: ${exchange}`);
+       return ['spot'];
+     }
+
+     try {
+       // Delegate to provider-specific implementation
+       switch (provider.type) {
+         case 'ccxt-browser': {
+           const ccxtProvider = createCCXTBrowserProvider(provider);
+           return await ccxtProvider.getMarketsForExchange(exchange);
+         }
+         case 'ccxt-server':
+           // CCXT Server provider will implement its own logic
+           console.log(`📈 Getting markets for ${exchange} from CCXT Server provider ${provider.id}`);
+           // For now, return basic fallback until implementation
+           return ['spot', 'futures', 'margin'];
+           
+         case 'stocksharp':
+           // StockSharp provider will implement its own logic
+           console.log(`📈 Getting markets for ${exchange} from StockSharp provider ${provider.id}`);
+           // For now, return basic fallback until implementation
+           return ['spot', 'futures'];
+           
+         case 'marketmaker.cc':
+           // MarketMaker.cc provider will implement its own logic
+           console.log(`📈 Getting markets for ${exchange} from MarketMaker.cc provider ${provider.id}`);
+           return ['spot', 'futures'];
+           
+         case 'custom-json-server':
+           // Custom JSON Server provider will implement its own logic
+           console.log(`📈 Getting markets for ${exchange} from Custom JSON Server provider ${provider.id}`);
+           return ['spot'];
+           
+         case 'custom':
+           // Custom providers will implement their own logic
+           console.log(`📈 Getting markets for ${exchange} from custom provider ${provider.id}`);
+           return ['spot'];
+           
+         default:
+           console.error(`❌ Unknown provider type: ${(provider as any).type}`);
+           return ['spot'];
+       }
+     } catch (error) {
+       console.error(`❌ Error getting markets for exchange: ${exchange}`, error);
+       return ['spot'];
+     }
+   },
+
+   // NEW: Get all supported exchanges from all enabled providers
+   getAllSupportedExchanges: (): string[] => {
+     const providers = Object.values(get().providers);
+     const enabledProviders = providers.filter(p => p.status === 'connected');
+     
+     const allExchanges = new Set<string>();
+     
+     enabledProviders.forEach(provider => {
+       if (provider.exchanges.includes('*')) {
+         // Universal provider - add popular exchanges
+         ['binance', 'bybit', 'okx', 'kucoin', 'coinbase', 'bitget', 'kraken', 'huobi', 
+          'gate', 'mexc', 'probit', 'whitebit', 'bingx', 'phemex', 'deribit', 'ftx'].forEach(exchange => {
+           allExchanges.add(exchange);
+         });
+       } else {
+         // Specific exchanges
+         provider.exchanges.forEach(exchange => {
+           allExchanges.add(exchange);
+         });
+       }
+     });
+     
+     console.log(`🌐 [getAllSupportedExchanges] Found ${allExchanges.size} exchanges from ${enabledProviders.length} providers:`, Array.from(allExchanges).sort());
+     
+     return Array.from(allExchanges).sort();
+   }
 }); 

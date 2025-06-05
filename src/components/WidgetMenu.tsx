@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug, Bell, Handshake } from 'lucide-react';
+import { BarChart3, PieChart, ListOrdered, FileText, Clock, LineChart, Newspaper, Calendar, BookOpen, ArrowUpDown, Settings, Bug, Bell, Handshake, Users, Database, Globe, Server, TrendingUp } from 'lucide-react';
 
-type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'deals' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug' | 'notificationTest';
+type WidgetType = 'chart' | 'portfolio' | 'orderForm' | 'transactionHistory' | 'custom' | 'orderbook' | 'trades' | 'deals' | 'dataProviderSettings' | 'dataProviderDemo' | 'dataProviderSetup' | 'dataProviderDebug' | 'notificationTest' | 'debugUserData' | 'debugCCXTCache' | 'exchanges' | 'markets' | 'pairs';
 
 interface WidgetMenuProps {
   position: { x: number; y: number };
@@ -61,7 +61,12 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       dataProviderDemo: { width: 700, height: 400 },
       dataProviderSetup: { width: 500, height: 400 },
       dataProviderDebug: { width: 700, height: 500 },
-      notificationTest: { width: 400, height: 500 }
+      notificationTest: { width: 400, height: 500 },
+      debugUserData: { width: 600, height: 400 },
+      debugCCXTCache: { width: 700, height: 500 },
+      exchanges: { width: 600, height: 500 },
+      markets: { width: 500, height: 450 },
+      pairs: { width: 650, height: 550 }
     };
     
     const size = defaultSizes[type];
@@ -89,7 +94,12 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
       dataProviderDemo: 'Data Provider Demo',
       dataProviderSetup: 'Data Provider Setup',
       dataProviderDebug: 'Data Provider Debug',
-      notificationTest: 'Notification Test'
+      notificationTest: 'Notification Test',
+      debugUserData: 'Debug User Data',
+      debugCCXTCache: 'Debug CCXT Cache',
+      exchanges: 'Exchanges Diagnostic',
+      markets: 'Markets Diagnostic',
+      pairs: 'Pairs Diagnostic'
     };
     
     addWidget(activeDashboardId, {
@@ -119,6 +129,11 @@ const WidgetMenu: React.FC<WidgetMenuProps> = ({ position, onClose }) => {
     { type: 'dataProviderSetup' as WidgetType, label: 'Data Provider Setup', icon: <Settings size={16} /> },
     { type: 'dataProviderDebug' as WidgetType, label: 'Data Provider Debug', icon: <Bug size={16} /> },
     { type: 'notificationTest' as WidgetType, label: 'Notification System Test', icon: <Bell size={16} /> },
+    { type: 'debugUserData' as WidgetType, label: 'Debug User Data', icon: <Users size={16} /> },
+    { type: 'debugCCXTCache' as WidgetType, label: 'Debug CCXT Cache', icon: <Database size={16} /> },
+    { type: 'exchanges' as WidgetType, label: 'Exchanges Diagnostic', icon: <Globe size={16} /> },
+    { type: 'markets' as WidgetType, label: 'Markets Diagnostic', icon: <Server size={16} /> },
+    { type: 'pairs' as WidgetType, label: 'Pairs Diagnostic', icon: <TrendingUp size={16} /> },
     { type: 'custom' as WidgetType, label: 'Custom Widget', icon: <BarChart3 size={16} /> },
   ];
 
