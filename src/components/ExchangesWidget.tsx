@@ -120,7 +120,7 @@ export const ExchangesWidget: React.FC = () => {
       </div>
 
       {/* Exchanges List */}
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-medium text-terminal-text">
             Available Exchanges
@@ -136,7 +136,7 @@ export const ExchangesWidget: React.FC = () => {
             <span className="ml-2 text-sm">Loading exchanges...</span>
           </div>
         ) : (
-          <div className="bg-terminal-bg border border-terminal-border rounded max-h-80 overflow-y-auto">
+          <div className="flex-1 bg-terminal-bg border border-terminal-border rounded overflow-y-auto">
             {availableExchanges.length === 0 ? (
               <div className="p-4 text-center text-terminal-muted text-sm">
                 No exchanges available
