@@ -305,21 +305,13 @@ const DataProviderSetupWidgetInner: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 p-4">
-      <div className="flex items-center gap-2">
-        <Settings className="h-5 w-5" />
-        <h2 className="text-lg font-semibold">Data Providers Setup</h2>
+    <div className="space-y-4">
+      <div className="text-xs text-muted-foreground">
+        🔑 API keys are automatically taken from your active user accounts
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Add Data Provider</CardTitle>
-          <p className="text-xs text-muted-foreground">
-            🔑 API keys are automatically taken from your active user accounts
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Provider type selection */}
+      <div className="space-y-4">
+        {/* Provider type selection */}
           <div className="space-y-2">
             <Label>Provider Type</Label>
             <Select 
@@ -417,24 +409,20 @@ const DataProviderSetupWidgetInner: React.FC = () => {
 
 
 
-          {/* Submit Button */}
-          <Button
-            onClick={handleSubmit}
-            disabled={!isFormValid || isSubmitting}
-            className="w-full flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            {isSubmitting ? 'Creating Provider...' : 'Create Provider'}
-          </Button>
-        </CardContent>
-      </Card>
+        {/* Submit Button */}
+        <Button
+          onClick={handleSubmit}
+          disabled={!isFormValid || isSubmitting}
+          className="w-full flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          {isSubmitting ? 'Creating Provider...' : 'Create Provider'}
+        </Button>
+      </div>
 
       {/* Existing Providers */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Existing Providers</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium">Existing Providers</h3>
           <div className="space-y-3">
             {Object.values(providers).map(provider => (
               <div key={provider.id}>
@@ -554,8 +542,7 @@ const DataProviderSetupWidgetInner: React.FC = () => {
               </p>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
     </div>
   );
 };
