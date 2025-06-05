@@ -7,6 +7,12 @@ interface AnimatedLogoProps {
   showBackground?: boolean;
 }
 
+interface LetterState {
+  char: string;
+  isVisible: boolean;
+  delay: number;
+}
+
 export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
   width = 200,
   height = 200,
@@ -14,11 +20,52 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
   showBackground = false,
 }) => {
   const [animationState, setAnimationState] = useState<'initial' | 'docking' | 'rotating' | 'finishing'>('initial');
+  const [isTextVisible, setIsTextVisible] = useState(false);
+  const [visibleLetterCount, setVisibleLetterCount] = useState(0);
+  const [typingInterval, setTypingInterval] = useState<NodeJS.Timeout | null>(null);
+  
+  const projectName = "Profitmaker.cc";
+  const typingSpeed = 80; // milliseconds per letter
+
+  // Simple typing animation effect
+  useEffect(() => {
+    // Clear previous interval
+    if (typingInterval) {
+      clearInterval(typingInterval);
+      setTypingInterval(null);
+    }
+
+    if (!isTextVisible) {
+      setVisibleLetterCount(0);
+      return;
+    }
+
+    // Start typing animation with interval
+    let currentCount = 0;
+    const interval = setInterval(() => {
+      currentCount++;
+      setVisibleLetterCount(currentCount);
+      
+      if (currentCount >= projectName.length) {
+        clearInterval(interval);
+        setTypingInterval(null);
+      }
+    }, typingSpeed);
+    
+    setTypingInterval(interval);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(interval);
+      setTypingInterval(null);
+    };
+  }, [isTextVisible, projectName.length, typingSpeed]);
 
   // Обработка наведения мыши
   const handleMouseEnter = () => {
     if (animationState === 'initial' || animationState === 'finishing') {
       setAnimationState('docking');
+      setIsTextVisible(true);
       
       // После стыковки через 600мс запускаем вращение
       setTimeout(() => {
@@ -31,6 +78,7 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
   const handleMouseLeave = () => {
     if (animationState === 'rotating' || animationState === 'docking') {
       setAnimationState('finishing');
+      setIsTextVisible(false);
       
       // Через 600мс вернуться в исходное состояние
       setTimeout(() => {
@@ -115,61 +163,101 @@ export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({
   const groupStyles = getGroupStyles();
 
   return (
-    <svg 
-      width={width} 
-      height={height} 
-      viewBox="0 0 200 200" 
-      xmlns="http://www.w3.org/2000/svg"
-      className={`${className} cursor-pointer`}
+    <div 
+      className={`${className} cursor-pointer relative`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <style>
-        {`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        `}
-      </style>
+      <svg 
+        width={width} 
+        height={height} 
+        viewBox="0 0 200 200" 
+        xmlns="http://www.w3.org/2000/svg"
+        className="flex-shrink-0"
+      >
+        <style>
+          {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          `}
+        </style>
+        
+        {/* Фоновый круг, отображается только во время анимации */}
+        {animationState !== 'initial' && (
+          <circle 
+            cx="100" 
+            cy="100" 
+            r="100" 
+            className="fill-white dark:fill-gray-700"
+          />
+        )}
+        
+        {/* Контейнер для анимации */}
+        <g 
+          id="compass" 
+          style={{ 
+            transformOrigin: 'center',
+            transform: groupStyles.transform,
+            transition: groupStyles.transition,
+            animation: groupStyles.animation
+          }}
+        >
+          {/* Розовый треугольник (вниз) */}
+          <polygon 
+            id="pink-triangle" 
+            points="65,125 95,75 35,75" 
+            fill="#ff9aab" 
+            style={{
+              transformOrigin: '65px 105px',
+              transform: pinkStyles.transform,
+              transition: pinkStyles.transition
+            }}
+          />
+          
+          {/* Зеленый треугольник (вверх) */}
+          <polygon 
+            id="green-triangle" 
+            points="135,75 105,125 165,125" 
+            fill="#98ffa0" 
+            style={{
+              transformOrigin: '135px 105px',
+              transform: greenStyles.transform,
+              transition: greenStyles.transition
+            }}
+          />
+        </g>
+      </svg>
       
-      {/* Белый фоновый круг, отображается только во время анимации */}
-      {animationState !== 'initial' && <circle cx="100" cy="100" r="100" fill="white" />}
-      
-      {/* Контейнер для анимации */}
-      <g 
-        id="compass" 
-        style={{ 
-          transformOrigin: 'center',
-          transform: groupStyles.transform,
-          transition: groupStyles.transition,
-          animation: groupStyles.animation
+      {/* Анимированный текст */}
+      <div 
+        className={`absolute left-full top-1/2 transform -translate-y-1/2 ml-3 font-semibold text-lg whitespace-nowrap transition-all duration-300 px-2 py-1 rounded shadow-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 ${
+          isTextVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[-20px] pointer-events-none'
+        }`}
+        style={{
+          fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+          letterSpacing: '0.5px',
+          zIndex: 1000
         }}
       >
-        {/* Розовый треугольник (вниз) */}
-        <polygon 
-          id="pink-triangle" 
-          points="65,125 95,75 35,75" 
-          fill="#ff9aab" 
-          style={{
-            transformOrigin: '65px 105px',
-            transform: pinkStyles.transform,
-            transition: pinkStyles.transition
-          }}
-        />
-        
-        {/* Зеленый треугольник (вверх) */}
-        <polygon 
-          id="green-triangle" 
-          points="135,75 105,125 165,125" 
-          fill="#98ffa0" 
-          style={{
-            transformOrigin: '135px 105px',
-            transform: greenStyles.transform,
-            transition: greenStyles.transition
-          }}
-        />
-      </g>
-    </svg>
+        {projectName.split('').map((char, index) => (
+          <span
+            key={index}
+            className={`inline-block transition-all duration-200 ${
+              index < visibleLetterCount 
+                ? 'transform scale-100' 
+                : 'opacity-0 transform scale-75'
+            }`}
+            style={{
+              color: char === '.' ? '#ff9aab' : 'inherit'
+            }}
+          >
+            {char}
+          </span>
+        ))}
+
+      </div>
+    </div>
   );
 }; 

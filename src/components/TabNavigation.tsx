@@ -15,6 +15,7 @@ const TabNavigation: React.FC = () => {
   const [isNotificationHistoryOpen, setIsNotificationHistoryOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [isThemeSheetOpen, setIsThemeSheetOpen] = useState(false);
+
   
   // State for renaming dashboards
   const [editingDashboardId, setEditingDashboardId] = useState<string | null>(null);
@@ -143,11 +144,15 @@ const TabNavigation: React.FC = () => {
       <div className="flex items-center justify-between h-12 px-2">
         <div className="flex items-center">
           {/* Animated Logo */}
-          <div className="mr-4 flex-shrink-0">
-            <AnimatedLogo width={32} height={32} className="transition-opacity hover:opacity-80" />
+          <div className="flex-shrink-0">
+            <AnimatedLogo 
+              width={32} 
+              height={32} 
+              className="transition-opacity hover:opacity-80" 
+            />
           </div>
           {/* Dashboard Tabs */}
-            <div className="flex overflow-x-auto hide-scrollbar">
+            <div className="flex overflow-x-auto hide-scrollbar ml-2">
             {dashboards.map((dashboard) => (
               <div
                 key={dashboard.id}
