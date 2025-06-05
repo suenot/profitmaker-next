@@ -196,9 +196,8 @@ export const DataProviderDebugWidget: React.FC = () => {
 
   return (
     <div className="space-y-4 p-4">
-      {/* Header */}
+      {/* Statistics and controls */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Data Providers Debug</h2>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="flex items-center gap-1">
             <Activity className="h-3 w-3" />
@@ -208,11 +207,11 @@ export const DataProviderDebugWidget: React.FC = () => {
             <Power className="h-3 w-3" />
             {enabledProviders.length} enabled
           </Badge>
-          <Button size="sm" variant="outline" onClick={handleCleanup}>
-            <Trash2 className="h-3 w-3 mr-1" />
-            Clear all
-          </Button>
         </div>
+        <Button size="sm" variant="outline" onClick={handleCleanup}>
+          <Trash2 className="h-3 w-3 mr-1" />
+          Clear all
+        </Button>
       </div>
 
       {/* General settings */}
